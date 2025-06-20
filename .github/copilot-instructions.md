@@ -205,8 +205,7 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
   C:\Users\BicepDeveloper\ai-in-a-box\src\frontend\ (JavaScript SPA)
   C:\Users\BicepDeveloper\ai-in-a-box\src\backend\ (C# Function App)
   ```
-- Infrastructure:
-  ```
+- Infrastructure:  ```
   C:\Users\BicepDeveloper\ai-in-a-box\infra\
     ├── main-orchestrator.bicep
     ├── dev-orchestrator.parameters.bicepparam
@@ -217,7 +216,8 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
   ```
 - DevBox configuration: `C:\Users\BicepDeveloper\ai-in-a-box\devbox\`
 - Configuration: Root level (package.json, vite.config.js, etc.)
-- Documentation: README.md with comprehensive setup instructions
+- Documentation: `C:\Users\BicepDeveloper\ai-in-a-box\documentation\` with comprehensive guides
+- Main documentation: README.md in root with project overview and quick start
 
 ## Dependencies
 

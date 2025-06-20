@@ -81,13 +81,13 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 ### **Local Testing**
 ```bash
 # Test local Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 ```
 
 ### **Production Testing**
 ```bash
 # Test deployed Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
 ```
 
 ### **Conversation Testing**

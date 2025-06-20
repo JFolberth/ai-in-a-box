@@ -65,7 +65,7 @@ az storage blob upload-batch \
 
 ### Using PowerShell Script
 ```powershell
-./deploy-scripts/deploy.ps1  # Uses default parameters from bicepparam file
+../deploy-scripts/deploy.ps1  # Uses default parameters from bicepparam file
 ```
 
 ## Key Changes from Previous Architecture

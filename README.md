@@ -423,8 +423,13 @@ ai-in-a-box/
 │   └── devcontainer.json
 ├── tests/                       # Testing scripts
 │   ├── Test-FunctionEndpoints.ps1 # PowerShell endpoint tests
-│   └── README.md               # Testing documentation
-├── deploy-frontend-only.ps1     # Frontend-only deployment script
+│   └── TEST.md                 # Testing documentation
+├── documentation/               # Additional documentation
+│   ├── SETUP.md                # Development setup guide
+│   ├── PUBLIC_MODE_SETUP.md    # Public mode configuration guide
+│   ├── MULTI_RG_ARCHITECTURE.md # Multi-resource group architecture
+│   ├── THREAD_PERSISTENCE_FIX.md # Thread persistence solution
+│   └── AI_FOUNDRY_BROWSER_LIMITATIONS.md # Browser integration details
 ├── deploy-scripts/              # Deployment automation
 │   ├── deploy.ps1               # Full deployment script (PowerShell)
 │   ├── deploy-backend.ps1       # Backend-only deployment
@@ -510,6 +515,17 @@ az ad sp create-for-rbac \
 | `VITE_AI_FOUNDRY_ENDPOINT` | AI Foundry endpoint URL | Yes |
 | `VITE_AI_FOUNDRY_DEPLOYMENT` | AI model deployment name | Yes |
 | `VITE_STORAGE_ACCOUNT_NAME` | Azure Storage account name | For deployment |
+
+## 📚 Documentation
+
+For detailed setup and architecture information, see the documentation folder:
+
+- **[Setup Guide](documentation/SETUP.md)** - Complete development environment setup
+- **[Public Mode Setup](documentation/PUBLIC_MODE_SETUP.md)** - Public mode configuration and deployment
+- **[Multi-Resource Group Architecture](documentation/MULTI_RG_ARCHITECTURE.md)** - Infrastructure design and deployment patterns
+- **[Thread Persistence Solution](documentation/THREAD_PERSISTENCE_FIX.md)** - AI Foundry conversation handling details
+- **[Browser Integration Details](documentation/AI_FOUNDRY_BROWSER_LIMITATIONS.md)** - Backend proxy solution for browser compatibility
+- **[Testing Guide](tests/TEST.md)** - Testing procedures and validation scripts
 
 ## 📚 Additional Resources
 
