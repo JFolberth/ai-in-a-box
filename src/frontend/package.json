@@ -1,0 +1,19 @@
+{
+  "name": "ai-foundry-spa",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode dev",
+    "preview": "vite preview",
+    "deploy": "npm run build:dev && az storage blob upload-batch --destination '$web' --source ./dist --account-name staifrontspa001 --auth-mode login --overwrite",
+    "clean": "rimraf dist node_modules/.vite"
+  },
+  "devDependencies": {
+    "vite": "^5.0.8"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

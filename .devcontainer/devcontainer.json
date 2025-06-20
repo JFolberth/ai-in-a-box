@@ -1,0 +1,75 @@
+{
+  "name": "AI Foundry SPA Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "latest",
+      "installBicep": true,
+      "extensions": "bicep"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8.0",
+      "installUsingApt": true,
+      "includePreviewVersions": false
+    }
+  },
+
+  "customizations": {
+    "vscode": {      "extensions": [
+        "ms-vscode.vscode-bicep",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-json",
+        "ms-azure-devops.azure-pipelines",
+        "github.vscode-github-actions",
+        "ms-vscode.azure-account",
+        "ms-azuretools.vscode-azurefunctions",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime"
+      ],"settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "prettier.requireConfig": true,
+        "editor.formatOnSave": true,
+        "files.associations": {
+          "*.bicep": "bicep",
+          "*.bicepparam": "bicep"
+        },
+        "bicep.trace.server": "Verbose",        "bicep.experimental.deployment": true,
+        "editor.quickSuggestions": {
+          "strings": true
+        },        "azureFunctions.showCoreToolsWarning": false,
+        "azureFunctions.projectRuntime": "~4",
+        "azureFunctions.deploySubpath": "src/backend",
+        "dotnet.defaultSolution": "ai-in-a-box.sln",
+        "azurite.location": ".azurite",
+        "azurite.debug": true,
+        "azurite.silent": false
+      }
+    }
+  },
+
+  "postCreateCommand": "npm install && az bicep install && az extension add --name bicep && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite",
+
+  "remoteUser": "node",
+  "forwardPorts": [3000, 4173, 7071],  "portsAttributes": {
+    "3000": {
+      "label": "Development Server",
+      "onAutoForward": "notify"
+    },
+    "4173": {
+      "label": "Preview Server",
+      "onAutoForward": "notify"
+    },
+    "7071": {
+      "label": "Azure Functions",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ]
+}

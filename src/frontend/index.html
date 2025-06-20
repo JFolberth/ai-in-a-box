@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Foundry SPA</title>
+  </head>
+  <body>
+    <div id="app">      <header>
+        <h1>AI Foundry Integration - Public Demo</h1>
+        <div id="auth-section">
+          <span id="user-info"></span>
+        </div>
+      </header>
+      
+      <main>
+        <div class="container">          <div class="input-section">
+            <h2>Chat with CancerBot AI Agent</h2>
+            
+            <div class="form-group">
+              <label for="user-input">Your Message:</label>
+              <textarea id="user-input" placeholder="Type your message here..." rows="4"></textarea>
+            </div>
+            
+            <button id="send-btn" disabled>Send Message</button>
+          </div>
+          
+          <div class="response-section">
+            <h3>AI Response</h3>
+            <div id="response-container">
+              <p class="placeholder">Your AI response will appear here...</p>
+            </div>
+          </div>
+          
+          <div class="history-section">
+            <h3>Conversation History</h3>
+            <div id="history-container">
+              <p class="placeholder">Conversation history will appear here...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
