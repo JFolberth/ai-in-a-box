@@ -1,14 +1,13 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  root: './src/frontend',
   build: {
-    outDir: '../../dist',
+    outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: '/index.html'
+        main: 'index.html'
       }
     }
   },
