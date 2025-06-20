@@ -56,9 +56,8 @@ class App {
       // Add user message to conversation immediately
       this.addToConversation('user', message)
       this.elements.userInput.value = ''
-      
-      // Send message to AI Foundry (no authentication token needed in public mode)
-      const response = await this.aiClient.sendMessage(message, null)
+        // Send message to AI Foundry (public mode - no authentication)
+      const response = await this.aiClient.sendMessage(message)
       
       // Add AI response to conversation
       this.addToConversation('assistant', response)

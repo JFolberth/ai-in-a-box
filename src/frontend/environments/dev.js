@@ -5,15 +5,8 @@ export const environment = {  // Environment identifier
   name: 'dev',
   production: false,
   publicMode: true, // Public mode enabled - no authentication required
-  // Azure AD Configuration (not used in public mode)
-  azureAd: {
-    clientId: '',
-    tenantId: '',
-    redirectUri: window.location.origin,
-    scopes: ['https://cognitiveservices.azure.com/.default'],
-    authority: '',
-    enabled: false // Disabled for public mode
-  },  // AI Foundry Configuration (single endpoint)
+
+  // AI Foundry Configuration (single endpoint)
   aiFoundry: {
     // Using Azure Function App as proxy
     useBackend: true,
