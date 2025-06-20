@@ -453,6 +453,7 @@ __azurite_debug.log
 __blobstorage__/
 __queuestorage__/
 __tablestorage__/
+AzuriteConfig
 
 # Additional project-specific exclusions
 *.bicep.corrupted
