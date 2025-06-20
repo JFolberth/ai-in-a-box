@@ -1,0 +1,90 @@
+$schema: "1.0"
+name: "ai-foundry-spa-devbox"
+image: microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2
+tasks:
+  - name: winget
+    description: Install Node.js LTS for frontend development
+    parameters:
+      package: OpenJS.NodeJS.LTS
+  - name: winget
+    description: Install Visual Studio Code for development
+    parameters:
+      package: Microsoft.VisualStudioCode
+  - name: winget
+    description: Install Azure CLI for infrastructure deployment
+    parameters:
+      package: Microsoft.AzureCLI
+  - name: winget
+    description: Install Git for source control
+    parameters:
+      package: Git.Git
+  - name: winget
+    description: Install .NET 8 SDK for Azure Functions backend
+    parameters:
+      package: Microsoft.DotNet.SDK.8
+  - name: winget
+    description: Install Azure Functions Core Tools for local development
+    parameters:
+      package: Microsoft.AzureFunctionsCoreTools
+  - name: powershell
+    description: Install Azure CLI Bicep extension system-wide
+    parameters:
+      command: |
+        # Install Azure CLI Bicep extension (system-wide)
+        az extension add --name bicep --only-show-errors
+        Write-Host "System-level setup complete!" -ForegroundColor Green
+userTasks:
+  - name: powershell
+    description: Install VS Code extensions for AI Foundry SPA development
+    parameters:
+      command: |
+        # Install VS Code extensions for the user
+        Write-Host "Installing VS Code extensions..." -ForegroundColor Yellow
+        
+        # Infrastructure & Deployment
+        code --install-extension ms-vscode.vscode-bicep
+        code --install-extension ms-vscode.azure-account
+        
+        # Backend Development (C# Function App)
+        code --install-extension ms-azuretools.vscode-azurefunctions
+        code --install-extension ms-dotnettools.csharp
+        code --install-extension ms-dotnettools.vscode-dotnet-runtime
+        
+        # Frontend Development (JavaScript/Vite)
+        code --install-extension esbenp.prettier-vscode
+        code --install-extension ms-vscode.vscode-eslint
+        code --install-extension ms-vscode.vscode-json
+        
+        # Source Control
+        code --install-extension github.vscode-github-actions
+        
+        Write-Host "VS Code extensions installed successfully!" -ForegroundColor Green
+  
+  - name: powershell
+    description: Configure user-specific development environment and tools
+    parameters:
+      command: |
+        # Install npm global packages for the current user
+        npm install -g azurite@latest
+        
+        # Create user workspace directories
+        $workspaceDir = "$env:USERPROFILE\Workspaces"
+        $azuriteDir = "$env:USERPROFILE\.azurite"
+        
+        New-Item -ItemType Directory -Force -Path $workspaceDir
+        New-Item -ItemType Directory -Force -Path $azuriteDir
+        
+        # Set up user-specific environment variables
+        [Environment]::SetEnvironmentVariable("AZURE_STORAGE_EMULATOR_LOCATION", $azuriteDir, "User")
+        
+        # Configure npm registry for user
+        npm config set registry https://registry.npmjs.org/
+        
+        Write-Host "=== User Development Environment Setup Complete ===" -ForegroundColor Green
+        Write-Host "Next steps:" -ForegroundColor Yellow
+        Write-Host "1. Configure Git with your credentials:" -ForegroundColor Gray
+        Write-Host "   git config --global user.name 'Your Name'" -ForegroundColor Gray
+        Write-Host "   git config --global user.email 'your.email@example.com'" -ForegroundColor Gray
+        Write-Host "2. Sign in to Azure: az login" -ForegroundColor Gray
+        Write-Host "3. Clone repository to: $workspaceDir" -ForegroundColor Gray
+        Write-Host "4. Azurite data will be stored in: $azuriteDir" -ForegroundColor Gray

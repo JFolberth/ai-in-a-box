@@ -1,10 +1,11 @@
 {
   "name": "AI Foundry SPA Development",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",  "features": {
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",
+
+  "features": {
     "ghcr.io/devcontainers/features/azure-cli:1": {
       "version": "latest",
-      "installBicep": true,
-      "extensions": "bicep"
+      "installBicep": true
     },
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"
@@ -17,57 +18,73 @@
   },
 
   "customizations": {
-    "vscode": {      "extensions": [
+    "vscode": {
+      "extensions": [
+        // Infrastructure & Deployment
         "ms-vscode.vscode-bicep",
-        "esbenp.prettier-vscode",
-        "ms-vscode.vscode-eslint",
-        "bradlc.vscode-tailwindcss",
-        "ms-vscode.vscode-json",
-        "ms-azure-devops.azure-pipelines",
-        "github.vscode-github-actions",
         "ms-vscode.azure-account",
+        
+        // Backend Development (C# Function App)
         "ms-azuretools.vscode-azurefunctions",
         "ms-dotnettools.csharp",
-        "ms-dotnettools.vscode-dotnet-runtime"
-      ],"settings": {
+        "ms-dotnettools.vscode-dotnet-runtime",
+        
+        // Frontend Development (JavaScript/Vite)
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-eslint",
+        "ms-vscode.vscode-json",
+        
+        // Source Control
+        "github.vscode-github-actions"
+      ],
+
+      "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
         "prettier.requireConfig": true,
         "editor.formatOnSave": true,
+        
+        // Bicep Configuration
         "files.associations": {
           "*.bicep": "bicep",
           "*.bicepparam": "bicep"
         },
-        "bicep.trace.server": "Verbose",        "bicep.experimental.deployment": true,
+        "bicep.trace.server": "Off",
+        "bicep.experimental.deployment": true,
         "editor.quickSuggestions": {
           "strings": true
-        },        "azureFunctions.showCoreToolsWarning": false,
+        },
+        
+        // Azure Functions Configuration
+        "azureFunctions.showCoreToolsWarning": false,
         "azureFunctions.projectRuntime": "~4",
-        "azureFunctions.deploySubpath": "src/backend",
-        "azurite.location": ".azurite",
-        "azurite.debug": true,
-        "azurite.silent": false
+        "azureFunctions.deploySubpath": "src/backend"
       }
     }
   },
 
-  "postCreateCommand": "npm install && az bicep install && az extension add --name bicep && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite",
+  // Optimized setup command - install everything needed in one go
+  "postCreateCommand": "npm install && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite",
 
   "remoteUser": "node",
-  "forwardPorts": [3000, 4173, 7071],  "portsAttributes": {
+  
+  // Forward ports for development servers
+  "forwardPorts": [3000, 4173, 7071],
+  "portsAttributes": {
     "3000": {
-      "label": "Development Server",
+      "label": "Vite Dev Server",
       "onAutoForward": "notify"
     },
     "4173": {
-      "label": "Preview Server",
+      "label": "Vite Preview Server", 
       "onAutoForward": "notify"
     },
     "7071": {
-      "label": "Azure Functions",
+      "label": "Azure Functions Runtime",
       "onAutoForward": "notify"
     }
   },
 
+  // Enable Docker socket access for potential container operations
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ]
