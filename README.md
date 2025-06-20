@@ -435,8 +435,7 @@ ai-in-a-box/
 │   ├── deploy-backend.ps1       # Backend-only deployment
 │   ├── deploy-frontend-only.ps1 # Frontend-only deployment
 │   └── deploy.sh                # Full deployment script (Bash)
-├── vite.config.js              # Vite build configuration (root level)
-└── ai-in-a-box.sln             # Visual Studio solution file
+└── vite.config.js              # Vite build configuration (root level)
 ```
 
 ## 🔒 Security

@@ -43,7 +43,6 @@
         },        "azureFunctions.showCoreToolsWarning": false,
         "azureFunctions.projectRuntime": "~4",
         "azureFunctions.deploySubpath": "src/backend",
-        "dotnet.defaultSolution": "ai-in-a-box.sln",
         "azurite.location": ".azurite",
         "azurite.debug": true,
         "azurite.silent": false
