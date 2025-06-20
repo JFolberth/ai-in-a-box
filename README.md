@@ -247,10 +247,10 @@ The infrastructure uses an **orchestrator pattern** that deploys frontend and ba
    Or use the deployment scripts:
    ```bash
    # PowerShell
-   ./deploy.ps1 -SubscriptionId "your-subscription-id" -Location "eastus"
+   ./deploy-scripts/deploy.ps1 -SubscriptionId "your-subscription-id" -Location "eastus"
    
    # Bash
-   ./deploy.sh -s "your-subscription-id" -l "eastus"
+   ./deploy-scripts/deploy.sh -s "your-subscription-id" -l "eastus"
    ```
 
 3. **Infrastructure created:**
@@ -295,12 +295,12 @@ The infrastructure uses an **orchestrator pattern** that deploys frontend and ba
 
 #### PowerShell (Windows)
 ```powershell
-./deploy.ps1 -ResourceGroupName "rg-ai-foundry-spa-dev" -Location "eastus"
+./deploy-scripts/deploy.ps1 -ResourceGroupName "rg-ai-foundry-spa-dev" -Location "eastus"
 ```
 
 #### Bash (Linux/macOS/WSL)
 ```bash
-./deploy.sh -g "rg-ai-foundry-spa-dev" -l "eastus"
+./deploy-scripts/deploy.sh -g "rg-ai-foundry-spa-dev" -l "eastus"
 ```
 
 Both scripts support additional options:
@@ -425,7 +425,11 @@ ai-in-a-box/
 │   ├── Test-FunctionEndpoints.ps1 # PowerShell endpoint tests
 │   └── README.md               # Testing documentation
 ├── deploy-frontend-only.ps1     # Frontend-only deployment script
-├── deploy.ps1                   # Full deployment script
+├── deploy-scripts/              # Deployment automation
+│   ├── deploy.ps1               # Full deployment script (PowerShell)
+│   ├── deploy-backend.ps1       # Backend-only deployment
+│   ├── deploy-frontend-only.ps1 # Frontend-only deployment
+│   └── deploy.sh                # Full deployment script (Bash)
 ├── vite.config.js              # Vite build configuration (root level)
 └── ai-in-a-box.sln             # Visual Studio solution file
 ```
@@ -454,8 +458,8 @@ ai-in-a-box/
 - `func azure functionapp publish <function-app-name>` - Deploy to Azure
 
 ### Infrastructure
-- `./deploy.ps1` - Deploy infrastructure and applications (PowerShell)
-- `./deploy.sh` - Deploy infrastructure and applications (Bash)
+- `./deploy-scripts/deploy.ps1` - Deploy infrastructure and applications (PowerShell)
+- `./deploy-scripts/deploy.sh` - Deploy infrastructure and applications (Bash)
 
 ### Verification & Debugging
 - `node --version` - Check Node.js version

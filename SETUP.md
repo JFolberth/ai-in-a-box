@@ -120,7 +120,7 @@ az storage blob upload-batch \
 az login
 
 # Run deployment script
-./deploy.ps1
+./deploy-scripts/deploy.ps1
 ```
 
 ### 5. Post-Deployment Configuration
