@@ -2,15 +2,7 @@
 name: AI_Foundry_SPA_Frontend
 version: 1.0.0
 summary: Frontend infrastructure for AI Foundry SPA application
-description: |
-  Deploys the frontend infrastructure for the AI Foundry SPA application including:
-  - Azure Static Web App for SPA hosting with built-in CDN and SSL
-  - Application Insights for frontend monitoring and analytics
-  - Integration with existing Log Analytics Workspace for consolidated logging
-  
-  This template creates a modern, scalable frontend hosting solution with
-  automatic HTTPS, global distribution, and comprehensive monitoring.
-
+description: Deploys the frontend infrastructure for the AI Foundry SPA application including
 runner: Bicep
 templatePath: ../../modules/frontend.bicep
 

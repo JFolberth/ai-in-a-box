@@ -351,3 +351,4 @@ siteConfig: {
 - [Configuration Guide](CONFIGURATION.md) - Detailed configuration options
 - [Development Guide](DEVELOPMENT.md) - Local development setup
 - [Multi-RG Architecture](MULTI_RG_ARCHITECTURE.md) - Specific architecture decisions
+- [Azure Deployment Environments](AZURE_DEPLOYMENT_ENVIRONMENTS.md) - ADE catalog definitions and schema compliance

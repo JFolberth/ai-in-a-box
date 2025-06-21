@@ -36,6 +36,7 @@ cd ../backend && func start
 | [Configuration Guide](documentation/CONFIGURATION.md) | Environment variables and service configuration |
 | [Infrastructure Guide](documentation/INFRASTRUCTURE.md) | Architecture details and deployment patterns |
 | [Multi-RG Architecture](documentation/MULTI_RG_ARCHITECTURE.md) | Resource group design decisions |
+| [Azure Deployment Environments](documentation/AZURE_DEPLOYMENT_ENVIRONMENTS.md) | ADE catalog definitions and schema compliance |
 | [Public Mode Setup](documentation/PUBLIC_MODE_SETUP.md) | Authentication and security configuration |
 | [Thread Persistence](documentation/THREAD_PERSISTENCE_FIX.md) | Conversation state management |
 | [Browser Limitations](documentation/AI_FOUNDRY_BROWSER_LIMITATIONS.md) | Browser compatibility notes |
