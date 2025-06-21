@@ -62,12 +62,10 @@ parameters:
     description: "Tags to apply to all resources"
     type: "object"
     required: false
-    default: |
-      {
-        "Environment": "dev",
-        "Project": "AI-Foundry-SPA",
-        "Component": "Frontend"
-      }
+    default:
+      Environment: "dev"
+      Project: "AI-Foundry-SPA"
+      Component: "Frontend"
 
 outputs:
   - id: "applicationInsightsConnectionString"
