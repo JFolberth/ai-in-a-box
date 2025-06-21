@@ -9,6 +9,7 @@ This guide covers local development setup, workflows, and best practices for the
 - **.NET 8 SDK** (for backend Function App development)
 - **Azure CLI** with Bicep extension
 - **Azure Functions Core Tools v4** (for local Function App development)
+- **Python 3.12+** (for development tooling and scripting, optional)
 - **Azure subscription** with appropriate permissions
 
 ### Installation Commands
@@ -29,6 +30,9 @@ winget install Microsoft.Azure.FunctionsCoreTools
 # OR via npm
 npm install -g azure-functions-core-tools@4 --unsafe-perm true
 
+# Python (optional, for development tooling)
+winget install Python.Python.3.12
+
 # Install Bicep
 az bicep install
 az extension add --name bicep
@@ -48,6 +52,9 @@ brew install azure-cli
 # Azure Functions Core Tools
 brew tap azure/functions
 brew install azure-functions-core-tools@4
+
+# Python (optional, for development tooling)
+brew install python@3.12
 
 # Install Bicep
 az bicep install
@@ -73,6 +80,9 @@ curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microso
 sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
 sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
 sudo apt-get update && sudo apt-get install azure-functions-core-tools-4
+
+# Python (optional, for development tooling)
+sudo apt-get update && sudo apt-get install -y python3.12 python3.12-pip python3.12-venv
 
 # Install Bicep
 az bicep install
@@ -228,12 +238,24 @@ The DevContainer automatically:
 
 For team development environments, use the DevBox configuration:
 
-```yaml
-# See devbox/imageDefinition.yaml for complete configuration
-# Includes all development tools and extensions
+```powershell
+# DevBox includes all tools and extensions automatically
+# See devbox/README.md for detailed setup instructions
+
+# Validate your DevBox setup
+.\devbox\Test-DevBoxSetup.ps1
+
+# Or run detailed validation
+.\devbox\Test-DevBoxSetup.ps1 -Detailed
 ```
 
-See [DevBox README](../devbox/README.md) for detailed setup instructions.
+The DevBox configuration automatically installs:
+- All required development tools (Node.js, .NET, Azure CLI, Python)
+- VS Code with pre-configured extensions including GitHub Copilot
+- Azure Functions Core Tools and Azurite
+- Bicep extension and Azure AI Toolkit
+
+See [DevBox README](../devbox/README.md) for detailed setup instructions and troubleshooting.
 
 ## 🧪 Testing
 

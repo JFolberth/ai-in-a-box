@@ -14,27 +14,30 @@
       "version": "8.0",
       "installUsingApt": true,
       "includePreviewVersions": false
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installTools": true
     }
   },
 
   "customizations": {
     "vscode": {
       "extensions": [
-        // Infrastructure & Deployment
         "ms-vscode.vscode-bicep",
         "ms-vscode.azure-account",
-        
-        // Backend Development (C# Function App)
         "ms-azuretools.vscode-azurefunctions",
         "ms-dotnettools.csharp",
         "ms-dotnettools.vscode-dotnet-runtime",
-        
-        // Frontend Development (JavaScript/Vite)
         "esbenp.prettier-vscode",
         "ms-vscode.vscode-eslint",
         "ms-vscode.vscode-json",
-        
-        // Source Control
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-toolsai.vscode-ai-toolkit",
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-vscode.vscode-dev-containers",
         "github.vscode-github-actions"
       ],
 
@@ -42,8 +45,6 @@
         "terminal.integrated.defaultProfile.linux": "bash",
         "prettier.requireConfig": true,
         "editor.formatOnSave": true,
-        
-        // Bicep Configuration
         "files.associations": {
           "*.bicep": "bicep",
           "*.bicepparam": "bicep"
@@ -53,21 +54,21 @@
         "editor.quickSuggestions": {
           "strings": true
         },
-        
-        // Azure Functions Configuration
         "azureFunctions.showCoreToolsWarning": false,
         "azureFunctions.projectRuntime": "~4",
-        "azureFunctions.deploySubpath": "src/backend"
+        "azureFunctions.deploySubpath": "src/backend",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black"
       }
     }
   },
 
-  // Optimized setup command - install everything needed in one go
-  "postCreateCommand": "npm install && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite",
+  "postCreateCommand": "npm install && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install virtualenv black pylint",
 
   "remoteUser": "node",
   
-  // Forward ports for development servers
   "forwardPorts": [3000, 4173, 7071],
   "portsAttributes": {
     "3000": {
@@ -83,8 +84,6 @@
       "onAutoForward": "notify"
     }
   },
-
-  // Enable Docker socket access for potential container operations
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ]
