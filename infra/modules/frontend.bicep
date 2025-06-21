@@ -1,21 +1,23 @@
 // Frontend Infrastructure Module
-// This module deploys the frontend resources: Storage Account + Application Insights
+// This module deploys the frontend resources: Static Web App + Application Insights
 
 targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
 
-@description('Environment name (e.g., dev, staging, prod)')
-param environmentName string
+@description('Name for the Azure Deployment Environment')
+param adeName string = ''
 
 @description('Application name used for resource naming')
-param applicationName string
+param applicationName string = 'aibox'
+
+param devCenterProjectName string = ''
+
+@description('Environment name (e.g., dev, staging, prod)')
+param environmentName string = 'dev'
 
 @description('Azure region for resource deployment')
-param location string
-
-@description('Resource token for unique naming')
-param resourceToken string
+param location string = 'eastus2'
 
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string
@@ -28,10 +30,22 @@ param tags object
 
 // =========== VARIABLES ===========
 
-var resourceNames = {
-  storageAccount: 'staifrontspa${resourceToken}'
-  applicationInsights: 'appi-${applicationName}-frontend-${environmentName}-${resourceToken}'
+var nameSuffix = empty(adeName) ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}') : '${devCenterProjectName}-${adeName}'
+
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
 }
+
+var resourceNames = {
+  applicationInsights: 'appi-${nameSuffix}'
+  staticWebApp: 'stapp-${nameSuffix}'
+}
+
+var typeInfrastructure = 'fd'
 
 // =========== EXISTING RESOURCES ===========
 
@@ -55,106 +69,40 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
     kind: 'web'
     applicationType: 'web'
     workspaceResourceId: logAnalyticsWorkspace.id
-    publicNetworkAccessForIngestion: 'Enabled'
-    publicNetworkAccessForQuery: 'Enabled'
-    disableIpMasking: false
-    disableLocalAuth: false
   }
 }
 
-// =========== STORAGE ACCOUNT (AVM) ===========
+// =========== STATIC WEB APP (AVM) ===========
 
-// Storage Account for hosting the static website using AVM
-module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
-  name: 'frontend-storageAccount'
+// Static Web App for hosting the frontend using AVM
+module staticWebApp 'br/public:avm/res/web/static-site:0.5.0' = {
+  name: 'frontend-staticWebApp'
   params: {
-    name: resourceNames.storageAccount
+    name: resourceNames.staticWebApp
     location: location
     tags: union(tags, {
-      Component: 'Frontend-Storage'
+      Component: 'Frontend-StaticWebApp'
     })
-    kind: 'StorageV2'
-    skuName: 'Standard_LRS'
     
-    // Enable system-assigned managed identity
-    managedIdentities: {
-      systemAssigned: true
+    // Application Insights integration
+    appSettings: {
+      APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.outputs.instrumentationKey
+      APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.outputs.connectionString
     }
-    
-    // Storage account properties
-    accessTier: 'Hot'
-    allowBlobPublicAccess: true
-    allowSharedKeyAccess: true
-    supportsHttpsTrafficOnly: true
-    minimumTlsVersion: 'TLS1_2'
-    publicNetworkAccess: 'Enabled'
-    allowCrossTenantReplication: false
-    
-    // Enable CORS through blob services
-    blobServices: {
-      deleteRetentionPolicyEnabled: true
-      deleteRetentionPolicyDays: 7
-      containerDeleteRetentionPolicyEnabled: true
-      containerDeleteRetentionPolicyDays: 7
-      corsRules: [
-        {
-          allowedOrigins: ['*']
-          allowedMethods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-          allowedHeaders: ['*']
-          exposedHeaders: ['*']
-          maxAgeInSeconds: 3600
-        }
-      ]
-    }
-    
-    // Network access rules
-    networkAcls: {
-      defaultAction: 'Allow'
-      bypass: 'AzureServices'
-    }
-    
-    // Enable infrastructure encryption
-    requireInfrastructureEncryption: false
   }
 }
+
+
 
 // =========== RBAC ASSIGNMENTS ===========
 
-// Storage Blob Data Contributor role for the system-assigned managed identity
-resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: resourceGroup()
-  name: guid(storageAccount.name, 'StorageBlobDataContributor', 'SystemAssigned')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalId: storageAccount.outputs.systemAssignedMIPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Monitoring Metrics Publisher role for Application Insights (system-assigned identity)
-resource monitoringRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: resourceGroup()
-  name: guid(applicationInsights.name, 'MonitoringMetricsPublisher', 'SystemAssigned')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb') // Monitoring Metrics Publisher
-    principalId: storageAccount.outputs.systemAssignedMIPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// For Static Web Apps, RBAC is typically managed through the platform
+// No explicit role assignments needed for basic functionality
 
 // =========== OUTPUTS ===========
 
-@description('Storage Account Name')
-output storageAccountName string = storageAccount.outputs.name
-
-@description('Storage Account Primary Endpoint')
-output storageAccountPrimaryEndpoint string = storageAccount.outputs.primaryBlobEndpoint
-
-@description('Static Website URL')
-output staticWebsiteUrl string = replace(storageAccount.outputs.primaryBlobEndpoint, '//', '//')
-
-@description('System Assigned Managed Identity Principal ID')
-output systemAssignedIdentityPrincipalId string = storageAccount.outputs.systemAssignedMIPrincipalId
+@description('Application Insights Connection String')
+output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString
 
 @description('Application Insights Resource ID')
 output applicationInsightsId string = applicationInsights.outputs.resourceId
@@ -162,5 +110,14 @@ output applicationInsightsId string = applicationInsights.outputs.resourceId
 @description('Application Insights Instrumentation Key')
 output applicationInsightsInstrumentationKey string = applicationInsights.outputs.instrumentationKey
 
-@description('Application Insights Connection String')
-output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString
+@description('Static Web App URL')
+output staticWebsiteUrl string = 'https://${staticWebApp.outputs.defaultHostname}'
+
+@description('Static Web App Name')
+output staticWebAppName string = staticWebApp.outputs.name
+
+@description('Static Web App Default Hostname')
+output staticWebAppHostname string = staticWebApp.outputs.defaultHostname
+
+@description('Static Web App System Assigned Identity Principal ID')
+output systemAssignedIdentityPrincipalId string = staticWebApp.outputs.?systemAssignedMIPrincipalId ?? ''

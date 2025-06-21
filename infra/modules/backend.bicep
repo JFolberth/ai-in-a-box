@@ -5,17 +5,32 @@ targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
 
-@description('Environment name (e.g., dev, staging, prod)')
-param environmentName string
+@description('AI Foundry agent ID for endpoint interaction')
+param aiFoundryAgentId string
+
+@description('AI Foundry agent name for endpoint interaction')
+param aiFoundryAgentName string
+
+@description('AI Foundry endpoint URL for API calls')
+param aiFoundryEndpoint string
+
+@description('AI Foundry project name')
+param aiFoundryProjectName string
+
+@description('AI Foundry resource group name')
+param aiFoundryResourceGroup string
+
+@description('AI Foundry subscription ID')
+param aiFoundrySubscriptionId string
 
 @description('Application name used for resource naming')
 param applicationName string
 
+@description('Environment name (e.g., dev, staging, prod)')
+param environmentName string
+
 @description('Azure region for resource deployment')
 param location string
-
-@description('Resource token for unique naming')
-param resourceToken string
 
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string
@@ -23,23 +38,8 @@ param logAnalyticsWorkspaceName string
 @description('Resource Group containing the Log Analytics Workspace')
 param logAnalyticsResourceGroupName string
 
-@description('AI Foundry agent ID for endpoint interaction')
-param aiFoundryAgentId string
-
-@description('AI Foundry endpoint URL for API calls')
-param aiFoundryEndpoint string
-
-@description('AI Foundry agent name for endpoint interaction')
-param aiFoundryAgentName string
-
-@description('AI Foundry subscription ID')
-param aiFoundrySubscriptionId string
-
-@description('AI Foundry resource group name')
-param aiFoundryResourceGroup string
-
-@description('AI Foundry project name')
-param aiFoundryProjectName string
+@description('Resource token for unique naming')
+param resourceToken string
 
 @description('Tags to apply to all resources')
 param tags object
@@ -47,10 +47,10 @@ param tags object
 // =========== VARIABLES ===========
 
 var resourceNames = {
-  functionStorageAccount: 'stfnbackspa${resourceToken}'
   applicationInsights: 'appi-${applicationName}-backend-${environmentName}-${resourceToken}'
-  functionApp: 'func-${applicationName}-backend-${environmentName}-${resourceToken}'
   appServicePlan: 'asp-${applicationName}-backend-${environmentName}-${resourceToken}'
+  functionApp: 'func-${applicationName}-backend-${environmentName}-${resourceToken}'
+  functionStorageAccount: 'stfnbackspa${resourceToken}'
 }
 
 // =========== EXISTING RESOURCES ===========
@@ -271,18 +271,9 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
 // due to cross-resource group scope requirements
 
 // =========== OUTPUTS ===========
-/**/
-@description('Function App Name')
-output functionAppName string = functionApp.outputs.name
 
-@description('Function App URL')
-output functionAppUrl string = 'https://${functionApp.outputs.defaultHostname}'
-
-@description('Function App System Assigned Identity Principal ID')
-output functionAppSystemAssignedIdentityPrincipalId string = functionApp.outputs.systemAssignedMIPrincipalId!
-
-@description('Backend API URL for frontend configuration')
-output backendApiUrl string = 'https://${functionApp.outputs.defaultHostname}/api'
+@description('Application Insights Connection String')
+output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString
 
 @description('Application Insights Resource ID')
 output applicationInsightsId string = applicationInsights.outputs.resourceId
@@ -290,8 +281,17 @@ output applicationInsightsId string = applicationInsights.outputs.resourceId
 @description('Application Insights Instrumentation Key')
 output applicationInsightsInstrumentationKey string = applicationInsights.outputs.instrumentationKey
 
-@description('Application Insights Connection String')
-output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString
+@description('Backend API URL for frontend configuration')
+output backendApiUrl string = 'https://${functionApp.outputs.defaultHostname}/api'
+
+@description('Function App Name')
+output functionAppName string = functionApp.outputs.name
+
+@description('Function App System Assigned Identity Principal ID')
+output functionAppSystemAssignedIdentityPrincipalId string = functionApp.outputs.systemAssignedMIPrincipalId!
+
+@description('Function App URL')
+output functionAppUrl string = 'https://${functionApp.outputs.defaultHostname}'
 
 @description('Function Storage Account Name')
 output functionStorageAccountName string = functionStorageAccount.outputs.name

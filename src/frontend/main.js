@@ -24,13 +24,12 @@ class ModernChatApp {
       characterCount: document.querySelector('.character-count')
     }
   }
-
   bindEvents() {
     // Send message events
     this.elements.sendBtn.addEventListener('click', () => this.handleSendMessage())
     
     // Textarea events
-    this.elements.userInput.addEventListener('input', () => this.handleInputEvent())
+    this.elements.userInput.addEventListener('input', () => this.handleInputChange())
     this.elements.userInput.addEventListener('keydown', (e) => this.handleKeyDown(e))
     
     // Header actions
