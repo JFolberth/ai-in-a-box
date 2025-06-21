@@ -13,7 +13,7 @@ These run during DevBox provisioning:
 - **.NET 8 SDK** - For C# Azure Functions backend development
 - **Git** - Source control management
 - **Azure CLI** - Infrastructure deployment and management
-- **Azure Functions Core Tools** - Local Function App development and testing
+- **Azure Functions Core Tools v4** - Local Function App development and testing (installed via npm for reliability)
 - **Bicep Extension** - Infrastructure as Code templates (system-wide)
 
 ### User-Level Tasks (Run as User)
@@ -29,6 +29,7 @@ These run after user first login:
   - `ms-vscode.vscode-json` - JSON language support
   - `github.vscode-github-actions` - GitHub Actions integration
 - **Azurite** - Azure Storage emulator for local development (user-specific installation)
+- **Azure Functions Core Tools verification** - Ensures tools are properly installed and accessible
 - **User workspace directories** - `%USERPROFILE%\Workspaces` and `%USERPROFILE%\.azurite`
 - **Environment variables** - User-specific development configuration
 - **NPM configuration** - User-specific registry settings
@@ -89,6 +90,7 @@ The DevBox is configured for the standard development workflow:
 ## 📝 Customization Notes
 
 - The configuration uses WinGet package manager for reliable software installation
+- **Azure Functions Core Tools** is installed via npm instead of WinGet for better reliability (WinGet package has known issues)
 - **System tasks** run as admin during DevBox provisioning for core software
 - **User tasks** run as the logged-in user after first login for user-specific configuration
 - **VS Code extensions** are installed per-user for personalized development experience

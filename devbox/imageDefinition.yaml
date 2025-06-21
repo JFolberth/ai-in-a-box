@@ -22,10 +22,13 @@ tasks:
     description: Install .NET 8 SDK for Azure Functions backend
     parameters:
       package: Microsoft.DotNet.SDK.8
-  - name: winget
-    description: Install Azure Functions Core Tools for local development
+  - name: powershell
+    description: Install Azure Functions Core Tools via npm (more reliable than WinGet)
     parameters:
-      package: Microsoft.AzureFunctionsCoreTools
+      command: |
+        # Install Azure Functions Core Tools globally via npm
+        npm install -g azure-functions-core-tools@4 --unsafe-perm true
+        Write-Host "Azure Functions Core Tools v4 installed via npm" -ForegroundColor Green
   - name: powershell
     description: Install Azure CLI Bicep extension system-wide
     parameters:
@@ -66,6 +69,10 @@ userTasks:
       command: |
         # Install npm global packages for the current user
         npm install -g azurite@latest
+        
+        # Verify Azure Functions Core Tools installation
+        Write-Host "Verifying Azure Functions Core Tools..." -ForegroundColor Yellow
+        func --version
         
         # Create user workspace directories
         $workspaceDir = "$env:USERPROFILE\Workspaces"
