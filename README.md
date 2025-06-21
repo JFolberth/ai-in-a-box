@@ -2,6 +2,7 @@
 
 A modern single-page application (SPA) that provides an interactive chat interface with AI Foundry endpoints. Built with JavaScript and deployed on Azure using infrastructure as code.
 
+
 ## 🚀 Quick Start
 
 1. **Prerequisites**: Node.js 20+, .NET 8 SDK, Azure CLI
@@ -25,8 +26,6 @@ cd ../backend && func start
 - **AI Integration**: CancerBot agent through AI Foundry with least-privilege access
 - **Infrastructure**: Azure Verified Modules (AVM) Bicep templates
 - **Monitoring**: Application Insights with consolidated Log Analytics
-
-**Key Features**: Public mode deployment, real-time conversations, responsive UI, PowerShell test suite
 
 ## 📚 Documentation
 
