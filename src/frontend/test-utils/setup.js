@@ -31,12 +31,25 @@ Object.defineProperty(window, 'localStorage', {
   writable: true
 })
 
-// Mock Date.now for consistent timestamps
+// Mock Date.now for consistent timestamps while preserving constructor behavior
 const mockDate = new Date('2023-01-01T00:00:00.000Z')
 const originalDate = global.Date
-global.Date = jest.fn(() => mockDate)
+
+// Create a proper Date constructor mock that handles arguments correctly
+global.Date = jest.fn().mockImplementation((...args) => {
+  if (args.length === 0) {
+    // No arguments - return consistent mock date for new Date()
+    return new originalDate(mockDate)
+  } else {
+    // Arguments provided - use original constructor behavior
+    return new originalDate(...args)
+  }
+})
+
+// Mock Date.now for consistent timestamps
 global.Date.now = jest.fn(() => mockDate.getTime())
-// Copy static methods
+
+// Copy static methods from original Date
 Object.setPrototypeOf(global.Date, originalDate)
 Object.getOwnPropertyNames(originalDate).forEach(name => {
   if (typeof originalDate[name] === 'function') {
