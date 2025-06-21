@@ -40,9 +40,11 @@ Azure Deployment Environments (ADE) provides a self-service way for developers t
 infra/catalogs/
 ├── frontend/
 │   ├── environment.yaml          # ADE manifest for frontend
+│   ├── manifest.schema.json      # Local copy of ADE schema for validation
 │   └── README.md                 # Frontend environment documentation
 └── backend/                      # Future: Backend environment
     ├── environment.yaml          # ADE manifest for backend
+    ├── manifest.schema.json      # Local copy of ADE schema for validation
     └── README.md                 # Backend environment documentation
 ```
 
@@ -80,16 +82,21 @@ Each parameter in the `parameters` array supports:
 | `description` | string | ❌ No | Parameter description | `Name used for resource naming` |
 | `type` | string | ❌ No | Data type (default: string) | `string`, `boolean`, `integer`, `number`, `object`, `array` |
 | `required` | boolean | ❌ No | Whether parameter is required | `true`, `false` |
-| `default` | various | ❌ No | Default value | `aibox` |
+| `default` | various | ❌ No | Default value (only for non-required params) | `aibox` |
 | `allowed` | array | ❌ No | Array of allowed values | `[dev, staging, prod]` |
 | `readOnly` | boolean | ❌ No | Whether parameter is read-only | `true`, `false` |
+
+#### ⚠️ **CRITICAL RULE**: Required Parameters and Defaults
+- **❌ Parameters with `required: true` MUST NOT have `default` values**
+- **✅ Parameters with `required: false` (or omitted) CAN have `default` values**
+- **Reason**: Required parameters force users to make explicit choices in ADE portal
 
 ## ✅ Frontend Environment Definition
 
 ### File: `infra/catalogs/frontend/environment.yaml`
 
 ```yaml
-# yaml-language-server: $schema=https://github.com/Azure/deployment-environments/releases/download/2022-11-11-preview/manifest.schema.json
+# yaml-language-server: $schema=./manifest.schema.json
 name: AI_Foundry_SPA_Frontend
 version: 1.0.0
 summary: Frontend infrastructure for AI Foundry SPA application
@@ -108,14 +115,12 @@ parameters:
     description: Name used for resource naming
     type: string
     required: true
-    default: aibox
     
   - id: environmentName
     name: Environment Name
     description: Environment identifier
     type: string
     required: true
-    default: dev
     allowed:
       - dev
       - staging
@@ -126,11 +131,12 @@ parameters:
     description: Azure region for resource deployment
     type: string
     required: true
-    default: eastus2
     allowed:
       - centralus
       - eastus
       - eastus2
+      - westus
+      - westus2
       - westus
       - westus2
 ```
@@ -139,8 +145,12 @@ parameters:
 
 ### Schema Compliance
 
-1. **✅ Always include schema validation**:
+1. **✅ Always include schema validation** (choose one option):
    ```yaml
+   # Option 1: Local schema file (recommended for offline development)
+   # yaml-language-server: $schema=./manifest.schema.json
+   
+   # Option 2: Remote schema (always up-to-date)
    # yaml-language-server: $schema=https://github.com/Azure/deployment-environments/releases/download/2022-11-11-preview/manifest.schema.json
    ```
 
@@ -168,10 +178,11 @@ parameters:
 
 ### Parameter Design
 
-1. **✅ Provide sensible defaults** for non-critical parameters
+1. **✅ Provide sensible defaults** for non-required parameters only
 2. **✅ Use `allowed` arrays** for restricted values
-3. **✅ Mark parameters as `required: true`** when necessary
+3. **✅ Mark parameters as `required: true`** when user input is mandatory
 4. **✅ Include descriptive `description`** fields
+5. **❌ NEVER use `default` with `required: true`** - this violates ADE schema rules
 
 ### YAML Structure
 
@@ -214,10 +225,41 @@ parameters:
     name: Application Name
     type: string
     required: true
+    
+  - id: optionalParam
+    name: Optional Parameter
+    type: string
+    required: false
+    default: someDefault
+```
+
+### 3. Required Parameters with Defaults (CRITICAL ERROR)
+
+```yaml
+# ❌ WRONG - required parameter with default value
+parameters:
+  - id: applicationName
+    name: Application Name
+    type: string
+    required: true
+    default: aibox      # ← This violates ADE schema!
+
+# ✅ CORRECT - required parameter without default
+parameters:
+  - id: applicationName
+    name: Application Name
+    type: string
+    required: true
+    
+  # OR: optional parameter with default
+  - id: applicationName
+    name: Application Name
+    type: string
+    required: false     # ← Only optional params can have defaults
     default: aibox
 ```
 
-### 3. Absolute Paths
+### 4. Absolute Paths
 
 ```yaml
 # ❌ WRONG - absolute path

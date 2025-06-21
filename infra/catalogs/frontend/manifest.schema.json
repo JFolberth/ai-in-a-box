@@ -1,0 +1,123 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Deployment Environment Manifest",
+    "description": "Schema for Azure Deployment Environment manifest file",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name",
+        "templatePath"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "The display name of the catalog item"
+        },
+        "summary": {
+            "type": "string",
+            "description": "A short summary string about the catalog item."
+        },
+        "description": {
+            "type": "string",
+            "description": "A description of the catalog item."
+        },
+        "templatePath": {
+            "type": "string",
+            "description": "The reletive path of the entry template file",
+            "examples": [
+                "main.tf",
+                "main.bicep",
+                "azuredeploy.json"
+            ]
+        },
+        "version": {
+            "type": "string",
+            "description": "The version of the catalog item",
+            "default": "1.0.0",
+            "examples": [
+                "1.0.0"
+            ]
+        },
+        "parameters": {
+            "type": "array",
+            "description": "Input paramaters to use when creating the environment and executing actions",
+            "items": {
+                "$ref": "#/definitions/Parameter"
+            }
+        },
+        "runner": {
+            "type": "string",
+            "description": "The container image to use when executing actions",
+            "examples": [
+                "ARM",
+                "Terraform"
+            ]
+        }
+    },
+    "definitions": {
+        "Parameter": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique ID of the parameter"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the parameter"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the parameter"
+                },
+                "default": {
+                    "type": [
+                        "array",
+                        "boolean",
+                        "integer",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                    ],
+                    "description": "The default value of the parameter"
+                },
+                "type": {
+                    "enum": [
+                        "array",
+                        "boolean",
+                        "integer",
+                        "null",
+                        "number",
+                        "object",
+                        "string"
+                    ],
+                    "default": "string",
+                    "description": "A string of one of the basic JSON types (number, integer, null, array, object, boolean, string)"
+                },
+                "readOnly": {
+                    "type": "boolean",
+                    "description": "Whether or not this parameter is read-only.  If true, default should have a valuex"
+                },
+                "required": {
+                    "type": "boolean",
+                    "description": "Whether or not this parameter is required"
+                },
+                "allowed": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "description": "An array of allowed values"
+                }
+            }
+        }
+    }
+}

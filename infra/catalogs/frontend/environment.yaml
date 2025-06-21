@@ -12,29 +12,7 @@ parameters:
     description: Name used for resource naming (e.g., aibox)
     type: string
     required: true
-    
-  - id: environmentName
-    name: Environment Name
-    description: Environment identifier (dev, staging, prod)
-    type: string
-    required: true
-    allowed:
-      - dev
-      - staging
-      - prod
-      
-  - id: location
-    name: Azure Region
-    description: Azure region for resource deployment
-    type: string
-    required: true
-    allowed:
-      - centralus
-      - eastus
-      - eastus2
-      - westus
-      - westus2
-      
+         
   - id: logAnalyticsWorkspaceName
     name: Log Analytics Workspace Name
     description: Name of existing Log Analytics Workspace for consolidated logging
