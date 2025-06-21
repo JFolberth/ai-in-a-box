@@ -410,6 +410,15 @@ ai-in-a-box/
 │       ├── AIFoundryProxy.csproj # Project file
 │       ├── host.json           # Function App configuration
 │       └── local.settings.json # Local development settings
+│   └── tests/                   # Backend unit and integration tests
+│       └── AIFoundryProxy.Tests/ # Test project (xUnit)
+│           ├── BasicFunctionTests.cs # Function initialization tests
+│           ├── ChatModelsTests.cs    # Model validation tests
+│           ├── UtilityMethodTests.cs # Helper method tests
+│           ├── SimulationLogicTests.cs # AI simulation tests
+│           ├── IntegrationTests.cs   # End-to-end tests
+│           ├── AIFoundryProxy.Tests.csproj # Test project file
+│           └── README.md         # Test documentation
 ├── infra/                        # Bicep infrastructure (modular design)
 │   ├── main-orchestrator.bicep  # Subscription-level orchestrator
 │   ├── dev-orchestrator.parameters.bicepparam # Development parameters
@@ -475,6 +484,8 @@ ai-in-a-box/
 
 ### Testing & Validation
 - `./tests/Test-FunctionEndpoints.ps1` - Test Function App endpoints and conversation threading (PowerShell)
+- `./run-backend-tests.sh` - Run comprehensive backend unit and integration tests
+- `cd src/tests/AIFoundryProxy.Tests && dotnet test` - Run backend tests directly
 
 ### CI/CD Secrets
 
