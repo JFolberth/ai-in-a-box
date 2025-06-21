@@ -1,74 +1,165 @@
-name: CI - Build Validation
+name: CI - Build and Test
 
+# Prevent duplicate runs: 
+# - Run on push to main/develop only (not feature branches)
+# - Run on pull requests to main/develop (covers feature branch changes)
+# - Use concurrency groups to cancel previous runs
 on:
   push:
-    branches: [main, develop, 'feature/*']
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
+      - 'infra/**'
+      - 'package*.json'
+      - '*.csproj'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
+      - 'infra/**'
+      - 'package*.json'
+      - '*.csproj'
+
+# Cancel previous runs when pushing new commits
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  DOTNET_VERSION: '8.0.x'
 
 jobs:
   frontend-build:
-    name:  Frontend Build
+    name: Frontend Build
     runs-on: ubuntu-latest
     
     steps:
-      - name:  Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       
-      - name:  Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: src/frontend/package-lock.json
+        
+    - name: Install frontend dependencies
+      working-directory: ./src/frontend
+      run: npm ci
       
-      - name:  Install dependencies
-        run: npm ci
-        working-directory: src/frontend
+    - name: Build frontend
+      working-directory: ./src/frontend
+      run: npm run build
       
-      - name:  Build frontend
-        run: npm run build
-        working-directory: src/frontend
+    - name: Build frontend (dev mode)
+      working-directory: ./src/frontend
+      run: npm run build:dev
+      
+    - name: Upload frontend build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-dist
+        path: src/frontend/dist/
+        retention-days: 5
 
   backend-build:
-    name:  Backend Build
+    name: Backend Build
     runs-on: ubuntu-latest
     
     steps:
-      - name:  Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       
-      - name:  Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore backend dependencies
+      working-directory: ./src/backend
+      run: dotnet restore
       
-      - name:  Restore dependencies
-        run: dotnet restore
-        working-directory: src/backend
+    - name: Build backend
+      working-directory: ./src/backend
+      run: dotnet build --configuration Release --no-restore
       
-      - name:  Build backend
-        run: dotnet build --no-restore --configuration Release
-        working-directory: src/backend
+    - name: Test backend
+      working-directory: ./src/tests/AIFoundryProxy.Tests
+      run: dotnet test --configuration Release --verbosity normal
+      
+    - name: Publish backend
+      working-directory: ./src/backend
+      run: dotnet publish --configuration Release --no-build --output ./publish
+      
+    - name: Upload backend build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-publish
+        path: src/backend/publish/
+        retention-days: 5
 
   build-summary:
-    name:  Build Summary
+    name: Build Summary
     runs-on: ubuntu-latest
     needs: [frontend-build, backend-build]
     if: always()
     
     steps:
-      - name:  Summary
-        run: |
-          echo "##  Build Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend | ${{ needs.frontend-build.result == 'success' && ' Success' || ' Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend | ${{ needs.backend-build.result == 'success' && ' Success' || ' Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "${{ needs.frontend-build.result }}" == "success" && "${{ needs.backend-build.result }}" == "success" ]]; then
-            echo "##  All builds completed successfully!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "##  Some builds failed - please check the logs above" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: ./artifacts/frontend/
+        
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-publish
+        path: ./artifacts/backend/
+        
+    - name: Display build summary
+      run: |
+        echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Frontend summary
+        if [ -d "./artifacts/frontend" ]; then
+          echo "### ✅ Frontend Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build output**: $(du -sh ./artifacts/frontend | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files**: $(find ./artifacts/frontend -type f | wc -l) files generated" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Frontend Build Failed" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Backend summary
+        if [ -d "./artifacts/backend" ]; then
+          echo "### ✅ Backend Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build output**: $(du -sh ./artifacts/backend | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files**: $(find ./artifacts/backend -type f | wc -l) files generated" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Backend Build Failed" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- Review build artifacts if needed" >> $GITHUB_STEP_SUMMARY
+        echo "- Run local tests: \`npm test\` (frontend) and \`dotnet test\` (backend)" >> $GITHUB_STEP_SUMMARY
+        echo "- Deploy to Azure using deployment scripts in \`deploy-scripts/\`" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Check build status
+      run: |
+        if [ "${{ needs.frontend-build.result }}" = "success" ] && [ "${{ needs.backend-build.result }}" = "success" ]; then
+          echo "✅ All builds completed successfully!"
+          exit 0
+        else
+          echo "❌ One or more builds failed:"
+          echo "Frontend: ${{ needs.frontend-build.result }}"
+          echo "Backend: ${{ needs.backend-build.result }}"
+          exit 1
+        fi
