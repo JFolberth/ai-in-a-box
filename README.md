@@ -74,7 +74,7 @@ npm run test:coverage      # Run with coverage
 npm run test:ci           # CI mode
 
 # Backend tests  
-cd src/tests/AIFoundryProxy.Tests
+cd src/backend/tests/AIFoundryProxy.Tests
 dotnet test
 ```
 

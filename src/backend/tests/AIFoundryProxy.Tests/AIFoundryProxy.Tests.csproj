@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../backend/AIFoundryProxy.csproj" />
+    <ProjectReference Include="../../AIFoundryProxy.csproj" />
   </ItemGroup>
 
 </Project>

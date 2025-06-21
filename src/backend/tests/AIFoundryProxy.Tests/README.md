@@ -76,7 +76,7 @@ The test suite covers:
 
 ```bash
 # Navigate to test directory
-cd src/tests/AIFoundryProxy.Tests
+cd src/backend/tests/AIFoundryProxy.Tests
 
 # Restore packages and build
 dotnet build
@@ -96,7 +96,7 @@ dotnet test --collect:"XPlat Code Coverage"
 ```bash
 # Build and test from root
 dotnet build src/backend/AIFoundryProxy.csproj
-dotnet test src/tests/AIFoundryProxy.Tests/AIFoundryProxy.Tests.csproj
+dotnet test src/backend/tests/AIFoundryProxy.Tests/AIFoundryProxy.Tests.csproj
 ```
 
 ## Test Results
