@@ -121,7 +121,7 @@ The Function App uses **system-assigned managed identity** with minimal required
 {
   "cors": {
     "allowedOrigins": [
-      "https://your-static-website.z13.web.core.windows.net"
+      "https://your-static-web-app.azurestaticapps.net"
     ],
     "supportCredentials": false
   }

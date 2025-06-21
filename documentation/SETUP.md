@@ -107,11 +107,8 @@ func azure functionapp publish func-ai-foundry-spa-backend-dev-001
 # Deploy Frontend
 cd ../frontend
 npm run build:dev
-az storage blob upload-batch \
-  --destination '$web' \
-  --source ./dist \
-  --account-name staifrontspa001 \
-  --auth-mode login
+# Use deployment script for Static Web App
+../deploy-scripts/deploy-frontend-only.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-001"
 ```
 
 #### Using PowerShell Deployment Script
@@ -133,14 +130,10 @@ az login
    - Verify Function App has Azure AI Developer role on AI Foundry resource
    - Confirm AI Foundry endpoint configuration in Function App settings
 
-3. **Enable Static Website Hosting:**
+3. **Verify Static Web App Deployment:**
    ```bash
-   az storage blob service-properties update \
-     --account-name staifrontspa001 \
-     --resource-group rg-ai-foundry-spa-frontend-dev-001 \
-     --static-website \
-     --index-document index.html \
-     --404-document index.html
+   # Static Web App should be automatically configured
+   # No manual configuration needed - handled by deployment script
    ```
 
 ### 6. Verification
@@ -209,7 +202,7 @@ az login
 - Azurite Table: http://127.0.0.1:10002
 
 **Production URLs:**
-- Frontend: https://staifrontspa001.z13.web.core.windows.net/
+- Frontend: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
 - Function App: https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net
 
 ### 9. Next Steps

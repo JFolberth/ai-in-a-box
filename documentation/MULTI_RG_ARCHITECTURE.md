@@ -56,11 +56,8 @@ func azure functionapp publish func-ai-foundry-spa-backend-dev-001
 # Deploy Frontend
 cd ../frontend
 npm run build:dev
-az storage blob upload-batch \
-  --destination '$web' \
-  --source ./dist \
-  --account-name staifrontspa001 \
-  --auth-mode login
+# Use deployment script for Static Web App
+../deploy-scripts/deploy-frontend-only.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-001"
 ```
 
 ### Using PowerShell Script

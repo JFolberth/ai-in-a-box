@@ -33,7 +33,7 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 - **Function Admin**: http://localhost:7071/admin/functions
 
 ### **Production Deployment**
-- **Frontend**: https://staifrontspa001.z13.web.core.windows.net/
+- **Frontend**: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
 - **Backend**: https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net
 
 ## 🔧 **Key Features**
