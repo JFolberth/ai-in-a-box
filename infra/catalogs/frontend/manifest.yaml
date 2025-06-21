@@ -1,0 +1,123 @@
+name: AI Foundry SPA Frontend
+version: 1.0.0
+summary: Frontend infrastructure for AI Foundry SPA application
+description: |
+  Deploys the frontend infrastructure for the AI Foundry SPA application including:
+  - Azure Static Web App for SPA hosting with built-in CDN and SSL
+  - Application Insights for frontend monitoring and analytics
+  - Integration with existing Log Analytics Workspace for consolidated logging
+  
+  This template creates a modern, scalable frontend hosting solution with
+  automatic HTTPS, global distribution, and comprehensive monitoring.
+
+runner: Bicep
+templatePath: ../../modules/frontend.bicep
+
+parameters:
+  - id: "applicationName"
+    name: "Application Name"
+    description: "Name used for resource naming (e.g., aibox)"
+    type: "string"
+    required: true
+    default: "aibox"
+    
+  - id: "environmentName"
+    name: "Environment Name"
+    description: "Environment identifier (dev, staging, prod)"
+    type: "string"
+    required: true
+    default: "dev"
+    allowed:
+      - "dev"
+      - "staging"
+      - "prod"
+      
+  - id: "location"
+    name: "Azure Region"
+    description: "Azure region for resource deployment"
+    type: "string"
+    required: true
+    default: "eastus2"
+    allowed:
+      - "centralus"
+      - "eastus" 
+      - "eastus2"
+      - "westus"
+      - "westus2"
+      
+  - id: "logAnalyticsWorkspaceName"
+    name: "Log Analytics Workspace Name"
+    description: "Name of existing Log Analytics Workspace for consolidated logging"
+    type: "string"
+    required: true
+    
+  - id: "logAnalyticsResourceGroupName"
+    name: "Log Analytics Resource Group"
+    description: "Resource Group containing the Log Analytics Workspace"
+    type: "string"
+    required: true
+    
+  - id: "tags"
+    name: "Resource Tags"
+    description: "Tags to apply to all resources"
+    type: "object"
+    required: false
+    default: |
+      {
+        "Environment": "dev",
+        "Project": "AI-Foundry-SPA",
+        "Component": "Frontend"
+      }
+
+outputs:
+  - id: "applicationInsightsConnectionString"
+    name: "Application Insights Connection String"
+    description: "Connection string for Application Insights integration"
+    type: "string"
+    
+  - id: "applicationInsightsInstrumentationKey"
+    name: "Application Insights Instrumentation Key"
+    description: "Instrumentation key for Application Insights"
+    type: "string"
+    
+  - id: "staticWebsiteUrl"
+    name: "Static Web App URL"
+    description: "Public URL for the deployed Static Web App"
+    type: "string"
+    
+  - id: "staticWebAppName"
+    name: "Static Web App Name"
+    description: "Name of the deployed Static Web App resource"
+    type: "string"
+    
+  - id: "staticWebAppHostname"
+    name: "Static Web App Hostname"
+    description: "Default hostname for the Static Web App"
+    type: "string"
+
+metadata:
+  category: "Web Applications"
+  subcategory: "Frontend"
+  complexity: "Simple"
+  estimatedDeploymentTime: "5-10 minutes"
+  supportedRegions:
+    - "centralus"
+    - "eastus"
+    - "eastus2" 
+    - "westus"
+    - "westus2"
+  prerequisites:
+    - "Existing Log Analytics Workspace"
+    - "Resource Group for deployment"
+  resourceTypes:
+    - "Microsoft.Web/staticSites"
+    - "Microsoft.Insights/components"
+  costEstimate: "Low - Static Web Apps Free tier, Application Insights based on usage"
+  
+tags:
+  - "frontend"
+  - "spa" 
+  - "static-web-app"
+  - "javascript"
+  - "monitoring"
+  - "ai-foundry"
