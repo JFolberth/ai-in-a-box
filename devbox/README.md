@@ -120,6 +120,23 @@ The DevBox is configured for the standard development workflow:
 
 ## ✅ Validation and Troubleshooting
 
+### Quick Validation
+
+Use the provided validation script to check your DevBox setup:
+
+```powershell
+# Run basic validation
+.\devbox\Test-DevBoxSetup.ps1
+
+# Run detailed validation with version information
+.\devbox\Test-DevBoxSetup.ps1 -Detailed
+
+# Skip VS Code extension checks (faster)
+.\devbox\Test-DevBoxSetup.ps1 -SkipExtensions
+```
+
+This script will verify all system tools, user environment, VS Code extensions, and project structure.
+
 ### DevBox Validation Checklist
 
 After DevBox creation, verify the following components:
