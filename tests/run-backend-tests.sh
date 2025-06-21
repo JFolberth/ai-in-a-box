@@ -21,7 +21,7 @@ dotnet build
 # Build and run tests
 echo ""
 echo "🧪 Building and running tests..."
-cd "$REPO_ROOT/src/tests/AIFoundryProxy.Tests"
+cd "$REPO_ROOT/src/backend/tests/AIFoundryProxy.Tests"
 dotnet build
 
 echo ""

@@ -92,7 +92,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
       
     - name: Test backend
-      working-directory: ./src/tests/AIFoundryProxy.Tests
+      working-directory: ./src/backend/tests/AIFoundryProxy.Tests
       run: dotnet test --configuration Release --verbosity normal
       
     - name: Publish backend
