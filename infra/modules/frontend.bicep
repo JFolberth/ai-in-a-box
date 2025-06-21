@@ -26,7 +26,10 @@ param logAnalyticsWorkspaceName string
 param logAnalyticsResourceGroupName string
 
 @description('Tags to apply to all resources')
-param tags object?
+param tags object = {
+  Environment: environmentName
+  Application: applicationName
+}
 
 // =========== VARIABLES ===========
 
