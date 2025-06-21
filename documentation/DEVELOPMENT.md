@@ -237,6 +237,24 @@ See [DevBox README](../devbox/README.md) for detailed setup instructions.
 
 ## 🧪 Testing
 
+### Frontend Testing
+```bash
+# Navigate to frontend directory
+cd src/frontend
+
+# Install testing dependencies
+npm install
+
+# Run unit tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode (for development)
+npm run test:watch
+```
+
 ### Manual Testing
 ```bash
 # Test Function App endpoints
@@ -250,6 +268,17 @@ See [DevBox README](../devbox/README.md) for detailed setup instructions.
 - `Test-FunctionEndpoints.ps1`: Validates Function App endpoints
 - `Test-FunctionAppAccess.ps1`: Tests Function App accessibility
 - `Test-AzuriteSetup.ps1`: Validates Azurite configuration
+
+### Testing Best Practices
+⚠️ **Important**: Always test locally before deployment. The test suite includes:
+- **Unit Tests**: Test individual functions with mocks
+- **Integration Tests**: Test workflows and data flow
+- **Manual Tests**: Validate actual deployments
+
+**Critical Testing Gap Addressed**: After discovering a runtime error where event handlers referenced non-existent methods, we've enhanced testing to include:
+- Class instantiation validation
+- Event binding verification  
+- Method existence checks
 
 See [Test Documentation](../tests/TEST.md) for comprehensive testing information.
 

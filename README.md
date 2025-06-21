@@ -21,7 +21,7 @@ cd ../backend && func start
 
 **Multi-resource group architecture** with security and scalability in mind:
 
-- **Frontend**: Vanilla JavaScript SPA hosted on Azure Storage Static Website
+- **Frontend**: Vanilla JavaScript SPA hosted on Azure Static Web Apps
 - **Backend**: C# Azure Function App with system-assigned managed identity  
 - **AI Integration**: CancerBot agent through AI Foundry with least-privilege access
 - **Infrastructure**: Azure Verified Modules (AVM) Bicep templates

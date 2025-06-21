@@ -9,9 +9,9 @@ The infrastructure has been restructured to deploy the frontend and backend comp
 ### Frontend Resource Group
 - **Name Pattern**: `rg-ai-foundry-spa-frontend-{environmentName}-{resourceToken}`
 - **Resources**:
-  - Storage Account for static website hosting (`staifrontspa{resourceToken}`)
+  - Azure Static Web App for SPA hosting (`stapp-ai-foundry-spa-frontend-{environmentName}-{resourceToken}`)
   - Application Insights for frontend monitoring
-- **Purpose**: Hosts the JavaScript SPA with public mode access
+- **Purpose**: Hosts the JavaScript SPA with modern static web app features
 
 ### Backend Resource Group  
 - **Name Pattern**: `rg-ai-foundry-spa-backend-{environmentName}-{resourceToken}`
@@ -82,7 +82,7 @@ az storage blob upload-batch \
 ## Resource Naming Conventions
 
 ### Frontend Resources
-- Storage Account: `staifrontspa{resourceToken}` (e.g., `staifrontspa001`)
+- Static Web App: `stapp-ai-foundry-spa-frontend-{environmentName}-{resourceToken}` (e.g., `stapp-ai-foundry-spa-frontend-dev-001`)
 - Application Insights: `appi-ai-foundry-spa-frontend-{environmentName}-{resourceToken}`
 
 ### Backend Resources
@@ -97,8 +97,8 @@ The orchestrator provides the following outputs:
 
 - `frontendResourceGroupName`: Name of the frontend resource group
 - `backendResourceGroupName`: Name of the backend resource group
-- `frontendStorageAccountName`: Frontend storage account name
-- `frontendStaticWebsiteUrl`: Frontend website URL
+- `frontendStaticWebAppName`: Frontend Static Web App name
+- `frontendStaticWebAppUrl`: Frontend Static Web App URL
 - `frontendApplicationInsightsConnectionString`: Frontend monitoring connection string
 - `backendFunctionAppName`: Backend Function App name
 - `backendFunctionAppUrl`: Backend Function App URL

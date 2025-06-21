@@ -18,8 +18,8 @@ The AI Foundry SPA uses a **modular, multi-resource group architecture** designe
 │  │       Group             │  │                                │ │
 │  │                         │  │                                │ │
 │  │  ┌─────────────────┐    │  │  ┌─────────────────────────┐  │ │
-│  │  │ Storage Account │    │  │  │    Function App         │  │ │
-│  │  │ (Static Website)│    │  │  │  (AI Foundry Proxy)     │  │ │
+│  │  │ Static Web App  │    │  │  │    Function App         │  │ │
+│  │  │ (SPA Hosting)   │    │  │  │  (AI Foundry Proxy)     │  │ │
 │  │  └─────────────────┘    │  │  └─────────────────────────┘  │ │
 │  │                         │  │                                │ │
 │  │  ┌─────────────────┐    │  │  ┌─────────────────────────┐  │ │
@@ -79,13 +79,14 @@ The AI Foundry SPA uses a **modular, multi-resource group architecture** designe
 
 | Resource | Type | Purpose |
 |----------|------|---------|
-| Storage Account | `Microsoft.Storage/storageAccounts` | Static website hosting |
+| Static Web App | `Microsoft.Web/staticSites` | Modern SPA hosting with built-in CI/CD |
 | Application Insights | `Microsoft.Insights/components` | Frontend monitoring and analytics |
 
 **Key Features**:
-- Static website configuration with SPA routing
-- HTTPS-only access with custom domain support
-- Built-in CDN capabilities for global distribution
+- Native SPA routing and fallback handling
+- HTTPS-only access with automatic SSL certificates
+- Built-in global CDN for optimal performance
+- Integrated CI/CD with preview environments
 
 ### Backend Resource Group  
 **Name Pattern**: `rg-ai-foundry-spa-backend-{env}-{token}`
@@ -292,12 +293,16 @@ jobs:
 
 ## 🔧 Resource Configuration
 
-### Storage Account (Frontend)
+### Static Web App (Frontend)
 ```bicep
-staticWebsite: {
-  enabled: true
-  indexDocument: 'index.html'
-  errorDocument404Path: 'index.html'  // SPA routing support
+staticSiteBuild: {
+  skipGithubActionWorkflowGeneration: true
+  appLocation: '/dist'
+  outputLocation: ''
+}
+sku: {
+  name: 'Free'
+  tier: 'Free'
 }
 ```
 
