@@ -120,7 +120,7 @@ az storage blob upload-batch \
 az login
 
 # Run deployment script
-./deploy.ps1
+../deploy-scripts/deploy.ps1
 ```
 
 ### 5. Post-Deployment Configuration
@@ -162,10 +162,10 @@ az login
 3. **Run endpoint tests:**
    ```bash
    # Test local endpoints
-   ./tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
    
    # Test Azure endpoints
-   ./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+   .   .   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
    ```
 
 ### 7. Troubleshooting
@@ -223,6 +223,6 @@ az login
 
 For issues and questions:
 1. Check the troubleshooting section above
-2. Review Azure documentation links in README.md
+2. Review Azure documentation links in ../README.md
 3. Use the provided test scripts to diagnose issues
 4. Check Function App logs in Azure Portal

@@ -139,7 +139,7 @@ else
 fi
 
 # Verify dist folder exists
-if [[ ! -d "dist" ]]; then
+if [[ ! -d "src/frontend/dist" ]]; then
   echo "❌ Build output not found. Please run 'npm run build' first or remove --skip-build flag"
   exit 1
 fi
@@ -159,7 +159,7 @@ echo "✅ Static website hosting enabled"
 echo "📤 Uploading website files..."
 az storage blob upload-batch \
   --destination '$web' \
-  --source "./dist" \
+  --source "./src/frontend/dist" \
   --account-name "$FRONTEND_STORAGE_ACCOUNT" \
   --overwrite \
   --output table

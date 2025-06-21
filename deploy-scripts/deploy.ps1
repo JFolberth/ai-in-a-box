@@ -168,7 +168,7 @@ if ($LASTEXITCODE -ne 0) {
 az storage blob upload-batch `
     --account-name $frontendStorageAccountName `
     --destination '$web' `
-    --source "dist" `
+    --source "src/frontend/dist" `
     --overwrite
 
 if ($LASTEXITCODE -ne 0) {

@@ -247,10 +247,10 @@ The infrastructure uses an **orchestrator pattern** that deploys frontend and ba
    Or use the deployment scripts:
    ```bash
    # PowerShell
-   ./deploy.ps1 -SubscriptionId "your-subscription-id" -Location "eastus"
+   ./deploy-scripts/deploy.ps1 -SubscriptionId "your-subscription-id" -Location "eastus"
    
    # Bash
-   ./deploy.sh -s "your-subscription-id" -l "eastus"
+   ./deploy-scripts/deploy.sh -s "your-subscription-id" -l "eastus"
    ```
 
 3. **Infrastructure created:**
@@ -295,12 +295,12 @@ The infrastructure uses an **orchestrator pattern** that deploys frontend and ba
 
 #### PowerShell (Windows)
 ```powershell
-./deploy.ps1 -ResourceGroupName "rg-ai-foundry-spa-dev" -Location "eastus"
+./deploy-scripts/deploy.ps1 -ResourceGroupName "rg-ai-foundry-spa-dev" -Location "eastus"
 ```
 
 #### Bash (Linux/macOS/WSL)
 ```bash
-./deploy.sh -g "rg-ai-foundry-spa-dev" -l "eastus"
+./deploy-scripts/deploy.sh -g "rg-ai-foundry-spa-dev" -l "eastus"
 ```
 
 Both scripts support additional options:
@@ -423,11 +423,19 @@ ai-in-a-box/
 │   └── devcontainer.json
 ├── tests/                       # Testing scripts
 │   ├── Test-FunctionEndpoints.ps1 # PowerShell endpoint tests
-│   └── README.md               # Testing documentation
-├── deploy-frontend-only.ps1     # Frontend-only deployment script
-├── deploy.ps1                   # Full deployment script
-├── vite.config.js              # Vite build configuration (root level)
-└── ai-in-a-box.sln             # Visual Studio solution file
+│   └── TEST.md                 # Testing documentation
+├── documentation/               # Additional documentation
+│   ├── SETUP.md                # Development setup guide
+│   ├── PUBLIC_MODE_SETUP.md    # Public mode configuration guide
+│   ├── MULTI_RG_ARCHITECTURE.md # Multi-resource group architecture
+│   ├── THREAD_PERSISTENCE_FIX.md # Thread persistence solution
+│   └── AI_FOUNDRY_BROWSER_LIMITATIONS.md # Browser integration details
+├── deploy-scripts/              # Deployment automation
+│   ├── deploy.ps1               # Full deployment script (PowerShell)
+│   ├── deploy-backend.ps1       # Backend-only deployment
+│   ├── deploy-frontend-only.ps1 # Frontend-only deployment
+│   └── deploy.sh                # Full deployment script (Bash)
+└── vite.config.js              # Vite build configuration (root level)
 ```
 
 ## 🔒 Security
@@ -454,8 +462,8 @@ ai-in-a-box/
 - `func azure functionapp publish <function-app-name>` - Deploy to Azure
 
 ### Infrastructure
-- `./deploy.ps1` - Deploy infrastructure and applications (PowerShell)
-- `./deploy.sh` - Deploy infrastructure and applications (Bash)
+- `./deploy-scripts/deploy.ps1` - Deploy infrastructure and applications (PowerShell)
+- `./deploy-scripts/deploy.sh` - Deploy infrastructure and applications (Bash)
 
 ### Verification & Debugging
 - `node --version` - Check Node.js version
@@ -506,6 +514,17 @@ az ad sp create-for-rbac \
 | `VITE_AI_FOUNDRY_ENDPOINT` | AI Foundry endpoint URL | Yes |
 | `VITE_AI_FOUNDRY_DEPLOYMENT` | AI model deployment name | Yes |
 | `VITE_STORAGE_ACCOUNT_NAME` | Azure Storage account name | For deployment |
+
+## 📚 Documentation
+
+For detailed setup and architecture information, see the documentation folder:
+
+- **[Setup Guide](documentation/SETUP.md)** - Complete development environment setup
+- **[Public Mode Setup](documentation/PUBLIC_MODE_SETUP.md)** - Public mode configuration and deployment
+- **[Multi-Resource Group Architecture](documentation/MULTI_RG_ARCHITECTURE.md)** - Infrastructure design and deployment patterns
+- **[Thread Persistence Solution](documentation/THREAD_PERSISTENCE_FIX.md)** - AI Foundry conversation handling details
+- **[Browser Integration Details](documentation/AI_FOUNDRY_BROWSER_LIMITATIONS.md)** - Backend proxy solution for browser compatibility
+- **[Testing Guide](tests/TEST.md)** - Testing procedures and validation scripts
 
 ## 📚 Additional Resources
 

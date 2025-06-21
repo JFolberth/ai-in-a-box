@@ -453,6 +453,11 @@ __azurite_debug.log
 __blobstorage__/
 __queuestorage__/
 __tablestorage__/
+AzuriteConfig
+
+# DevBox specific files
+.devbox/
+devbox-*.log
 
 # Additional project-specific exclusions
 *.bicep.corrupted

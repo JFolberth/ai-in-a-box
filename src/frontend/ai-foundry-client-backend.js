@@ -74,12 +74,11 @@ export class AIFoundryClient {
     this.currentThreadId = this.generateThreadId()
     return true
   }
-
-  async sendMessage(message, accessToken = null) {
+  async sendMessage(message) {
     // Ensure client is initialized
     if (!this.currentThreadId && !this.isBackendMode) {
       await this.initialize()
-    }    // Try backend first if enabled, regardless of public mode
+    }// Try backend first if enabled, regardless of public mode
     if (this.isBackendMode) {
       try {
         return await this.sendBackendMessage(message)
