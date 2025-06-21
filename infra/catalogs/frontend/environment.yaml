@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://github.com/Azure/deployment-environments/releases/download/2022-11-11-preview/manifest.schema.json
 name: AI_Foundry_SPA_Frontend
 version: 1.0.0
 summary: Frontend infrastructure for AI Foundry SPA application
@@ -14,71 +15,45 @@ runner: Bicep
 templatePath: ../../modules/frontend.bicep
 
 parameters:
-  - id: "applicationName"
-    name: "Application Name"
-    description: "Name used for resource naming (e.g., aibox)"
-    type: "string"
+  - id: applicationName
+    name: Application Name
+    description: Name used for resource naming (e.g., aibox)
+    type: string
     required: true
-    default: "aibox"
+    default: aibox
     
-  - id: "environmentName"
-    name: "Environment Name"
-    description: "Environment identifier (dev, staging, prod)"
-    type: "string"
+  - id: environmentName
+    name: Environment Name
+    description: Environment identifier (dev, staging, prod)
+    type: string
     required: true
-    default: "dev"
+    default: dev
     allowed:
-      - "dev"
-      - "staging"
-      - "prod"
+      - dev
+      - staging
+      - prod
       
-  - id: "location"
-    name: "Azure Region"
-    description: "Azure region for resource deployment"
-    type: "string"
+  - id: location
+    name: Azure Region
+    description: Azure region for resource deployment
+    type: string
     required: true
-    default: "eastus2"
+    default: eastus2
     allowed:
-      - "centralus"
-      - "eastus" 
-      - "eastus2"
-      - "westus"
-      - "westus2"
+      - centralus
+      - eastus
+      - eastus2
+      - westus
+      - westus2
       
-  - id: "logAnalyticsWorkspaceName"
-    name: "Log Analytics Workspace Name"
-    description: "Name of existing Log Analytics Workspace for consolidated logging"
-    type: "string"
+  - id: logAnalyticsWorkspaceName
+    name: Log Analytics Workspace Name
+    description: Name of existing Log Analytics Workspace for consolidated logging
+    type: string
     required: true
     
-  - id: "logAnalyticsResourceGroupName"
-    name: "Log Analytics Resource Group"
-    description: "Resource Group containing the Log Analytics Workspace"
-    type: "string"
+  - id: logAnalyticsResourceGroupName
+    name: Log Analytics Resource Group
+    description: Resource Group containing the Log Analytics Workspace
+    type: string
     required: true
-    
-outputs:
-  - id: "applicationInsightsConnectionString"
-    name: "Application Insights Connection String"
-    description: "Connection string for Application Insights integration"
-    type: "string"
-    
-  - id: "applicationInsightsInstrumentationKey"
-    name: "Application Insights Instrumentation Key"
-    description: "Instrumentation key for Application Insights"
-    type: "string"
-    
-  - id: "staticWebsiteUrl"
-    name: "Static Web App URL"
-    description: "Public URL for the deployed Static Web App"
-    type: "string"
-    
-  - id: "staticWebAppName"
-    name: "Static Web App Name"
-    description: "Name of the deployed Static Web App resource"
-    type: "string"
-    
-  - id: "staticWebAppHostname"
-    name: "Static Web App Hostname"
-    description: "Default hostname for the Static Web App"
-    type: "string"
