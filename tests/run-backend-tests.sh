@@ -8,8 +8,8 @@ set -e  # Exit on any error
 echo "🧪 AI Foundry SPA Backend Test Runner"
 echo "======================================"
 
-# Change to the repository root
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Change to the repository root (one level up from tests folder)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "📁 Repository root: $REPO_ROOT"
 
 # Build the backend project first

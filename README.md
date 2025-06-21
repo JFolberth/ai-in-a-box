@@ -2,11 +2,7 @@
 
 A modern single-page application (SPA) built with JavaScript that integrates with AI Foundry endpoints and can be hosted on Azure Storage Static Websites.
 
-## 🏗2. **The container will automatically:**
-   - Install Node.js 20, .NET 8 SDK, Azure CLI, and Azure Functions Core Tools
-   - Configure VS Code extensions for Bicep, Azure Functions, and C#
-   - Set up port forwarding for development servers (5173, 4173, 7071)
-   - Run `npm install` in the frontend directory and configure Azure toolinghitecture
+## 🏗️ Architecture
 
 This project uses a **modular, multi-resource group architecture**:
 - **Frontend**: Vanilla JavaScript SPA with Vite build system
@@ -484,7 +480,7 @@ ai-in-a-box/
 
 ### Testing & Validation
 - `./tests/Test-FunctionEndpoints.ps1` - Test Function App endpoints and conversation threading (PowerShell)
-- `./run-backend-tests.sh` - Run comprehensive backend unit and integration tests
+- `./tests/run-backend-tests.sh` - Run comprehensive backend unit and integration tests
 - `cd src/tests/AIFoundryProxy.Tests && dotnet test` - Run backend tests directly
 
 ### CI/CD Secrets
