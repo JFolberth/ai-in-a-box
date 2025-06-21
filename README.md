@@ -40,6 +40,7 @@ cd ../backend && func start
 | [Thread Persistence](documentation/THREAD_PERSISTENCE_FIX.md) | Conversation state management |
 | [Browser Limitations](documentation/AI_FOUNDRY_BROWSER_LIMITATIONS.md) | Browser compatibility notes |
 | [Testing Guide](tests/TEST.md) | Test scripts and validation procedures |
+| [Frontend Testing](src/frontend/TESTING.md) | Frontend unit tests and CI integration |
 
 ## 🛠 Development Environments
 
@@ -48,6 +49,34 @@ cd ../backend && func start
 - **Local**: Manual setup with Node.js, .NET 8, and Azure CLI
 
 See [Development Guide](documentation/DEVELOPMENT.md) for detailed setup instructions.
+
+## 🧪 Testing
+
+The project includes comprehensive unit tests for both frontend and backend components:
+
+### Frontend Testing
+- **72 unit tests** covering core functionality, UI interactions, and data management
+- **Jest + jsdom** testing environment with comprehensive mocking
+- **CI integration** with automated test execution
+- See [Frontend Testing Guide](src/frontend/TESTING.md) for details
+
+### Backend Testing  
+- **C# unit tests** for Function App endpoints and business logic
+- **xUnit framework** with mock testing patterns
+- Coverage of AI Foundry integration and error handling
+
+### Running Tests
+```bash
+# Frontend tests
+cd src/frontend
+npm test                    # Run all tests
+npm run test:coverage      # Run with coverage
+npm run test:ci           # CI mode
+
+# Backend tests  
+cd src/tests/AIFoundryProxy.Tests
+dotnet test
+```
 
 ## 🤝 Contributing
 
