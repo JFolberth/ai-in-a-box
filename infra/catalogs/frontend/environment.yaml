@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://github.com/Azure/deployment-environments/releases/download/2022-11-11-preview/manifest.schema.json
+# yaml-language-server: $schema=./manifest.schema.json
 name: AI_Foundry_SPA_Frontend
 version: 1.0.0
 summary: Frontend infrastructure for AI Foundry SPA application
@@ -12,14 +12,12 @@ parameters:
     description: Name used for resource naming (e.g., aibox)
     type: string
     required: true
-    default: aibox
     
   - id: environmentName
     name: Environment Name
     description: Environment identifier (dev, staging, prod)
     type: string
     required: true
-    default: dev
     allowed:
       - dev
       - staging
@@ -30,7 +28,6 @@ parameters:
     description: Azure region for resource deployment
     type: string
     required: true
-    default: eastus2
     allowed:
       - centralus
       - eastus
