@@ -86,7 +86,7 @@ class ModernChatApp {
   autoResizeTextarea() {
     const textarea = this.elements.userInput
     textarea.style.height = 'auto'
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'
+    textarea.style.height = Math.min(textarea.scrollHeight, this.MAX_TEXTAREA_HEIGHT) + 'px'
   }
 
   async handleSendMessage() {
