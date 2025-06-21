@@ -26,6 +26,10 @@ tasks:
     description: Install Azure Functions Core Tools for local development
     parameters:
       package: Microsoft.AzureFunctionsCoreTools
+  - name: winget
+    description: Install Python for development scripting and tooling
+    parameters:
+      package: Python.Python.3.12
   - name: powershell
     description: Install Azure CLI Bicep extension system-wide
     parameters:
@@ -55,6 +59,18 @@ userTasks:
         code --install-extension ms-vscode.vscode-eslint
         code --install-extension ms-vscode.vscode-json
         
+        # AI Development & Copilot
+        code --install-extension GitHub.copilot
+        code --install-extension GitHub.copilot-chat
+        code --install-extension ms-toolsai.vscode-ai-toolkit
+        
+        # Python Development (for tooling and scripting)
+        code --install-extension ms-python.python
+        code --install-extension ms-python.pylint
+        
+        # DevBox Support
+        code --install-extension ms-vscode.vscode-dev-containers
+        
         # Source Control
         code --install-extension github.vscode-github-actions
         
@@ -80,6 +96,10 @@ userTasks:
         # Configure npm registry for user
         npm config set registry https://registry.npmjs.org/
         
+        # Configure Python for user development
+        python -m pip install --user --upgrade pip
+        python -m pip install --user virtualenv
+        
         Write-Host "=== User Development Environment Setup Complete ===" -ForegroundColor Green
         Write-Host "Next steps:" -ForegroundColor Yellow
         Write-Host "1. Configure Git with your credentials:" -ForegroundColor Gray
@@ -88,3 +108,4 @@ userTasks:
         Write-Host "2. Sign in to Azure: az login" -ForegroundColor Gray
         Write-Host "3. Clone repository to: $workspaceDir" -ForegroundColor Gray
         Write-Host "4. Azurite data will be stored in: $azuriteDir" -ForegroundColor Gray
+        Write-Host "5. Python and pip are available for development tooling" -ForegroundColor Gray
