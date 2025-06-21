@@ -242,3 +242,36 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 - **🚫 No empty directories**: Remove empty directories unless they serve a structural purpose
 - **✅ Verify file necessity**: Before creating new files, ensure they're actually needed and will contain content
 - **⚠️ Check for duplicates**: Before creating files or folders, verify no duplicates exist with the same name in the project. If duplicates are detected, prompt for confirmation before proceeding
+
+### 📝 GitHub Issue Creation Guidelines
+
+When creating GitHub issues, consider who will be working on them:
+
+#### For Personal Work (You will implement)
+- **Keep issues concise and actionable**
+- Focus on clear title and brief description
+- Include only essential details needed as reminders
+- Use simple checkboxes for sub-tasks if needed
+- Example: "Add unit tests for Function App endpoints"
+
+#### For Copilot Assignment (Handing off to AI)
+- **Create detailed, comprehensive issues**
+- Include extensive context, requirements, and acceptance criteria
+- Provide code examples, file paths, and technical specifications
+- Use @copilot assignment for complex implementation tasks
+- Example: Detailed infrastructure issues with Bicep requirements
+
+#### Issue Categories
+- **Bug fixes**: Always detailed (regardless of assignee)
+- **New features**: Detailed if complex, concise if straightforward
+- **Refactoring**: Usually concise unless architectural changes
+- **Documentation**: Concise with clear scope
+- **Infrastructure**: Detailed due to complexity
+
+#### Best Practices
+- ✅ Create issues immediately when problems are identified
+- ✅ Use consistent labeling (bug, enhancement, documentation, etc.)
+- ✅ Reference related files and line numbers when relevant
+- ✅ Update issues with progress and findings
+- ❌ Don't over-engineer issues for simple personal tasks
+- ❌ Don't create overly brief issues for complex handoffs
