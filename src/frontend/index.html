@@ -4,43 +4,78 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Foundry SPA</title>
+    <title>AI Foundry Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
   <body>
-    <div id="app">      <header>
-        <h1>AI Foundry Integration - Public Demo</h1>
-        <div id="auth-section">
-          <span id="user-info"></span>
+    <div id="app">
+      <!-- Header -->
+      <header class="chat-header">
+        <div class="header-content">
+          <div class="chat-title">
+            <i class="fas fa-robot"></i>
+            <span>CancerBot AI Assistant</span>
+          </div>
+          <div class="header-actions">
+            <button id="clear-chat" class="header-btn" title="Clear conversation">
+              <i class="fas fa-trash"></i>
+            </button>
+            <button id="export-chat" class="header-btn" title="Export conversation">
+              <i class="fas fa-download"></i>
+            </button>
+          </div>
         </div>
       </header>
-      
-      <main>
-        <div class="container">          <div class="input-section">
-            <h2>Chat with CancerBot AI Agent</h2>
-            
-            <div class="form-group">
-              <label for="user-input">Your Message:</label>
-              <textarea id="user-input" placeholder="Type your message here..." rows="4"></textarea>
+
+      <!-- Chat Container -->
+      <main class="chat-container">
+        <!-- Messages Area -->
+        <div id="messages-container" class="messages-container">
+          <div class="welcome-message">
+            <div class="welcome-icon">
+              <i class="fas fa-comments"></i>
             </div>
-            
-            <button id="send-btn" disabled>Send Message</button>
+            <h2>Welcome to AI Foundry Chat</h2>
+            <p>Start a conversation with the CancerBot AI Assistant. Ask questions about cancer research, treatment options, or general health topics.</p>
           </div>
-          
-          <div class="response-section">
-            <h3>AI Response</h3>
-            <div id="response-container">
-              <p class="placeholder">Your AI response will appear here...</p>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="typing-indicator" class="typing-indicator hidden">
+          <div class="message ai-message">
+            <div class="avatar">
+              <i class="fas fa-robot"></i>
             </div>
-          </div>
-          
-          <div class="history-section">
-            <h3>Conversation History</h3>
-            <div id="history-container">
-              <p class="placeholder">Conversation history will appear here...</p>
+            <div class="message-content">
+              <div class="typing-animation">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      <!-- Input Area -->
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea 
+            id="user-input" 
+            placeholder="Type your message here..." 
+            rows="1"
+            maxlength="4000"
+          ></textarea>
+          <button id="send-btn" class="send-btn" disabled>
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <div class="input-footer">
+          <span class="character-count">0/4000</span>
+          <span class="input-hint">Press Enter to send, Shift+Enter for new line</span>
+        </div>
+      </div>
     </div>
     <script type="module" src="main.js"></script>
   </body>
