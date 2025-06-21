@@ -82,30 +82,3 @@ outputs:
     name: "Static Web App Hostname"
     description: "Default hostname for the Static Web App"
     type: "string"
-
-metadata:
-  category: "Web Applications"
-  subcategory: "Frontend"
-  complexity: "Simple"
-  estimatedDeploymentTime: "5-10 minutes"
-  supportedRegions:
-    - "centralus"
-    - "eastus"
-    - "eastus2" 
-    - "westus"
-    - "westus2"
-  prerequisites:
-    - "Existing Log Analytics Workspace"
-    - "Resource Group for deployment"
-  resourceTypes:
-    - "Microsoft.Web/staticSites"
-    - "Microsoft.Insights/components"
-  costEstimate: "Low - Static Web Apps Free tier, Application Insights based on usage"
-  
-tags:
-  - "frontend"
-  - "spa" 
-  - "static-web-app"
-  - "javascript"
-  - "monitoring"
-  - "ai-foundry"
