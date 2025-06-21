@@ -27,6 +27,22 @@ describe('Basic Functionality Tests', () => {
       expect(date.getMonth()).toBe(0) // January is 0
     })
 
+    test('should create dates with various formats', () => {
+      // Test different date formats and years
+      const date1 = new Date('2024-06-15')
+      expect(date1.getFullYear()).toBe(2024)
+      expect(date1.getMonth()).toBe(5) // June is 5
+
+      const date2 = new Date('2022-12-31')
+      expect(date2.getFullYear()).toBe(2022)
+      expect(date2.getMonth()).toBe(11) // December is 11
+
+      // Test with no arguments - should return consistent mock date
+      const dateNow = new Date()
+      expect(dateNow.getFullYear()).toBe(2023)
+      expect(dateNow.getMonth()).toBe(0) // Mock date is January 1, 2023
+    })
+
     test('should perform math operations', () => {
       expect(2 + 2).toBe(4)
       expect(Math.max(1, 2, 3)).toBe(3)
