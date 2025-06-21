@@ -98,8 +98,8 @@ resource aiFoundryAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' exis
 
 // =========== FRONTEND DEPLOYMENT ===========
 
-// Deploy frontend infrastructure (Storage Account + Application Insights)
-module frontendInfrastructure 'modules/frontend.bicep' = {
+// Deploy frontend infrastructure (Static Web App + Application Insights)
+module frontendInfrastructure 'environments/frontend/main.bicep' = {
   name: 'frontend-deployment'
   scope: resourceGroup(frontendResourceGroupName)
   dependsOn: [
@@ -120,7 +120,7 @@ module frontendInfrastructure 'modules/frontend.bicep' = {
 // =========== BACKEND DEPLOYMENT ===========
 
 // Deploy backend infrastructure (Function App + Application Insights)
-module backendInfrastructure 'modules/backend.bicep' = {
+module backendInfrastructure 'environments/backend/main.bicep' = {
   name: 'backend-deployment'
   scope: resourceGroup(backendResourceGroupName)
   dependsOn: [
@@ -149,7 +149,7 @@ module backendInfrastructure 'modules/backend.bicep' = {
 
 // Azure AI User role assignment for Function App to access AI Foundry
 // Uses a separate module to deploy RBAC in the AI Foundry resource group
-module functionAppAIFoundryRoleAssignment 'modules/rbac.bicep' = {
+module functionAppAIFoundryRoleAssignment 'shared/rbac.bicep' = {
   name: 'functionApp-aiFoundry-rbac'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
@@ -162,7 +162,7 @@ module functionAppAIFoundryRoleAssignment 'modules/rbac.bicep' = {
 
 // Storage Blob Data Owner role assignment for Function App to access its storage account
 // Required for Flex Consumption Function Apps to access storage for runtime operations
-module functionAppStorageRoleAssignment 'modules/rbac.bicep' = {
+module functionAppStorageRoleAssignment 'shared/rbac.bicep' = {
   name: 'functionApp-storage-rbac'
   scope: resourceGroup(backendResourceGroupName)
   params: {

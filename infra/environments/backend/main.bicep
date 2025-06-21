@@ -298,5 +298,3 @@ output functionStorageAccountName string = functionStorageAccount.outputs.name
 
 @description('Function Storage Account Resource ID')
 output functionStorageAccountResourceId string = functionStorageAccount.outputs.resourceId
-
-

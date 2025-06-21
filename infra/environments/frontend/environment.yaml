@@ -1,10 +1,10 @@
-# yaml-language-server: $schema=./manifest.schema.json
+# yaml-language-server: $schema=../manifest.schema.json
 name: AI_Foundry_SPA_Frontend
 version: 1.0.0
 summary: Frontend infrastructure for AI Foundry SPA application
 description: Deploys the frontend infrastructure for the AI Foundry SPA application including
 runner: Bicep
-templatePath: ../../modules/frontend.bicep
+templatePath: main.bicep
 
 parameters:
   - id: applicationName
