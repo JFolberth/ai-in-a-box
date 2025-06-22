@@ -4,7 +4,8 @@
 targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
-
+@description('Name for the Azure Deployment Environment')
+param adeName string = ''
 @description('AI Foundry agent ID for endpoint interaction')
 param aiFoundryAgentId string
 
@@ -14,23 +15,15 @@ param aiFoundryAgentName string
 @description('AI Foundry endpoint URL for API calls')
 param aiFoundryEndpoint string
 
-@description('AI Foundry project name')
-param aiFoundryProjectName string
-
-@description('AI Foundry resource group name')
-param aiFoundryResourceGroup string
-
-@description('AI Foundry subscription ID')
-param aiFoundrySubscriptionId string
-
 @description('Application name used for resource naming')
 param applicationName string
 
+param devCenterProjectName string = ''
 @description('Environment name (e.g., dev, staging, prod)')
-param environmentName string
+param environmentName string ='dev'
 
 @description('Azure region for resource deployment')
-param location string
+param location string ='eastus2'
 
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string
@@ -38,20 +31,31 @@ param logAnalyticsWorkspaceName string
 @description('Resource Group containing the Log Analytics Workspace')
 param logAnalyticsResourceGroupName string
 
-@description('Resource token for unique naming')
-param resourceToken string
 
 @description('Tags to apply to all resources')
-param tags object
+param tags object = {
+  Environment: environmentName
+  Application: applicationName
+}
 
 // =========== VARIABLES ===========
+var nameSuffix = empty(adeName) ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}') : '${devCenterProjectName}-${adeName}'
+var nameSuffixShort = replace(nameSuffix, '-', '')
 
-var resourceNames = {
-  applicationInsights: 'appi-${applicationName}-backend-${environmentName}-${resourceToken}'
-  appServicePlan: 'asp-${applicationName}-backend-${environmentName}-${resourceToken}'
-  functionApp: 'func-${applicationName}-backend-${environmentName}-${resourceToken}'
-  functionStorageAccount: 'stfnbackspa${resourceToken}'
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
 }
+var resourceNames = {
+  applicationInsights: 'appi-${nameSuffix}'
+  appServicePlan: 'asp-${nameSuffix}'
+  functionApp: 'func-${nameSuffix}'
+  functionStorageAccount: 'st${nameSuffixShort}'
+}
+var typeInfrastructure = 'bk'
 
 // =========== EXISTING RESOURCES ===========
 
@@ -114,6 +118,17 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     blobServices: {
       deleteRetentionPolicyEnabled: true
       deleteRetentionPolicyDays: 7
+      containers:[
+        {
+          name: 'function-container'
+          properties: {
+            publicAccess: 'None'
+            metadata: {
+              createdBy: 'FunctionApp'
+            }
+          }
+        }
+      ]
     }
     
     // Network access rules
@@ -192,7 +207,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
     functionAppConfig:{
       deployment: {
         storage: {
-          value: functionStorageAccount.outputs.primaryBlobEndpoint
+          value: '${functionStorageAccount.outputs.primaryBlobEndpoint}function-container'
           type: 'blobContainer'
            authentication:{
               type: 'SystemAssignedIdentity'
@@ -222,7 +237,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
       cors: {
         allowedOrigins: ['*']
         supportCredentials: false
-      }
+      }      
       appSettings: [
         {
           name: 'AzureWebJobsStorage__accountname'
@@ -239,18 +254,6 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
         {
           name: 'AI_FOUNDRY_ENDPOINT'
           value: aiFoundryEndpoint
-        }
-        {
-          name: 'AI_FOUNDRY_SUBSCRIPTION_ID'
-          value: aiFoundrySubscriptionId
-        }
-        {
-          name: 'AI_FOUNDRY_RESOURCE_GROUP'
-          value: aiFoundryResourceGroup
-        }
-        {
-          name: 'AI_FOUNDRY_PROJECT_NAME'
-          value: aiFoundryProjectName
         }
         {
           name: 'AI_FOUNDRY_AGENT_ID'
