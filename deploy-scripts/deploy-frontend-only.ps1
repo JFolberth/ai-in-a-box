@@ -224,7 +224,7 @@ try {
     swa --version | Out-Null
     Write-Host "✅ SWA CLI is available" -ForegroundColor Green
 } catch {
-    Write-Host "� Installing SWA CLI..." -ForegroundColor Yellow
+    Write-Host "📦 Installing SWA CLI..." -ForegroundColor Yellow
     npm install -g @azure/static-web-apps-cli
     if ($LASTEXITCODE -ne 0) {
         Write-Error "❌ Failed to install SWA CLI!"
