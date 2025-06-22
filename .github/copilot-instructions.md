@@ -4,6 +4,32 @@
 
 This is a JavaScript SPA project that integrates with a single AI Foundry endpoint and deploys to Azure Storage Static Websites using Azure CLI.
 
+## ⚠️ ⚠️ CRITICAL REQUIREMENT - ABSOLUTE PATHS ONLY ⚠️ ⚠️
+
+**🚨 ALL COMMANDS AND FILE OPERATIONS MUST USE ABSOLUTE PATHS 🚨**
+
+### MANDATORY ABSOLUTE PATH PATTERNS:
+```powershell
+# ✅ CORRECT - Always use these patterns:
+az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep"
+& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1"
+Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"
+dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
+
+# ❌ FORBIDDEN - Never use relative paths:
+az deployment sub create --template-file infra/main-orchestrator.bicep
+.\deploy-scripts\deploy-backend-func-code.ps1
+cd src/backend
+```
+
+**WHY THIS MATTERS:**
+- ✅ Commands work from any directory
+- ✅ No ambiguity about file locations  
+- ✅ Consistent results across environments
+- ✅ Easier debugging and troubleshooting
+
+---
+
 ## Project Context
 
 - **Frontend Framework**: Vanilla JavaScript with Vite build system
@@ -20,12 +46,13 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
 
 ### ⚠️ CRITICAL - Path Management and Local Testing
 
-#### Absolute Paths - REQUIRED
-- **✅ ALWAYS use absolute paths** for all file operations
-- **✅ Example**: `C:\Users\BicepDeveloper\ai-in-a-box\src\frontend\index.html`
-- **❌ NEVER use relative paths** like `./src/frontend` or `../backend`
-- **✅ Use workspace root**: `${workspaceFolder}` when available in tasks
-- **✅ Verify paths exist** before operations
+#### Absolute Paths - REQUIRED (REINFORCED)
+- **🚨 EVERY FILE OPERATION MUST USE ABSOLUTE PATHS 🚨**
+- **✅ ALWAYS**: `C:\Users\BicepDeveloper\ai-in-a-box\src\frontend\index.html`
+- **❌ NEVER**: `./src/frontend` or `../backend` or any relative path
+- **✅ Tasks**: Use `${workspaceFolder}` when available in VS Code tasks
+- **✅ Scripts**: Always verify absolute paths exist before operations
+- **🎯 NO EXCEPTIONS**: This applies to ALL commands, file operations, and scripts
 
 #### Local Testing - MANDATORY
 1. **Local Testing Sequence**:
@@ -150,10 +177,50 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
 - **ALWAYS test locally before deploying to Azure**
 - Use only `az deployment sub create` for orchestrator deployment at subscription scope
 - Use Azure CLI for all resource management operations
-- **ALWAYS use absolute paths** in all operations and commands
-- Infrastructure deployment: `az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam`
+- **⚠️ CRITICAL: ALWAYS use absolute paths** in all operations and commands
+- **✅ Example**: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`
+- **❌ NEVER**: `az deployment sub create --template-file infra/main-orchestrator.bicep` (relative path)
+- **✅ PowerShell commands**: `& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1"`
+- **❌ PowerShell commands**: `.\deploy-scripts\deploy-backend-func-code.ps1` (relative path)
+- **✅ Directory changes**: `Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"`
+- **❌ Directory changes**: `cd src\backend` (relative path)
+- Infrastructure deployment: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`
 - No azure.yaml file or azd configuration files
 - All deployment scripts use Azure CLI + Bicep exclusively
+
+### ⚠️ CRITICAL COMMAND PATH REQUIREMENTS - ZERO TOLERANCE
+
+#### Absolute Paths in Commands - MANDATORY (NO EXCEPTIONS)
+- **🚨 EVERY SINGLE COMMAND MUST USE FULL ABSOLUTE PATHS 🚨**
+- **🎯 ZERO TOLERANCE for relative paths in any form**
+- **✅ Azure CLI**: ALWAYS quote paths: `--template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main.bicep"`
+- **✅ PowerShell**: ALWAYS quote paths: `& "C:\Users\BicepDeveloper\ai-in-a-box\scripts\deploy.ps1"`
+- **✅ File operations**: `Copy-Item "C:\Users\BicepDeveloper\ai-in-a-box\src\file.txt" "C:\destination\file.txt"`
+- **✅ Directory navigation**: `Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"`
+- **❌ FORBIDDEN**: `./scripts/deploy.ps1`, `../infra/main.bicep`, `cd src/backend`, `.\deploy.ps1`
+
+#### Command Examples - FOLLOW THESE EXACT PATTERNS
+```powershell
+# ✅ CORRECT - Full absolute paths (COPY THESE PATTERNS)
+az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"
+
+& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1" -FunctionAppName "func-name" -ResourceGroupName "rg-name"
+
+Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"
+dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
+
+# ❌ WRONG - Relative paths (NEVER USE THESE)
+az deployment sub create --template-file infra/main-orchestrator.bicep
+.\deploy-scripts\deploy-backend-func-code.ps1
+cd src/backend
+```
+
+#### Why This Matters (Critical for Success)
+- **Reliability**: Commands work regardless of current working directory
+- **Clarity**: No ambiguity about which files are being referenced
+- **Debugging**: Easier to troubleshoot when paths are explicit
+- **Consistency**: All team members and automation get same results
+- **Professional**: Industry best practice for production scripts
 
 ### Security
 - Never expose secrets in client-side code
