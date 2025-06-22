@@ -465,3 +465,6 @@ devbox-*.log
 *.json.backup
 deploy.zip
 main-orchestrator.json
+
+# Bicep compiled JSON files in infra folder
+infra/**/main.json

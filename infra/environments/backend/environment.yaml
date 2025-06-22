@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=../manifest.schema.json
+name: AI_Foundry_SPA_Backend
+version: 1.0.0
+summary: Backend infrastructure for AI Foundry SPA application
+description: Deploys the backend infrastructure for the AI Foundry SPA application including Function App, Storage, and Application Insights
+runner: Bicep
+templatePath: ./main.bicep
+
+parameters:
+  - id: aiFoundryAgentId
+    name: AI Foundry Agent ID
+    description: AI Foundry agent ID for endpoint interaction
+    type: string
+    required: true
+    
+  - id: aiFoundryAgentName
+    name: AI Foundry Agent Name
+    description: AI Foundry agent name for endpoint interaction
+    type: string
+    required: true
+    
+  - id: aiFoundryEndpoint
+    name: AI Foundry Endpoint
+    description: AI Foundry endpoint URL for API calls
+    type: string
+    required: true
+    
+  - id: aiFoundryProjectName
+    name: AI Foundry Project Name
+    description: AI Foundry project name
+    type: string
+    required: true
+    
+  - id: aiFoundryResourceGroup
+    name: AI Foundry Resource Group
+    description: AI Foundry resource group name
+    type: string
+    required: true
+    
+  - id: aiFoundrySubscriptionId
+    name: AI Foundry Subscription ID
+    description: AI Foundry subscription ID
+    type: string
+    required: true
+    
+  - id: applicationName
+    name: Application Name
+    description: Name used for resource naming (e.g., aibox)
+    type: string
+    required: true
+    
+  - id: environmentName
+    name: Environment Name
+    description: Environment identifier (dev, staging, prod)
+    type: string
+    required: true
+    allowed:
+      - dev
+      - staging
+      - prod
+      
+  - id: location
+    name: Azure Region
+    description: Azure region for resource deployment
+    type: string
+    required: true
+    allowed:
+      - centralus
+      - eastus
+      - eastus2
+      - westus
+      - westus2
+      
+  - id: logAnalyticsWorkspaceName
+    name: Log Analytics Workspace Name
+    description: Name of existing Log Analytics Workspace for consolidated logging
+    type: string
+    required: true
+    
+  - id: logAnalyticsResourceGroupName
+    name: Log Analytics Resource Group
+    description: Resource Group containing the Log Analytics Workspace
+    type: string
+    required: true
+    
+  - id: resourceToken
+    name: Resource Token
+    description: Resource token for unique naming
+    type: string
+    required: true
+    
+  - id: tags
+    name: Resource Tags
+    description: Tags to apply to all resources
+    type: object
+    required: false

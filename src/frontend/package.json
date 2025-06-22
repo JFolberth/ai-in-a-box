@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode dev",
     "preview": "vite preview",
-    "deploy": "npm run build:dev && az storage blob upload-batch --destination '$web' --source ./dist --account-name staifrontspa001 --auth-mode login --overwrite",
+    "deploy": "npm run build:dev && echo 'Note: Use deploy-scripts/deploy-frontend-only.ps1 for Static Web App deployment'",
     "clean": "node -e \"const fs = require('fs'); ['dist', 'node_modules/.vite'].forEach(dir => { try { fs.rmSync(dir, {recursive: true, force: true}); console.log('Cleaned', dir); } catch (e) { console.log(dir, 'not found or already clean'); } });\"",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -1,20 +1,20 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-Deploy ONLY the frontend of AI Foundry SPA to Azure Storage Static Website
+Deploy the frontend of AI Foundry SPA to Azure Static Web App (DEV Environment)
 
 .DESCRIPTION
-This script deploys only the frontend portion of the AI Foundry SPA to Azure Storage.
-It builds the frontend and uploads it to an existing Azure Storage account.
+This script deploys only the frontend portion of the AI Foundry SPA to Azure Static Web App.
+It builds the frontend and uploads it to an existing Azure Static Web App.
 
-.PARAMETER StorageAccountName
-The name of the Azure Storage account to deploy to (optional - will be detected from Bicep outputs)
+.PARAMETER StaticWebAppName
+The name of the Azure Static Web App to deploy to. If not provided, the script will attempt to auto-detect from Bicep deployment outputs or use defaults.
 
 .PARAMETER ResourceGroupName
-The name of the resource group containing the storage account (optional - will be detected)
+The name of the resource group containing the Static Web App. If not provided, the script will attempt to auto-detect from Bicep deployment outputs or use defaults.
 
 .PARAMETER BackendUrl
-The backend Function App URL to configure (optional - will update .env for production)
+The backend Function App URL to configure (optional - will update .env for dev environment)
 
 .PARAMETER SkipBuild
 Skip the npm build step if the application is already built
@@ -26,12 +26,15 @@ Skip the npm build step if the application is already built
 ./deploy-frontend-only.ps1 -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
 
 .EXAMPLE
-./deploy-frontend-only.ps1 -StorageAccountName "staifrontspa001" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
+./deploy-frontend-only.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
+
+.EXAMPLE
+./deploy-frontend-only.ps1 -StaticWebAppName "my-custom-static-web-app" -SkipBuild
 #>
 
 param(
     [Parameter(Mandatory = $false)]
-    [string]$StorageAccountName,
+    [string]$StaticWebAppName,
     
     [Parameter(Mandatory = $false)]
     [string]$ResourceGroupName,
@@ -46,11 +49,11 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-Write-Host "🚀 AI Foundry SPA - Frontend Only Deployment" -ForegroundColor Green -BackgroundColor Black
-Write-Host "=============================================" -ForegroundColor Green
+Write-Host "🚀 AI Foundry SPA - Frontend Deployment (DEV Environment)" -ForegroundColor Green -BackgroundColor Black
+Write-Host "=========================================================" -ForegroundColor Green
 
-# Change to project root
-Set-Location $PSScriptRoot
+# Change to project root (go up one level from deploy-scripts)
+Set-Location (Join-Path $PSScriptRoot "..")
 
 # Check if Azure CLI is installed and logged in
 Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Yellow
@@ -63,9 +66,9 @@ try {
     exit 1
 }
 
-# If storage account details not provided, try to get them from deployment outputs
-if (-not $StorageAccountName -or -not $ResourceGroupName) {
-    Write-Host "🔍 Attempting to detect storage account from Bicep deployment..." -ForegroundColor Yellow
+# If Static Web App details not provided, try to get them from deployment outputs
+if (-not $StaticWebAppName -or -not $ResourceGroupName) {
+    Write-Host "🔍 Attempting to detect Static Web App from Bicep deployment..." -ForegroundColor Yellow
     
     # Try to get deployment outputs
     try {
@@ -76,78 +79,90 @@ if (-not $StorageAccountName -or -not $ResourceGroupName) {
             --name $deploymentName `
             --query "properties.outputs" `
             --output json 2>$null | ConvertFrom-Json
-            
-        if ($deploymentOutputs) {
-            $StorageAccountName = $deploymentOutputs.frontendStorageAccountName.value
+              if ($deploymentOutputs) {
+            $StaticWebAppName = $deploymentOutputs.frontendStaticWebAppName.value
             $ResourceGroupName = $deploymentOutputs.frontendResourceGroupName.value
             Write-Host "✅ Detected from deployment:" -ForegroundColor Green
-            Write-Host "   Storage Account: $StorageAccountName" -ForegroundColor Cyan
+            Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor Cyan
             Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor Cyan
         }
     } catch {
-        Write-Warning "⚠️ Could not auto-detect storage account. Please provide manually."
+        Write-Warning "⚠️ Could not auto-detect Static Web App. Please provide manually."
     }
 }
 
 # If still not found, prompt user or use defaults
-if (-not $StorageAccountName) {
-    Write-Host "📝 Storage account details needed. Based on your configuration:" -ForegroundColor Yellow
-    $StorageAccountName = "staifrontspa001"  # From bicep naming convention
-    $ResourceGroupName = "rg-ai-foundry-spa-frontend-dev-001"
+if (-not $StaticWebAppName) {
+    Write-Host "📝 Static Web App details needed. Based on your configuration:" -ForegroundColor Yellow
+    $StaticWebAppName = "stapp-aibox-fd-dev-eus2"  # From bicep naming convention
     
     Write-Host "🔧 Using default names:" -ForegroundColor Cyan
-    Write-Host "   Storage Account: $StorageAccountName" -ForegroundColor Cyan
-    Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor Cyan
+    Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor Cyan
+    
+    # If Resource Group is still not provided, use default
+    if (-not $ResourceGroupName) {
+        $ResourceGroupName = "rg-ai-foundry-spa-frontend-dev-001"
+        Write-Host "   Resource Group: $ResourceGroupName (default)" -ForegroundColor Cyan
+    }
+    
     Write-Host ""
     Write-Host "Press Enter to continue or Ctrl+C to cancel and specify manually..." -ForegroundColor Yellow
     Read-Host
+} else {
+    Write-Host "🎯 Using provided Static Web App: $StaticWebAppName" -ForegroundColor Green
+    
+    # If Resource Group is still not provided, use default
+    if (-not $ResourceGroupName) {
+        $ResourceGroupName = "rg-ai-foundry-spa-frontend-dev-001"
+        Write-Host "🔧 Using default Resource Group: $ResourceGroupName" -ForegroundColor Cyan
+    } else {
+        Write-Host "🎯 Using provided Resource Group: $ResourceGroupName" -ForegroundColor Green
+    }
 }
 
-# Verify the storage account exists
-Write-Host "🔍 Verifying storage account '$StorageAccountName' in resource group '$ResourceGroupName'..." -ForegroundColor Yellow
+# Verify the Static Web App exists
+Write-Host "🔍 Verifying Static Web App '$StaticWebAppName' in resource group '$ResourceGroupName'..." -ForegroundColor Yellow
 try {
-    $storageAccount = az storage account show --name $StorageAccountName --resource-group $ResourceGroupName --output json | ConvertFrom-Json
-    Write-Host "✅ Storage account found: $($storageAccount.name)" -ForegroundColor Green
+    $staticWebApp = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --output json | ConvertFrom-Json
+    Write-Host "✅ Static Web App found: $($staticWebApp.name)" -ForegroundColor Green
 } catch {
-    Write-Error "❌ Storage account '$StorageAccountName' not found in resource group '$ResourceGroupName'!"
+    Write-Error "❌ Static Web App '$StaticWebAppName' not found in resource group '$ResourceGroupName'!"
     Write-Host "💡 To create the infrastructure first, run:" -ForegroundColor Yellow
     Write-Host "   az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location eastus2" -ForegroundColor White
     exit 1
 }
 
-# Update environment configuration for production if BackendUrl is provided
-if ($BackendUrl) {
-    Write-Host "🔧 Updating frontend configuration for production deployment..." -ForegroundColor Yellow
-    
-    # Create production environment file
-    $envContent = @"
-# Production Configuration - Generated by deployment script
-VITE_BACKEND_URL=$BackendUrl
-VITE_USE_BACKEND=true
-VITE_PUBLIC_MODE=true
+# Update environment configuration for dev environment
+Write-Host "🔧 Updating frontend configuration for dev environment..." -ForegroundColor Yellow
 
-# AI Foundry Configuration (Single Instance)
+# Create dev environment file with hardcoded dev values
+$envContent = @"
+# Dev Environment Configuration - Generated by deployment script
+VITE_BACKEND_URL=$($BackendUrl -replace '^$', 'http://localhost:7071/api')
+VITE_USE_BACKEND=true
+VITE_PUBLIC_MODE=false
+
+# AI Foundry Configuration (Dev Environment)
 VITE_AI_FOUNDRY_AGENT_NAME=CancerBot
 VITE_AI_FOUNDRY_AGENT_ID=asst_dH7M0nbmdRblhSQO8nIGIYF4
 VITE_AI_FOUNDRY_PROJECT_URL=https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject
 VITE_AI_FOUNDRY_ENDPOINT=https://ai-foundry-dev-eus.azureml.net
 VITE_AI_FOUNDRY_DEPLOYMENT=gpt-4
 
-# Azure Storage Configuration
-VITE_STORAGE_ACCOUNT_NAME=$StorageAccountName
+# Azure Static Web App Configuration
+VITE_STATIC_WEB_APP_NAME=$StaticWebAppName
 
 # Environment Settings
-VITE_ENV=production
-NODE_ENV=production
+VITE_ENV=dev
+NODE_ENV=development
 "@
-    
-    Set-Content -Path "src/frontend/.env.production" -Value $envContent
-    Write-Host "✅ Production environment configuration created" -ForegroundColor Green
-}
+
+Set-Content -Path "src/frontend/.env.dev" -Value $envContent
+Write-Host "✅ Dev environment configuration created" -ForegroundColor Green
 
 # Build frontend if not skipped
 if (-not $SkipBuild) {
-    Write-Host "🔨 Building frontend application..." -ForegroundColor Yellow
+    Write-Host "🔨 Building frontend application for dev environment..." -ForegroundColor Yellow
     
     # Navigate to frontend directory
     Push-Location "src/frontend"
@@ -158,15 +173,14 @@ if (-not $SkipBuild) {
         if ($LASTEXITCODE -ne 0) {
             Write-Error "❌ npm install failed!"
             exit 1
-        }
+        }        # Build the application for dev environment
+        Write-Host "🏗️ Building application for dev..." -ForegroundColor Cyan
+        $env:NODE_ENV = "development"
         
-        # Build the application
-        Write-Host "🏗️ Building application..." -ForegroundColor Cyan
-        if ($BackendUrl) {
-            # Use production environment
-            $env:NODE_ENV = "production"
-            npm run build -- --mode production
-        } else {
+        # Try the dev build script first, fall back to standard build if it fails
+        npm run build:dev
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "⚠️ Dev build failed, trying standard build..."
             npm run build
         }
         
@@ -175,7 +189,7 @@ if (-not $SkipBuild) {
             exit 1
         }
         
-        Write-Host "✅ Frontend build completed!" -ForegroundColor Green
+        Write-Host "✅ Frontend build completed for dev environment!" -ForegroundColor Green
     } finally {
         Pop-Location
     }
@@ -192,72 +206,71 @@ if (-not (Test-Path $buildPath)) {
 
 Write-Host "📁 Using build output from: $buildPath" -ForegroundColor Cyan
 
-# Enable static website hosting
-Write-Host "🌐 Enabling static website hosting..." -ForegroundColor Yellow
-az storage blob service-properties update `
-    --account-name $StorageAccountName `
-    --resource-group $ResourceGroupName `
-    --static-website `
-    --404-document "index.html" `
-    --index-document "index.html"
+# Deploy to Static Web App
+Write-Host "🚀 Deploying frontend files to Azure Static Web App..." -ForegroundColor Yellow
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "❌ Failed to enable static website hosting!"
+# Get deployment token for the Static Web App
+Write-Host "🔑 Getting deployment token..." -ForegroundColor Cyan
+$deploymentToken = az staticwebapp secrets list --name $StaticWebAppName --resource-group $ResourceGroupName --query "properties.apiKey" --output tsv
+
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($deploymentToken)) {
+    Write-Error "❌ Failed to get deployment token for Static Web App!"
     exit 1
 }
 
-Write-Host "✅ Static website hosting enabled!" -ForegroundColor Green
+# Install SWA CLI if not present
+Write-Host "📦 Checking for SWA CLI..." -ForegroundColor Cyan
+try {
+    swa --version | Out-Null
+    Write-Host "✅ SWA CLI is available" -ForegroundColor Green
+} catch {
+    Write-Host "📦 Installing SWA CLI..." -ForegroundColor Yellow
+    npm install -g @azure/static-web-apps-cli
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "❌ Failed to install SWA CLI!"
+        exit 1
+    }
+    Write-Host "✅ SWA CLI installed" -ForegroundColor Green
+}
 
-# Deploy static website
-Write-Host "🚀 Uploading frontend files to Azure Storage..." -ForegroundColor Yellow
-
-# Upload built files to storage
-az storage blob upload-batch `
-    --account-name $StorageAccountName `
-    --destination '$web' `
-    --source $buildPath `
-    --overwrite `
-    --pattern "*"
+# Deploy using SWA CLI
+Write-Host "🚀 Deploying to Static Web App..." -ForegroundColor Yellow
+swa deploy $buildPath --deployment-token $deploymentToken --env "dev"
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "❌ Failed to upload static website files!"
+    Write-Error "❌ Failed to deploy to Static Web App!"
     exit 1
 }
 
-Write-Host "✅ Frontend files uploaded successfully!" -ForegroundColor Green
+Write-Host "✅ Frontend files deployed successfully!" -ForegroundColor Green
 
-# Get the static website URL
-Write-Host "🔗 Retrieving static website URL..." -ForegroundColor Yellow
-$staticWebsiteUrl = az storage account show `
-    --name $StorageAccountName `
-    --resource-group $ResourceGroupName `
-    --query "primaryEndpoints.web" `
-    --output tsv
+# Get the static web app URL
+Write-Host "🔗 Retrieving Static Web App URL..." -ForegroundColor Yellow
+$staticWebsiteUrl = "https://$($staticWebApp.defaultHostname)"
 
-# Clean up temporary production env file
-if ($BackendUrl -and (Test-Path "src/frontend/.env.production")) {
-    Remove-Item "src/frontend/.env.production" -Force
+# Clean up temporary dev env file
+if (Test-Path "src/frontend/.env.dev") {
+    Remove-Item "src/frontend/.env.dev" -Force
 }
 
 # Final summary
 Write-Host ""
-Write-Host "🎉 Frontend deployment completed successfully! 🎉" -ForegroundColor Green -BackgroundColor Black
+Write-Host "🎉 Dev Frontend deployment completed successfully! 🎉" -ForegroundColor Green -BackgroundColor Black
 Write-Host ""
-Write-Host "📋 Deployment Summary:" -ForegroundColor Cyan
-Write-Host "   Storage Account: $StorageAccountName" -ForegroundColor White
+Write-Host "📋 Dev Deployment Summary:" -ForegroundColor Cyan
+Write-Host "   Environment: dev" -ForegroundColor White
+Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor White
 Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor White
-Write-Host "   Static Website URL: $staticWebsiteUrl" -ForegroundColor White
+Write-Host "   Static Web App URL: $staticWebsiteUrl" -ForegroundColor White
 Write-Host ""
-Write-Host "🌍 Your AI Foundry SPA is now live at:" -ForegroundColor Green
+Write-Host "🌍 Your AI Foundry SPA (dev) is now live at:" -ForegroundColor Green
 Write-Host "   $staticWebsiteUrl" -ForegroundColor Yellow -BackgroundColor DarkBlue
 Write-Host ""
 
-if (-not $BackendUrl) {
-    Write-Host "⚠️  Important: Make sure your backend Function App is deployed and running!" -ForegroundColor Yellow
-    Write-Host "   The frontend expects the backend at: http://localhost:7071/api (local) or your deployed Function App URL" -ForegroundColor White
-    Write-Host ""
-    Write-Host "💡 To deploy with production backend URL, run:" -ForegroundColor Cyan
-    Write-Host "   ./deploy-frontend-only.ps1 -BackendUrl 'https://your-function-app.azurewebsites.net/api'" -ForegroundColor White
-}
+Write-Host "⚠️  Important: This is a dev environment deployment!" -ForegroundColor Yellow
+Write-Host "   Backend URL: $($BackendUrl -replace '^$', 'http://localhost:7071/api (local dev)')" -ForegroundColor White
+Write-Host "   AI Foundry: ai-foundry-dev-eus (dev environment)" -ForegroundColor White
+Write-Host ""
+Write-Host "💡 For production deployment, use the main deploy.ps1 script instead." -ForegroundColor Cyan
 
-Write-Host "✨ Deployment complete! ✨" -ForegroundColor Green
+Write-Host "✨ Dev deployment complete! ✨" -ForegroundColor Green

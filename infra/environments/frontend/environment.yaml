@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../manifest.schema.json
+name: AI_Foundry_SPA_Frontend
+version: 1.0.0
+summary: Frontend infrastructure for AI Foundry SPA application
+description: Deploys the frontend infrastructure for the AI Foundry SPA application including
+runner: Bicep
+templatePath: main.bicep
+
+parameters:
+  - id: applicationName
+    name: Application Name
+    description: Name used for resource naming (e.g., aibox)
+    type: string
+    required: true
+         
+  - id: logAnalyticsWorkspaceName
+    name: Log Analytics Workspace Name
+    description: Name of existing Log Analytics Workspace for consolidated logging
+    type: string
+    required: true
+    
+  - id: logAnalyticsResourceGroupName
+    name: Log Analytics Resource Group
+    description: Resource Group containing the Log Analytics Workspace
+    type: string
+    required: true

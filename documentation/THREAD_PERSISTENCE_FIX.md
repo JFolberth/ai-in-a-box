@@ -58,7 +58,7 @@ POST /api/sendMessage { message: "What about side effects?", threadId: "thread_x
 6. **Check Function App logs**: Real AI Foundry polling and response retrieval
 
 ### **Production Testing**
-1. **Open**: https://staifrontspa001.z13.web.core.windows.net/
+1. **Open**: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
 2. **Test conversation flow**: Multiple messages with context retention
 3. **Verify responses**: Real AI responses with conversation memory
 

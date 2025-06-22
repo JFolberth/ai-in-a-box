@@ -88,7 +88,7 @@ The project uses a consistent naming pattern:
 ```
 
 Examples:
-- Storage Account: `staifondryspadev001`
+- Static Web App: `stapp-ai-foundry-spa-frontend-dev-001`
 - Function App: `func-ai-foundry-spa-backend-dev-001`
 - Resource Groups: `rg-ai-foundry-spa-frontend-dev-001`
 
@@ -121,7 +121,7 @@ The Function App uses **system-assigned managed identity** with minimal required
 {
   "cors": {
     "allowedOrigins": [
-      "https://your-static-website.z13.web.core.windows.net"
+      "https://your-static-web-app.azurestaticapps.net"
     ],
     "supportCredentials": false
   }
@@ -171,18 +171,19 @@ Shared workspace consolidates logs from:
 - Frontend Application Insights
 - Backend Application Insights
 - Function App diagnostic logs
-- Storage Account logs (if enabled)
+- Static Web App logs and analytics
 
 ## 🔧 Service Configuration
 
-### Static Website Configuration
+### Static Web App Configuration
 
-The Storage Account static website is configured for SPA routing:
+The Static Web App is configured for optimal SPA performance:
 
-```json
+```bicep
 {
-  "indexDocument": "index.html",
-  "errorDocument404Path": "index.html"
+  "appLocation": "/dist",
+  "outputLocation": "",
+  "skipGithubActionWorkflowGeneration": true
 }
 ```
 

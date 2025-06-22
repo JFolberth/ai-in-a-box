@@ -112,6 +112,21 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
 - **Cross-Resource Group RBAC**: Use dedicated RBAC modules for permissions across resource groups
 - Deploy using Azure CLI commands ONLY - never use azd (Azure Developer CLI)
 - System-assigned managed identity only (no user-assigned)
+- **🏗️ Azure Deployment Environment (ADE) Schema - CRITICAL**:
+  - **✅ Follow official schema**: https://learn.microsoft.com/en-us/azure/deployment-environments/concept-environment-yaml
+  - **✅ Required properties**: `name`, `templatePath` (all other properties are optional)
+  - **✅ Supported root properties**: `name`, `version`, `summary`, `description`, `runner`, `templatePath`, `parameters`
+  - **✅ Add schema validation**: Include `# yaml-language-server: $schema=./manifest.schema.json` (local) or remote URL
+  - **✅ Parameter structure**: Use `id`, `name`, `description`, `type`, `required`, `default`, `allowed` properties
+  - **✅ Supported runners**: `ARM`, `Bicep`, `Terraform`
+  - **✅ Parameter types**: `string`, `boolean`, `integer`, `number`, `object`, `array`
+  - **❌ NO outputs section**: ADE schema does not support outputs - outputs are handled by the underlying Bicep/ARM template
+  - **❌ NO custom metadata**: Only use officially supported properties
+  - **❌ NO quoted strings**: Use unquoted strings for parameter IDs and simple values
+  - **❌ NO defaults on required parameters**: Parameters with `required: true` MUST NOT have `default` values
+  - **✅ Relative templatePath**: Use relative paths from catalog root (e.g., `../../modules/frontend.bicep`)
+  - **📋 Validation**: Always validate YAML syntax and schema compliance before deployment
+  - **⚠️ Parameter Rules**: `required: true` means user MUST provide value; `required: false` allows defaults
 - **🎯 Resource References vs Names - CRITICAL**:
   - **✅ ALWAYS use resource references**: `scope: myResourceGroup` (direct resource reference)
   - **❌ NEVER use resource names**: `scope: resourceGroup(myResourceGroupName)` (string-based lookup)

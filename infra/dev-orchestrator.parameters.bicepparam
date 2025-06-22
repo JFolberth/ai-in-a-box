@@ -1,35 +1,34 @@
 using 'main-orchestrator.bicep'
 
+// AI Foundry configuration (single endpoint) - Synced with local.settings.json
+param aiFoundryAgentId = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
+param aiFoundryAgentName = 'CancerBot'
+param aiFoundryEndpoint = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
+param aiFoundryProjectName = 's'
+param aiFoundryResourceGroup = 'rg-ai-foundry-dev'
+param aiFoundryResourceGroupName = 'rg-ai-foundry-dev-eus'
+param aiFoundryResourceName = 'ai-foundry-dev-eus'
+// aiFoundrySubscriptionId will use subscription() function default - no need to specify
+
 // Environment and application configuration
-param environmentName = 'dev'
 param applicationName = 'ai-foundry-spa'
+param environmentName = 'dev'
 param location = 'eastus2'
-param resourceToken = '001'
 
 // Log Analytics workspace configuration (existing resource lookup)
-param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
 param logAnalyticsResourceGroupName = 'rg-logging-dev-eus'
+param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
 
-// AI Foundry configuration (single endpoint) - Synced with local.settings.json
-param aiFoundryAgentName = 'CancerBot'
-param aiFoundryAgentId = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
-param aiFoundryEndpoint = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
-// aiFoundrySubscriptionId will use subscription() function default - no need to specify
-param aiFoundryResourceGroup = 'rg-ai-foundry-dev'
-param aiFoundryProjectName = 's'
+param resourceToken = '001'
 
-// AI Foundry resource for RBAC assignment
-param aiFoundryResourceName = 'ai-foundry-dev-eus'
-param aiFoundryResourceGroupName = 'rg-ai-foundry-dev-eus'
-
-// Resource tags
+// Resource tags (alphabetized by key)
 param tags = {
-  Environment: 'dev'
-  Application: 'ai-foundry-spa'
-  ProjectType: 'AI-Foundry-SPA'
-  DeployedBy: 'Azure-CLI'
   AIFoundryAgent: 'CancerBot'
+  Application: 'ai-foundry-spa'
+  Architecture: 'Multi-ResourceGroup'
+  DeployedBy: 'Azure-CLI'
+  Environment: 'dev'
   ManagedIdentity: 'SystemAssigned'
   Monitoring: 'ApplicationInsights'
-  Architecture: 'Multi-ResourceGroup'
+  ProjectType: 'AI-Foundry-SPA'
 }
