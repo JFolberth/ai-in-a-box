@@ -7,10 +7,13 @@ using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 
 namespace AIFoundryProxy
-{
-    /// <summary>
+{    /// <summary>
     /// Azure Function that acts as a proxy to AI Foundry, enabling browser-based applications
     /// to securely connect to AI Foundry agents using managed identity authentication.
+    /// 
+    /// Architecture Decision: Agent ID and Name are kept as application configuration
+    /// rather than infrastructure parameters for better separation of concerns.
+    /// The AI Foundry workspace endpoint is automatically retrieved from infrastructure.
     /// </summary>
     public class AIFoundryProxyFunction
     {
@@ -18,9 +21,7 @@ namespace AIFoundryProxy
         private readonly string _projectEndpoint;
         private readonly string _agentId;
         private readonly string _agentName;
-        private PersistentAgentsClient? _agentsClient;
-
-        public AIFoundryProxyFunction(ILoggerFactory loggerFactory)
+        private PersistentAgentsClient? _agentsClient;        public AIFoundryProxyFunction(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<AIFoundryProxyFunction>();
             
@@ -28,13 +29,18 @@ namespace AIFoundryProxy
             _projectEndpoint = Environment.GetEnvironmentVariable("AI_FOUNDRY_ENDPOINT") 
                 ?? "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject";
             
+            // Agent configuration - can be hardcoded since it's application-specific
+            // These could also be moved to app configuration or Key Vault for flexibility
             _agentId = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_ID") 
-                ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4";
+                ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4"; // Default CancerBot agent
             _agentName = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME") 
-                ?? "CancerBot";
+                ?? "CancerBot"; // Default agent name
+            
+            var workspaceName = Environment.GetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME") ?? "Unknown";
             
             _logger.LogInformation($"🔗 AI Foundry Connection Details:");
             _logger.LogInformation($"   📍 Project Endpoint: {_projectEndpoint}");
+            _logger.LogInformation($"   🏢 Workspace: {workspaceName}");
             _logger.LogInformation($"   🤖 Agent: {_agentName} ({_agentId})");
             
             // Don't initialize the AI client in constructor - do it lazily on first use
@@ -275,36 +281,12 @@ namespace AIFoundryProxy
                         pollCount++;
                         
                         var elapsed = DateTime.UtcNow - startTime;
-                        
-                        // Log every 2 seconds with more detail
-                        if (pollCount % 4 == 0)
-                        {
-                            _logger.LogInformation($"⏳ Run status: {runStatus.Status} | Poll: {pollCount}/{maxPolls} | Elapsed: {elapsed.TotalSeconds:F1}s | Remaining: {(maxPolls - pollCount) * 0.5:F1}s");
-                        }
-                          // Log status changes immediately
+                          // Log status changes only
                         var currentStatus = runStatus.Status.ToString();
                         if (pollCount == 1 || (pollCount > 1 && currentStatus != previousStatus))
                         {
-                            _logger.LogInformation($"🔄 Status change detected: {currentStatus} at {elapsed.TotalSeconds:F1}s");
+                            _logger.LogInformation($"🔄 Status change: {currentStatus} at {elapsed.TotalSeconds:F1}s");
                             previousStatus = currentStatus;
-                        }
-                        
-                        // Log milestone checkpoints
-                        if (pollCount == 20) // 10 seconds
-                        {
-                            _logger.LogInformation($"📊 Checkpoint: 10 seconds elapsed, run still {runStatus.Status}");
-                        }
-                        else if (pollCount == 60) // 30 seconds
-                        {
-                            _logger.LogInformation($"📊 Checkpoint: 30 seconds elapsed, run still {runStatus.Status}");
-                        }
-                        else if (pollCount == 120) // 1 minute
-                        {
-                            _logger.LogInformation($"📊 Checkpoint: 1 minute elapsed, run still {runStatus.Status}");
-                        }
-                        else if (pollCount == 180) // 1.5 minutes
-                        {
-                            _logger.LogInformation($"📊 Checkpoint: 1.5 minutes elapsed, run still {runStatus.Status}");
                         }
                     }
                     

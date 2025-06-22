@@ -23,15 +23,14 @@ namespace AIFoundryProxy.Tests
             _mockLoggerFactory
                 .Setup(x => x.CreateLogger(It.IsAny<string>()))
                 .Returns(_mockLogger.Object);
-        }
-
-        [Fact]
+        }        [Fact]
         public void Constructor_WithDefaultEnvironment_InitializesSuccessfully()
         {
             // Arrange & Act - Clear any existing environment variables
             Environment.SetEnvironmentVariable("AI_FOUNDRY_ENDPOINT", null);
             Environment.SetEnvironmentVariable("AI_FOUNDRY_AGENT_ID", null);
             Environment.SetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME", null);
+            Environment.SetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME", null);
             
             var function = new AIFoundryProxyFunction(_mockLoggerFactory.Object);
 
@@ -87,13 +86,13 @@ namespace AIFoundryProxy.Tests
                         It.IsAny<Exception>(),
                         It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                     Times.AtLeastOnce);
-            }
-            finally
+            }            finally
             {
                 // Cleanup
                 Environment.SetEnvironmentVariable("AI_FOUNDRY_ENDPOINT", null);
                 Environment.SetEnvironmentVariable("AI_FOUNDRY_AGENT_ID", null);
                 Environment.SetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME", null);
+                Environment.SetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME", null);
             }
         }
 

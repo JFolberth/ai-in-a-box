@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AI_FOUNDRY_ENDPOINT": "https://your-ai-foundry-instance.services.ai.azure.com/api/projects/yourProject",
+    "AI_FOUNDRY_WORKSPACE_NAME": "your-ai-foundry-workspace",
+    "AI_FOUNDRY_AGENT_ID": "your-agent-id-here",
+    "AI_FOUNDRY_AGENT_NAME": "YourAgentName",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": ""
+  }
+}

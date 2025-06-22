@@ -1,47 +1,53 @@
 # yaml-language-server: $schema=../manifest.schema.json
-name: AI_Foundry_SPA_Backend
-version: 1.0.0
-summary: Backend infrastructure for AI Foundry SPA application
-description: Deploys the backend infrastructure for the AI Foundry SPA application including Function App, Storage, and Application Insights
+
+name: AI Foundry SPA Backend
+summary: Backend Function App for AI Foundry SPA with proxy functionality
+description: |
+  Deploys a serverless Function App that acts as a proxy between the frontend SPA 
+  and AI Foundry services. Includes proper RBAC configuration and monitoring.
+
 runner: Bicep
-templatePath: ./main.bicep
+templatePath: main.bicep
 
 parameters:
-    
-  - id: aiFoundryAgentId
-    name: AI Foundry Agent ID
-    description: AI Foundry agent ID for endpoint interaction
-    type: string
-    required: true
-    
-  - id: aiFoundryAgentName
-    name: AI Foundry Agent Name
-    description: AI Foundry agent name for endpoint interaction
-    type: string
-    required: true
-    
-  - id: aiFoundryEndpoint
-    name: AI Foundry Endpoint
-    description: AI Foundry endpoint URL for API calls
-    type: string
-    required: true    
   - id: applicationName
     name: Application Name
-    description: Name used for resource naming (e.g., aibox)
+    description: Name of the application used for resource naming
     type: string
     required: true
-    
-    
+
+  - id: aiFoundryEndpoint
+    name: AI Foundry Endpoint
+    description: The full endpoint URL for the AI Foundry service
+    type: string
+    required: true
+
+  - id: aiFoundryWorkspaceName
+    name: AI Foundry Workspace Name
+    description: The name of the AI Foundry workspace
+    type: string
+    required: true
+
+  - id: aiFoundryAgentId
+    name: AI Foundry Agent ID
+    description: The ID of the AI agent to use
+    type: string
+    required: true
+
+  - id: aiFoundryAgentName
+    name: AI Foundry Agent Name
+    description: The display name of the AI agent
+    type: string
+    required: true
 
   - id: logAnalyticsWorkspaceName
     name: Log Analytics Workspace Name
-    description: Name of existing Log Analytics Workspace for consolidated logging
+    description: Name of existing Log Analytics workspace for monitoring
     type: string
     required: true
-    
+
   - id: logAnalyticsResourceGroupName
     name: Log Analytics Resource Group
-    description: Resource Group containing the Log Analytics Workspace
+    description: Resource group containing the Log Analytics workspace
     type: string
     required: true
-    

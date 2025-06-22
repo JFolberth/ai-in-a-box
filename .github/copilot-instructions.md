@@ -178,6 +178,17 @@ cd src/backend
 - Use only `az deployment sub create` for orchestrator deployment at subscription scope
 - Use Azure CLI for all resource management operations
 - **⚠️ CRITICAL: ALWAYS use absolute paths** in all operations and commands
+
+#### 🚀 Existing Deployment Scripts - USE THESE, DON'T CREATE NEW ONES
+- **✅ Full Infrastructure**: `deploy.ps1` - Deploys complete infrastructure + applications (main deployment script)
+- **✅ Backend Code Only**: `deploy-backend-func-code.ps1` - Deploys Function App code to existing infrastructure  
+- **✅ Frontend Code Only**: `deploy-frontend-spa-code.ps1` - Deploys frontend code to existing Static Web App
+- **✅ Unix/Linux Support**: `deploy.sh` - Bash version of main deployment for cross-platform compatibility
+- **❌ NEVER create new deployment scripts** - Use the existing ones that are already tested and working
+- **❌ NEVER create empty script files** - If a deployment need isn't covered, enhance existing scripts
+- **❌ NEVER create duplicate scripts** - Check existing scripts first before creating new ones
+
+#### Command Examples:
 - **✅ Example**: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`
 - **❌ NEVER**: `az deployment sub create --template-file infra/main-orchestrator.bicep` (relative path)
 - **✅ PowerShell commands**: `& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1"`
@@ -221,6 +232,14 @@ cd src/backend
 - **Debugging**: Easier to troubleshoot when paths are explicit
 - **Consistency**: All team members and automation get same results
 - **Professional**: Industry best practice for production scripts
+
+#### Terminal Command Guidelines
+- **❌ NEVER include sleep/wait commands** in terminal operations
+- **❌ Forbidden**: `Start-Sleep`, `sleep`, `timeout`, `Wait-Job`, or any delay commands
+- **✅ Use proper task dependencies** and background processes instead
+- **✅ Let services start naturally** without artificial delays
+- **✅ Use health checks** to verify service readiness rather than arbitrary waits
+- **✅ Provide immediate feedback** to user without suggesting they wait
 
 ### Security
 - Never expose secrets in client-side code
@@ -282,6 +301,28 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 - No multi-endpoint switching logic in the frontend
 - Use environment variables for endpoint URL, deployment, and agent name
 
+## Project Structure Guidelines
+
+### ✅ Required Files and Folders
+- **Frontend**: `src/frontend/` - Vanilla JavaScript SPA with Vite
+- **Backend**: `src/backend/` - Single C# Function App project
+- **Infrastructure**: `infra/` - Bicep templates and parameters
+- **Tests**: `tests/` - Testing scripts and utilities
+- **Documentation**: `documentation/` - Project guides and setup instructions
+
+### ❌ Files and Structures to NEVER Create
+- **🚫 NO .sln files**: This is NOT a Visual Studio solution - it's a simple SPA + Function App
+- **🚫 NO complex .NET project structures**: Single Function App project only
+- **🚫 NO azd files**: azure.yaml, azd-env files, or azd configurations
+- **🚫 NO Docker files**: Unless specifically requested for containerization
+- **🚫 NO unnecessary scaffolding**: Keep structure simple and focused
+
+### 🎯 Project Type: Simple Web Application
+- This is a **JavaScript SPA** with a **C# Function App backend**
+- NOT a complex enterprise solution requiring .sln files
+- NOT a multi-project .NET solution
+- Focus on simplicity and deployment efficiency
+
 ## File Patterns
 
 - Source code: 
@@ -326,6 +367,7 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 - **🚫 No empty directories**: Remove empty directories unless they serve a structural purpose
 - **✅ Verify file necessity**: Before creating new files, ensure they're actually needed and will contain content
 - **⚠️ Check for duplicates**: Before creating files or folders, verify no duplicates exist with the same name in the project. If duplicates are detected, prompt for confirmation before proceeding
+- **🚫 Remove unnecessary project files**: Delete .sln files, unnecessary .csproj files, or other IDE-generated files that don't serve the simple SPA + Function App architecture
 
 ### 📝 GitHub Issue Creation Guidelines
 

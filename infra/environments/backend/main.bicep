@@ -6,14 +6,21 @@ targetScope = 'resourceGroup'
 // =========== PARAMETERS ===========
 @description('Name for the Azure Deployment Environment')
 param adeName string = ''
-@description('AI Foundry agent ID for endpoint interaction')
+
+@description('AI Foundry hub/project instance name')
+param aiFoundryInstanceName string
+
+@description('Resource Group containing the AI Foundry instance')
+param aiFoundryResourceGroupName string
+
+@description('AI Foundry endpoint URL')
+param aiFoundryEndpoint string
+
+@description('AI Foundry agent ID')
 param aiFoundryAgentId string
 
-@description('AI Foundry agent name for endpoint interaction')
-param aiFoundryAgentName string
-
-@description('AI Foundry endpoint URL for API calls')
-param aiFoundryEndpoint string
+@description('AI Foundry agent name')
+param aiFoundryAgentName string = 'CancerBot'
 
 @description('Application name used for resource naming')
 param applicationName string
@@ -30,7 +37,6 @@ param logAnalyticsWorkspaceName string
 
 @description('Resource Group containing the Log Analytics Workspace')
 param logAnalyticsResourceGroupName string
-
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -63,6 +69,12 @@ var typeInfrastructure = 'bk'
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(logAnalyticsResourceGroupName)
+}
+
+// Reference to existing AI Foundry hub/project instance
+resource aiFoundryInstance 'Microsoft.MachineLearningServices/workspaces@2024-04-01' existing = {
+  name: aiFoundryInstanceName
+  scope: resourceGroup(aiFoundryResourceGroupName)
 }
 
 // =========== APPLICATION INSIGHTS (AVM) ===========
@@ -223,8 +235,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
       }
     serverFarmResourceId: appServicePlan.id
     httpsOnly: true
-    publicNetworkAccess: 'Enabled'
-      // Site configuration for Function App
+    publicNetworkAccess: 'Enabled'      // Site configuration for Function App
     siteConfig: {
       alwaysOn: false
       http20Enabled: true
@@ -235,7 +246,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
       cors: {
         allowedOrigins: ['*']
         supportCredentials: false
-      }      
+      }
       appSettings: [
         {
           name: 'AzureWebJobsStorage__accountname'
@@ -248,6 +259,10 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
         {
           name: 'AI_FOUNDRY_ENDPOINT'
           value: aiFoundryEndpoint
+        }
+        {
+          name: 'AI_FOUNDRY_WORKSPACE_NAME'
+          value: aiFoundryInstanceName
         }
         {
           name: 'AI_FOUNDRY_AGENT_ID'
@@ -278,10 +293,19 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-// Note: Azure AI Developer role assignment is handled at the orchestrator level
-// due to cross-resource group scope requirements
+// Azure AI User role for Function App managed identity to access AI Foundry
+// Required for AI Foundry API access with least privilege
+// NOTE: This role assignment MUST be handled at the orchestrator level due to cross-resource group scope
+// The AI Foundry instance is in a different resource group, so we cannot assign roles to it from this template
+// The orchestrator template will handle this RBAC assignment using the exported principalId below
 
 // =========== OUTPUTS ===========
+
+@description('AI Foundry Instance Resource ID for RBAC assignments')
+output aiFoundryInstanceResourceId string = aiFoundryInstance.id
+
+@description('AI Foundry Instance Name')
+output aiFoundryInstanceName string = aiFoundryInstance.name
 
 @description('Application Insights Connection String')
 output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString

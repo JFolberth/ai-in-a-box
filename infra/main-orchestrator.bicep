@@ -130,15 +130,13 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
     environmentName: environmentName
     applicationName: applicationName
     location: location
-    resourceToken: resourceToken
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
     logAnalyticsResourceGroupName: logAnalyticsResourceGroupName
+    aiFoundryInstanceName: aiFoundryResourceName
+    aiFoundryResourceGroupName: aiFoundryResourceGroupName
     aiFoundryAgentId: aiFoundryAgentId
     aiFoundryEndpoint: aiFoundryEndpoint
     aiFoundryAgentName: aiFoundryAgentName
-    aiFoundrySubscriptionId: aiFoundrySubscriptionId
-    aiFoundryResourceGroup: aiFoundryResourceGroup
-    aiFoundryProjectName: aiFoundryProjectName
     tags: union(tags, {
       Component: 'Backend'
     })
