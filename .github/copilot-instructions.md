@@ -138,10 +138,12 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
   - **Example Good Practice**: `output rgName string = myResourceGroup.name` (not `myResourceGroupName`)
 - **🔒 RBAC in Bicep**: 
   - Always use least privilege roles (Azure AI Developer, not Contributor)
-  - Scope assignments to specific resources, not resource groups
+  - Scope assignments to specific resources, not resource groups when possible
+  - **⚠️ CRITICAL**: NEVER use literal strings for role assignment names - always use `guid()` to avoid conflicts
+  - Use deterministic GUID generation: `guid(resourceGroup().id, resourceName, roleDefinitionId)`
   - Document each role assignment with comments explaining necessity
   - Use resource IDs for scoping: `scope: aiFoundryResource.id`
-  - Never use subscription or resource group scope unless absolutely required
+  - Resource group scope acceptable when resource-level scoping creates circular dependencies
 
 ### Deployment Guidelines
 - **NEVER use azd (Azure Developer CLI)** - this project is azd-free by design

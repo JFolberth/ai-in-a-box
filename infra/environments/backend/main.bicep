@@ -129,9 +129,7 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
           }
         }
       ]
-    }
-    
-    // Network access rules
+    }    // Network access rules
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -265,6 +263,20 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
 }
 
 // =========== RBAC ASSIGNMENTS ===========
+
+// Storage Blob Data Contributor role for Function App managed identity
+// Required for Flex Consumption model to access storage account
+// Note: NEVER use literal strings for role assignment names - always use guid() to avoid conflicts
+resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, resourceNames.functionApp, resourceNames.functionStorageAccount, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    principalType: 'ServicePrincipal'
+    description: 'Grants Storage Blob Data Contributor access to Function App managed identity for Flex Consumption model'
+  }
+}
 
 // Note: Azure AI Developer role assignment is handled at the orchestrator level
 // due to cross-resource group scope requirements
