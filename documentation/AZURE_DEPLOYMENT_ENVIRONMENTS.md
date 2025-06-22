@@ -307,7 +307,132 @@ az deployment create \
 4. Fill in required parameters
 5. Deploy the environment
 
-## 📚 References
+## � Post-Deployment: Code Deployment Workflow
+
+After deploying infrastructure through ADE, use the simplified deployment scripts to deploy application code.
+
+### 🔍 Step 1: Discover Resource Names
+
+ADE creates resources with specific naming patterns. You'll need to identify the exact names for deployment:
+
+#### Method 1: ADE Portal
+1. Go to your deployed ADE environment
+2. Click on "Resources" tab
+3. Note the Function App and Static Web App names
+4. Note the resource group names
+
+#### Method 2: Azure CLI Discovery
+```powershell
+# List all Function Apps in subscription (filter by naming pattern)
+az functionapp list --query "[?contains(name, 'func-ai-foundry-spa-backend')].{name:name,resourceGroup:resourceGroup,state:state}" --output table
+
+# List all Static Web Apps in subscription  
+az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup,defaultHostname:defaultHostname}" --output table
+
+# If you know the resource group pattern
+az functionapp list --resource-group "rg-ai-foundry-spa-backend-*" --query "[].{name:name,state:state}" --output table
+az staticwebapp list --resource-group "rg-ai-foundry-spa-frontend-*" --query "[].{name:name,defaultHostname:defaultHostname}" --output table
+```
+
+### 🎯 Step 2: Deploy Backend Code
+
+```powershell
+# Deploy backend Function App code
+./deploy-scripts/deploy-backend-func-code.ps1 `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+```
+
+**Script automatically handles:**
+- ✅ Azure CLI authentication validation
+- ✅ Function App existence verification
+- ✅ .NET Function App build and package creation
+- ✅ Code deployment to Azure Function App
+- ✅ Health endpoint testing
+- ✅ Deployment summary with live URLs
+
+### 🌐 Step 3: Deploy Frontend Code
+
+```powershell
+# Deploy frontend to Static Web App
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
+
+# Optional: Include backend URL for environment configuration
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+```
+
+**Script automatically handles:**
+- ✅ Azure CLI authentication validation
+- ✅ Static Web App existence verification
+- ✅ DEV environment configuration with AI Foundry settings
+- ✅ Frontend build (npm install + build)
+- ✅ SWA CLI installation and deployment
+- ✅ Deployment summary with live URLs
+
+### 🔗 Step 4: Verification
+
+```powershell
+# Test the deployed Function App endpoints
+./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+
+# Access the deployed frontend
+# URL provided in deployment script output, typically:
+# https://<static-web-app-name>.azurestaticapps.net
+```
+
+### 🔄 Typical ADE Workflow
+
+```mermaid
+graph TD
+    A[Deploy Infrastructure via ADE Portal] --> B[Discover Resource Names]
+    B --> C[Deploy Backend Code]
+    C --> D[Deploy Frontend Code]
+    D --> E[Test Deployment]
+    E --> F[Application Ready]
+    
+    F --> G[Code Changes]
+    G --> H[Redeploy Code Only]
+    H --> E
+```
+
+### ⚠️ Important Notes for ADE Workflows
+
+1. **No Auto-Detection**: Deployment scripts require explicit resource names - they don't auto-detect ADE resources
+2. **Environment-Specific**: Each ADE environment creates unique resource names
+3. **Code-Only Focus**: Scripts are designed for code deployment after infrastructure exists
+4. **DEV Configuration**: Frontend script includes hardcoded DEV environment AI Foundry settings
+5. **Repeatable**: Code deployments can be run multiple times for updates
+
+### 📝 Example: Complete ADE to Running App
+
+```powershell
+# 1. After ADE deployment, discover resources
+az functionapp list --query "[?contains(name, 'func-ai-foundry-spa-backend')].{name:name,resourceGroup:resourceGroup}" --output table
+az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup}" --output table
+
+# 2. Deploy backend (replace with actual names from step 1)
+./deploy-scripts/deploy-backend-func-code.ps1 `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+
+# 3. Deploy frontend (replace with actual names from step 1)  
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+
+# 4. Test the deployment
+./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+```
+
+Your AI Foundry SPA is now live! 🎉
+
+## �📚 References
 
 - [Azure Deployment Environments Documentation](https://learn.microsoft.com/en-us/azure/deployment-environments/)
 - [Environment.yaml Schema Reference](https://learn.microsoft.com/en-us/azure/deployment-environments/concept-environment-yaml)
@@ -317,6 +442,6 @@ az deployment create \
 ## 🎯 Next Steps
 
 1. **Backend Environment**: Create similar environment.yaml for backend infrastructure
-2. **Testing**: Validate deployment through ADE portal
-3. **Documentation**: Update project documentation with ADE workflows
+2. **Testing**: Validate deployment through ADE portal  
+3. **CI/CD Integration**: Automate code deployment in pipelines
 4. **Governance**: Implement environment policies and controls

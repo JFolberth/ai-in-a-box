@@ -244,10 +244,6 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
           value: functionStorageAccount.outputs.name
         }
         {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet-isolated'
-        }
-        {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: applicationInsights.outputs.connectionString
         }
