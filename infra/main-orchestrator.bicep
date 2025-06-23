@@ -10,7 +10,7 @@ targetScope = 'subscription'
 param aiFoundryAgentId string = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
 
 @description('AI Foundry agent name for endpoint interaction')
-param aiFoundryAgentName string = 'CancerBot'
+param aiFoundryAgentName string = 'AI in A Box'
 
 @description('AI Foundry endpoint URL for API calls')
 param aiFoundryEndpoint string = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'

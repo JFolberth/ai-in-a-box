@@ -227,7 +227,7 @@ class ModernChatApp {
             <i class="fas fa-comments"></i>
           </div>
           <h2>Welcome to AI Foundry Chat</h2>
-          <p>Start a conversation with the CancerBot AI Assistant. Ask questions about cancer research, treatment options, or general health topics.</p>
+          <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
         </div>
       `
       this.saveConversationHistory()
@@ -250,7 +250,7 @@ class ModernChatApp {
     
     this.conversationHistory.forEach((message, index) => {
       const role = message.role === 'user' ? 'You' : 
-                   message.role === 'assistant' ? 'CancerBot' : 'System'
+                   message.role === 'assistant' ? 'AI in A Box' : 'System'
       exportText += `[${message.timestamp}] ${role}:\n${message.content}\n\n`
     })
     

@@ -2,7 +2,7 @@ using 'main-orchestrator.bicep'
 
 // AI Foundry configuration (single endpoint) - Synced with local.settings.json
 param aiFoundryAgentId = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
-param aiFoundryAgentName = 'CancerBot'
+param aiFoundryAgentName = 'AI in A Box'
 param aiFoundryEndpoint = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
 param aiFoundryProjectName = 's'
 param aiFoundryResourceGroup = 'rg-ai-foundry-dev'
@@ -23,7 +23,7 @@ param resourceToken = '001'
 
 // Resource tags (alphabetized by key)
 param tags = {
-  AIFoundryAgent: 'CancerBot'
+  AIFoundryAgent: 'AI in A Box'
   Application: 'ai-foundry-spa'
   Architecture: 'Multi-ResourceGroup'
   DeployedBy: 'Azure-CLI'

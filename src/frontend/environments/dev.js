@@ -11,7 +11,7 @@ export const environment = {  // Environment identifier
     // Using Azure Function App as proxy
     useBackend: true,
     backendUrl: 'https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api',
-    agentName: 'CancerBot',
+    agentName: 'AI in A Box',
     agentId: 'asst_dH7M0nbmdRblhSQO8nIGIYF4',
     projectUrl: 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject',
     endpoint: 'https://ai-foundry-dev-eus.azureml.net',
