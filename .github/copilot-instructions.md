@@ -152,8 +152,17 @@ cd src/backend
   - **❌ NO quoted strings**: Use unquoted strings for parameter IDs and simple values
   - **❌ NO defaults on required parameters**: Parameters with `required: true` MUST NOT have `default` values
   - **✅ Relative templatePath**: Use relative paths from catalog root (e.g., `../../modules/frontend.bicep`)
-  - **📋 Validation**: Always validate YAML syntax and schema compliance before deployment
-  - **⚠️ Parameter Rules**: `required: true` means user MUST provide value; `required: false` allows defaults
+  - **📋 Validation**: Always validate YAML syntax and schema compliance before deployment  - **⚠️ Parameter Rules**: `required: true` means user MUST provide value; `required: false` allows defaults
+- **🔄 Parameter Synchronization - MANDATORY**:
+  - **⚠️ CRITICAL**: When modifying Bicep parameters, ALWAYS update corresponding environment.yaml files
+  - **🔍 Check ALL environment.yaml files** in `infra/environments/*/environment.yaml` for parameter changes
+  - **📋 Parameter mapping**: Bicep `@description` maps to YAML `description`, Bicep type maps to YAML `type`
+  - **✅ Required sync**: Add, rename, or remove parameters in BOTH Bicep template AND environment.yaml
+  - **✅ Type consistency**: Ensure parameter types match between Bicep and YAML (string, boolean, integer, etc.)
+  - **✅ Default values**: Remove defaults from environment.yaml when Bicep parameter becomes required
+  - **❌ NEVER modify only Bicep**: Always check if environment.yaml needs updates too
+  - **📝 Validation**: Test both Bicep deployment and ADE deployment after parameter changes
+  - **🎯 Files to check**: `infra/environments/frontend/environment.yaml`, `infra/environments/backend/environment.yaml`
 - **🎯 Resource References vs Names - CRITICAL**:
   - **✅ ALWAYS use resource references**: `scope: myResourceGroup` (direct resource reference)
   - **❌ NEVER use resource names**: `scope: resourceGroup(myResourceGroupName)` (string-based lookup)
@@ -175,6 +184,7 @@ cd src/backend
 ### Deployment Guidelines
 - **NEVER use azd (Azure Developer CLI)** - this project is azd-free by design
 - **ALWAYS test locally before deploying to Azure**
+- **🔄 ALWAYS verify parameter synchronization** between Bicep templates and environment.yaml files before deployment
 - Use only `az deployment sub create` for orchestrator deployment at subscription scope
 - Use Azure CLI for all resource management operations
 - **⚠️ CRITICAL: ALWAYS use absolute paths** in all operations and commands
