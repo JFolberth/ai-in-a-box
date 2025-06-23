@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../manifest.schema.json
 
-name: AI_Foundry _SPA_Backend
+name: AI_Foundry_SPA_Backend
 summary: Backend Function App for AI Foundry SPA with proxy functionality
 description: |
   Deploys a serverless Function App that acts as a proxy between the frontend SPA 
