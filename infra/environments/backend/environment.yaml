@@ -33,8 +33,6 @@ parameters:
     description: The name of the AI Foundry workspace's Resource Group
     type: string
     required: true
-    aiFoundryResourceGroupName
-
 
   - id: aiFoundryAgentId
     name: AI Foundry Agent ID
