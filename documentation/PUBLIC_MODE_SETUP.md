@@ -12,7 +12,7 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 
 ### **2. Real AI Foundry Integration**
 - ✅ **Backend Function App** with `Azure.AI.Agents.Persistent` SDK
-- ✅ **CancerBot agent** with real AI responses
+- ✅ **AI in A Box agent** with real AI responses
 - ✅ **Thread management** with persistent conversation history
 - ✅ **Run status polling** with robust completion detection
 - ✅ **Message retrieval** with proper response filtering
@@ -39,7 +39,7 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 ## 🔧 **Key Features**
 
 ### **Real AI Integration**
-- Direct connection to AI Foundry CancerBot agent
+- Direct connection to AI Foundry AI in A Box agent
 - Contextual conversation threading
 - Professional AI responses with medical disclaimers
 - Real-time response streaming

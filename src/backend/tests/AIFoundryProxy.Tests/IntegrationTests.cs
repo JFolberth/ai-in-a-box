@@ -147,7 +147,7 @@ namespace AIFoundryProxy.Tests
             {
                 ThreadId = chatRequest.ThreadId,
                 Message = responseMessage,
-                AgentName = "CancerBot",
+                AgentName = "AI in A Box",
                 Timestamp = DateTime.UtcNow
             };
 
@@ -156,7 +156,7 @@ namespace AIFoundryProxy.Tests
             chatResponse.ThreadId.Should().Be(chatRequest.ThreadId);
             chatResponse.Message.Should().NotBeNullOrEmpty();
             chatResponse.Message.Should().Contain(expectedKeyword);
-            chatResponse.AgentName.Should().Be("CancerBot");
+            chatResponse.AgentName.Should().Be("AI in A Box");
             chatResponse.Error.Should().BeNull();
             chatResponse.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
 

@@ -7,7 +7,7 @@
 #### Azure Setup
 1. **Azure Subscription**: Ensure you have an active Azure subscription
 2. **Azure CLI**: Install from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
-3. **AI Foundry Resource**: Ensure you have access to an AI Foundry resource with a CancerBot agent
+3. **AI Foundry Resource**: Ensure you have access to an AI Foundry resource with an AI in A Box agent
 
 #### Development Tools
 1. **Node.js 20+**: For frontend development
@@ -30,7 +30,7 @@
    VITE_PUBLIC_MODE=true
 
    # AI Foundry Configuration (Single Instance)
-   VITE_AI_FOUNDRY_AGENT_NAME=CancerBot
+   VITE_AI_FOUNDRY_AGENT_NAME=AI in A Box
    VITE_AI_FOUNDRY_ENDPOINT=https://your-ai-foundry-endpoint.azureml.net
    VITE_AI_FOUNDRY_DEPLOYMENT=gpt-4
    ```

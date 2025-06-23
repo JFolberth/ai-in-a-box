@@ -175,7 +175,7 @@ namespace AIFoundryProxy.Tests
             // Assert
             result.Should().NotBeNullOrEmpty();
             result.Should().Contain("Thank you for your question");
-            result.Should().Contain("CancerBot");
+            result.Should().Contain("AI in A Box");
             result.Should().Contain(message);
         }
 

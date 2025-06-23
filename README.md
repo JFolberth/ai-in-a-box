@@ -23,7 +23,7 @@ cd ../backend && func start
 
 - **Frontend**: Vanilla JavaScript SPA hosted on Azure Static Web Apps
 - **Backend**: C# Azure Function App with system-assigned managed identity  
-- **AI Integration**: CancerBot agent through AI Foundry with least-privilege access
+- **AI Integration**: AI in A Box agent through AI Foundry with least-privilege access
 - **Infrastructure**: Azure Verified Modules (AVM) Bicep templates
 - **Monitoring**: Application Insights with consolidated Log Analytics
 

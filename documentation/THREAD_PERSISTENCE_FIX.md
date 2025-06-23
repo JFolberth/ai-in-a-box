@@ -20,7 +20,7 @@ Thread persistence issue has been completely resolved with **real AI Foundry int
 
 ### **3. Real AI Foundry Patterns**
 - ✅ **Agent, Thread, Run, Message pattern**: Proper AI Foundry SDK usage
-- ✅ **CancerBot agent**: Real AI agent with contextual responses
+- ✅ **AI in A Box agent**: Real AI agent with contextual responses
 - ✅ **Run status polling**: Waits for completion before returning response
 - ✅ **Error handling**: Robust retry mechanisms and timeouts
 
@@ -73,7 +73,7 @@ POST /api/sendMessage { message: "What about side effects?", threadId: "thread_x
 
 ## 🔍 **Console Output Example**
 ```
-AI Foundry CancerBot client initialized
+AI Foundry AI in A Box client initialized
 Backend Mode: true
 Public Mode: true
 Backend URL: http://localhost:7071/api

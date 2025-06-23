@@ -12,7 +12,7 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
 - **Hosting**: Azure Storage Static Website
 - **Deployment**: Azure CLI with Bicep ONLY (no azd/Azure Developer CLI dependencies)
 - **Development**: DevContainer and DevBox ready with full Bicep support
-- **AI Integration**: Single CancerBot agent endpoint (not user-switchable)
+- **AI Integration**: Single AI in A Box agent endpoint (not user-switchable)
 - **Monitoring**: Application Insights with consolidated Log Analytics Workspace
 - **Architecture**: Multi-resource group deployment (frontend and backend separated)
 
@@ -208,7 +208,7 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 
 ### AI Foundry Integration
 - Application connects to a single AI Foundry endpoint (not user-switchable)
-- CancerBot agent is the designated AI assistant
+- AI in A Box agent is the designated AI assistant
 - Endpoint configuration set via parameters and environment variables
 - No multi-endpoint switching logic in the frontend
 - Use environment variables for endpoint URL, deployment, and agent name
