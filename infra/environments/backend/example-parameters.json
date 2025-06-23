@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "aiFoundryAgentId": {
+      "value": "asst_example_agent_id"
+    },
+    "aiFoundryAgentName": {
+      "value": "CancerBot"
+    },
+    "aiFoundryEndpoint": {
+      "value": "https://example-ai-foundry.services.ai.azure.com/api/projects/exampleProject"
+    },
+    "aiFoundryProjectName": {
+      "value": "example-ai-foundry"
+    },
+    "aiFoundryResourceGroup": {
+      "value": "rg-ai-foundry-validation"
+    },
+    "aiFoundrySubscriptionId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "applicationName": {
+      "value": "ai-foundry-spa"
+    },
+    "environmentName": {
+      "value": "validation"
+    },
+    "location": {
+      "value": "eastus2"
+    },
+    "logAnalyticsWorkspaceName": {
+      "value": "la-logging-validation-eus2"
+    },
+    "logAnalyticsResourceGroupName": {
+      "value": "rg-logging-validation-eus2"
+    },
+    "resourceToken": {
+      "value": "val"
+    },
+    "tags": {
+      "value": {
+        "Environment": "validation",
+        "Application": "ai-foundry-spa",
+        "Purpose": "CI-Validation",
+        "AIFoundryAgent": "CancerBot"
+      }
+    }
+  }
+}
