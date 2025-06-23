@@ -22,6 +22,12 @@ parameters:
     type: string
     required: true
 
+  - id: aiFoundryInstanceName
+    name: AI Foundry Workspace Name
+    description: The name of the AI Foundry workspace
+    type: string
+    required: true
+
 
   - id: aiFoundryAgentId
     name: AI Foundry Agent ID
