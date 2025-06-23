@@ -293,11 +293,20 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-// Azure AI User role for Function App managed identity to access AI Foundry
+// Azure AI Developer role for Function App managed identity to access AI Foundry
 // Required for AI Foundry API access with least privilege
-// NOTE: This role assignment MUST be handled at the orchestrator level due to cross-resource group scope
-// The AI Foundry instance is in a different resource group, so we cannot assign roles to it from this template
-// The orchestrator template will handle this RBAC assignment using the exported principalId below
+// Using a separate module deployment to handle cross-resource group RBAC assignment
+// NOTE: The deploying identity must have User Access Administrator or Owner role on the AI Foundry resource group
+module functionAppAiFoundryRoleAssignment '../../shared/rbac.bicep' = {
+  name: 'functionApp-aiFoundry-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+  scope: resourceGroup(aiFoundryResourceGroupName)
+  params: {
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI Developer
+    targetResourceId: aiFoundryInstance.id
+    principalType: 'ServicePrincipal'
+  }
+}
 
 // =========== OUTPUTS ===========
 
