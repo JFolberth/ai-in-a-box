@@ -297,7 +297,7 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
 // Required for AI Foundry API access with least privilege
 // Using a separate module deployment to handle cross-resource group RBAC assignment
 // NOTE: The deploying identity must have User Access Administrator or Owner role on the AI Foundry resource group
-module functionAppAiFoundryRoleAssignment '../../shared/rbac.bicep' = {
+module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
   name: 'functionApp-aiFoundry-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
