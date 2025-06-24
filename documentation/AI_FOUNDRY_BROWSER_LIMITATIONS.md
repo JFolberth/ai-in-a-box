@@ -22,7 +22,7 @@ The AI Foundry SPA browser limitations have been **completely resolved** with a 
 
 ### 2. Real AI Foundry Integration
 The solution now provides:
-- **Real CancerBot agent**: Direct integration with actual AI Foundry agent
+- **Real AI in A Box agent**: Direct integration with actual AI Foundry agent
 - **Persistent conversation threads**: True thread management with AI Foundry
 - **Contextual responses**: Real AI responses with conversation memory
 - **Professional AI quality**: Genuine AI Foundry model responses
@@ -56,7 +56,7 @@ var run = await aiProjectClient.CreateRunAsync(thread.Id, agent.Id);
 The backend proxy provides:
 - **Real AI responses**: Authentic AI Foundry model outputs
 - **Contextual awareness**: True conversation memory across messages  
-- **Specialized knowledge**: CancerBot agent expertise
+- **Specialized knowledge**: AI in A Box agent expertise
 - **Professional quality**: Production-ready AI responses
 - **Unique responses**: Each message gets a distinct, contextual reply
 

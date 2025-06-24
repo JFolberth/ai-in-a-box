@@ -34,10 +34,10 @@ namespace AIFoundryProxy
             _agentId = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_ID") 
                 ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4"; // Default CancerBot agent
             _agentName = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME") 
-                ?? "CancerBot"; // Default agent name
+                ?? "AI in a Box"; // Default agent name
             
             var workspaceName = Environment.GetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME") ?? "Unknown";
-            
+          
             _logger.LogInformation($"🔗 AI Foundry Connection Details:");
             _logger.LogInformation($"   📍 Project Endpoint: {_projectEndpoint}");
             _logger.LogInformation($"   🏢 Workspace: {workspaceName}");
@@ -670,7 +670,7 @@ namespace AIFoundryProxy
             
             // Default response
             _logger.LogInformation("🎯 Generated contextual response");
-            return $"Thank you for your question about '{message}'. As CancerBot, I'm designed to provide helpful cancer-related information. Could you provide more context so I can give you the most relevant response?";
+            return $"Thank you for your question about '{message}'. As AI in A Box, I'm designed to provide helpful information. Could you provide more context so I can give you the most relevant response?";
         }
 
         /// <summary>

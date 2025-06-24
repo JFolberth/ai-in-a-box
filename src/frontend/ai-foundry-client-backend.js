@@ -3,7 +3,7 @@ import axios from 'axios'
 
 export class AIFoundryClient {
   constructor() {
-    this.agentName = import.meta.env.VITE_AI_FOUNDRY_AGENT_NAME || 'CancerBot'
+    this.agentName = import.meta.env.VITE_AI_FOUNDRY_AGENT_NAME || 'AI in A Box'
     this.backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:7071/api'
     
     // Thread persistence for conversation continuity
@@ -167,7 +167,7 @@ export class AIFoundryClient {
     return this.currentThreadId
   }
 
-  // Enhanced AI Foundry simulation with comprehensive cancer care responses
+  // Enhanced AI Foundry simulation with comprehensive responses
   async simulateEnhancedAIFoundryConversation(userMessage) {
     console.log(`Using enhanced AI simulation for: ${this.agentName}`)
     console.log(`Thread: ${this.currentThreadId}`)
@@ -277,7 +277,7 @@ The best approach is always personalized to your specific situation. Your oncolo
 What type of cancer are you dealing with? This would help me provide more specific information about treatment options.`
     }
 
-    // Additional comprehensive responses for other cancer care topics...
+    // Additional comprehensive responses for other topics...
     // [Previous enhanced responses remain the same]
 
     // Follow-up awareness for better conversation flow

@@ -8,7 +8,7 @@ export const sampleMessages = [
   },
   {
     role: 'assistant',
-    content: 'Hello! I\'m here to help with cancer-related questions. What would you like to know?',
+    content: 'Hello! I\'m here to help with your questions. What would you like to know?',
     timestamp: '10:30:15 AM'
   },
   {

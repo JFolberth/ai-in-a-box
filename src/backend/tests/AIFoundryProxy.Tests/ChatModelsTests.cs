@@ -49,7 +49,7 @@ namespace AIFoundryProxy.Tests
             // Arrange
             var request = new ChatRequest
             {
-                Message = "Hello, CancerBot!",
+                Message = "Hello, AI in A Box!",
                 ThreadId = "thread-456"
             };
 
@@ -58,7 +58,7 @@ namespace AIFoundryProxy.Tests
             var deserialized = JsonSerializer.Deserialize<ChatRequest>(json);
 
             // Assert
-            json.Should().Contain("Hello, CancerBot!");
+            json.Should().Contain("Hello, AI in A Box!");
             json.Should().Contain("thread-456");
             deserialized.Should().NotBeNull();
             deserialized!.Message.Should().Be(request.Message);
@@ -119,7 +119,7 @@ namespace AIFoundryProxy.Tests
         {
             // Arrange
             var message = "AI response";
-            var agentName = "CancerBot";
+            var agentName = "AI in A Box";
             var threadId = "thread-789";
             var error = "Test error";
             var timestamp = DateTime.UtcNow;
@@ -149,7 +149,7 @@ namespace AIFoundryProxy.Tests
             var response = new ChatResponse
             {
                 Message = "AI response message",
-                AgentName = "CancerBot",
+                AgentName = "AI in A Box",
                 ThreadId = "thread-999",
                 Timestamp = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc)
             };
@@ -160,7 +160,7 @@ namespace AIFoundryProxy.Tests
 
             // Assert
             json.Should().Contain("AI response message");
-            json.Should().Contain("CancerBot");
+            json.Should().Contain("AI in A Box");
             json.Should().Contain("thread-999");
             deserialized.Should().NotBeNull();
             deserialized!.Message.Should().Be(response.Message);
@@ -176,7 +176,7 @@ namespace AIFoundryProxy.Tests
             var response = new ChatResponse
             {
                 Error = "Something went wrong",
-                AgentName = "CancerBot",
+                AgentName = "AI in A Box",
                 Timestamp = DateTime.UtcNow
             };
 
@@ -198,7 +198,7 @@ namespace AIFoundryProxy.Tests
             var response = new ChatResponse
             {
                 Message = "Successful response",
-                AgentName = "CancerBot",
+                AgentName = "AI in A Box",
                 ThreadId = "thread-123",
                 Timestamp = DateTime.UtcNow
             };

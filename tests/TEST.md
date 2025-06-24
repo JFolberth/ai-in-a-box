@@ -85,7 +85,7 @@ This directory contains comprehensive test scripts to verify Azure Function App 
 
 ### 🔄 **Real AI Integration Testing**
 The endpoint tests verify:
-- Real AI Foundry CancerBot agent responses
+- Real AI Foundry AI in A Box agent responses
 - Proper conversation threading with context retention
 - Robust polling mechanisms for run completion
 - Message filtering to return only latest assistant responses

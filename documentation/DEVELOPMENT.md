@@ -296,7 +296,7 @@ export const environment = {
   production: false,
   apiBaseUrl: 'http://localhost:7071',
   aiFoundryEndpoint: 'your-ai-foundry-endpoint',
-  agentName: 'CancerBot'
+  agentName: 'AI in A Box'
 };
 ```
 
@@ -311,7 +311,7 @@ Update `src/backend/local.settings.json`:
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "AI_FOUNDRY_ENDPOINT": "your-ai-foundry-endpoint-url",
     "AI_FOUNDRY_DEPLOYMENT": "your-deployment-name",
-    "AI_FOUNDRY_AGENT_NAME": "CancerBot"
+    "AI_FOUNDRY_AGENT_NAME": "AI in A Box"
   }
 }
 ```
