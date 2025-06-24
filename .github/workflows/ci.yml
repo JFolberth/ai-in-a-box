@@ -300,34 +300,24 @@ jobs:
         echo "  - Static Web App: $STATIC_WEB_APP"
         echo "  - URL: https://$STATIC_WEB_APP_URL"
     
-    - name: Get Static Web App Deployment Token
-      id: get-token
+    - name: Install SWA CLI
       run: |
-        echo "🔑 Getting deployment token for Static Web App..."
-        
-        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
-          --name "${{ env.STATIC_WEB_APP_NAME }}" \
-          --resource-group "${{ env.RESOURCE_GROUP_NAME }}" \
-          --query "properties.apiKey" \
-          --output tsv)
-        
-        if [ -z "$DEPLOYMENT_TOKEN" ]; then
-          echo "❌ Failed to get deployment token for Static Web App!"
-          exit 1
-        fi
-        
-        echo "✅ Deployment token retrieved successfully"
-        echo "DEPLOYMENT_TOKEN=$DEPLOYMENT_TOKEN" >> $GITHUB_ENV
+        echo "📦 Installing Azure Static Web Apps CLI..."
+        npm install -g @azure/static-web-apps-cli
     
-    - name: Deploy Frontend Code to Static Web App
-      uses: Azure/static-web-apps-deploy@v1
-      with:
-        azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        action: "upload"
-        app_location: "./src/frontend/dist"
-        skip_app_build: true
-        skip_api_build: true
+    - name: Deploy Frontend Code to Static Web App using RBAC
+      run: |
+        echo "🚀 Deploying frontend code using SWA CLI with RBAC..."
+        
+        # Deploy using SWA CLI with Azure CLI authentication
+        # The SWA CLI will use the Azure credentials from the az login step
+        swa deploy \
+          --app-location "./src/frontend/dist" \
+          --resource-group "${{ env.RESOURCE_GROUP_NAME }}" \
+          --app-name "${{ env.STATIC_WEB_APP_NAME }}" \
+          --env "default"
+        
+        echo "✅ Frontend code deployed successfully using RBAC!"
     
     - name: Deployment Success
       run: |
