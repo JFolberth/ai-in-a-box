@@ -84,7 +84,7 @@ jobs:
         # Create ADE environment
         echo "📦 Deploying ADE environment: $ADE_ENV_NAME"
         az devcenter dev environment create \
-          --dev-center-name "devecnter-eus-dev" \
+          --dev-center-name "devcenter-eus-dev" \
           --project-name "ai-foundry" \
           --catalog-name "ai-in-abox-infrastructure" \
           --environment-definition-name "AI_Foundry_SPA_Frontend" \
