@@ -39,11 +39,23 @@ param environmentName string = 'dev'
 @description('Azure region for resource deployment')
 param location string = 'eastus'
 
+@description('Create new Log Analytics workspace or use existing')
+param createLogAnalyticsWorkspace bool = false
+
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string = 'la-logging-dev-eus'
 
 @description('Resource Group containing the Log Analytics Workspace')
 param logAnalyticsResourceGroupName string = 'rg-logging-dev-eus'
+
+@description('Log Analytics workspace pricing tier')
+@allowed(['Free', 'Standard', 'Premium', 'PerNode', 'PerGB2018', 'Standalone'])
+param logAnalyticsWorkspacePricingTier string = 'PerGB2018'
+
+@description('Log Analytics workspace data retention period in days')
+@minValue(30)
+@maxValue(730)
+param logAnalyticsWorkspaceRetentionInDays int = 90
 
 @description('Resource token for unique naming')
 param resourceToken string
@@ -84,6 +96,30 @@ module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' =
     tags: union(tags, {
       Component: 'Backend'
       ResourceType: 'FunctionApp'
+    })
+  }
+}
+
+// =========== LOG ANALYTICS WORKSPACE (OPTIONAL) ===========
+
+// Reference to existing Log Analytics workspace resource group
+resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
+  name: logAnalyticsResourceGroupName
+  scope: subscription()
+}
+
+// Conditionally create Log Analytics workspace using our module
+module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyticsWorkspace) {
+  name: 'shared-log-analytics'
+  scope: logAnalyticsResourceGroup
+  params: {
+    workspaceName: logAnalyticsWorkspaceName
+    location: location
+    pricingTier: logAnalyticsWorkspacePricingTier
+    retentionInDays: logAnalyticsWorkspaceRetentionInDays
+    tags: union(tags, {
+      Component: 'Shared-LogAnalytics'
+      Purpose: 'CentralizedLogging'
     })
   }
 }
