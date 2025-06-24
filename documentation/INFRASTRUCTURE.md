@@ -255,7 +255,7 @@ The project includes a dedicated `infra/modules/log-analytics.bicep` module usin
 - **Configurable retention**: 30-730 day retention period (default: 30 days in environments, 90 days in orchestrator)
 - **Flexible pricing**: Supports all Azure Log Analytics pricing tiers (default: PerGB2018)
 - **Security options**: Configurable public network access for ingestion and query
-- **Comprehensive outputs**: Provides all necessary details for Application Insights integration
+- **Secure outputs**: Provides workspace ID and connection details for Application Insights integration (sensitive keys are not exposed)
 
 **Usage Patterns:**
 ```bicep
@@ -297,6 +297,12 @@ az deployment sub create \
   --parameters infra/dev-orchestrator.parameters.bicepparam \
   --parameters createLogAnalyticsWorkspace=true
 ```
+
+**Security Best Practices:**
+- **No shared keys**: The module does not expose Log Analytics shared keys in outputs for security
+- **Managed identity**: Application Insights uses workspace resource ID for secure authentication
+- **Connection strings**: Prefer Application Insights connection strings over direct Log Analytics access
+- **RBAC-based access**: Use Azure RBAC for Log Analytics workspace access control
 
 #### KQL Queries for Common Scenarios
 ```kusto

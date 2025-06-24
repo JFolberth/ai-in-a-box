@@ -62,10 +62,6 @@ output workspaceName string = logAnalyticsWorkspace.outputs.name
 @description('Customer ID (workspace ID) for the Log Analytics workspace')
 output customerId string = logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
 
-@description('Primary shared key for the Log Analytics workspace')
-@secure()
-output primarySharedKey string = logAnalyticsWorkspace.outputs.primarySharedKey
-
 @description('Resource group name containing the workspace')
 output resourceGroupName string = resourceGroup().name
 
