@@ -285,9 +285,6 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
 
 **Testing the Module:**
 ```bash
-# Validate module structure
-./validate-log-analytics-module.sh
-
 # Test with existing workspace (default)
 az deployment sub create \
   --template-file infra/main-orchestrator.bicep \
