@@ -27,6 +27,28 @@ cd ../backend && func start
 - **Infrastructure**: Azure Verified Modules (AVM) Bicep templates
 - **Monitoring**: Application Insights with consolidated Log Analytics
 
+## 🔄 CI/CD Pipeline
+
+Automated build and validation pipeline ensures code quality:
+
+- **Frontend Build**: Node.js build, testing, and artifact generation
+- **Backend Build**: .NET build, testing, and publish artifacts  
+- **Bicep Validation**: Infrastructure what-if validation using Azure CLI
+- **Parallel Execution**: All validations run simultaneously for fast feedback
+
+### Bicep Infrastructure Validation
+
+The CI pipeline includes comprehensive Bicep template validation:
+
+```bash
+# Validates all infrastructure templates using what-if commands
+- Main orchestrator (subscription scope)
+- Backend environment (resource group scope) 
+- Frontend environment (resource group scope)
+```
+
+**Setup Requirements**: Configure `AZURE_CREDENTIALS` secret for Azure authentication. See [Bicep Validation Guide](.github/BICEP_VALIDATION.md) for details.
+
 ## 📚 Documentation
 
 | Guide | Description |
