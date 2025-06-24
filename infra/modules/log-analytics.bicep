@@ -1,6 +1,7 @@
 // Log Analytics Workspace Module
 // This module creates a Log Analytics workspace using Azure Verified Modules (AVM)
 // Provides centralized logging for both frontend and backend Application Insights
+// Uses simplified parameter set for maximum compatibility with AVM versions
 
 targetScope = 'resourceGroup'
 
@@ -24,30 +25,19 @@ param retentionInDays int = 30
 @description('Tags to apply to the workspace')
 param tags object = {}
 
-@description('Enable public network access for ingestion')
-@allowed(['Enabled', 'Disabled'])
-param publicNetworkAccessForIngestion string = 'Enabled'
-
-@description('Enable public network access for query')
-@allowed(['Enabled', 'Disabled'])
-param publicNetworkAccessForQuery string = 'Enabled'
-
 // =========== LOG ANALYTICS WORKSPACE (AVM) ===========
 
 // Log Analytics Workspace using Azure Verified Module
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.6.0' = {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.9.0' = {
   name: 'log-analytics-workspace'
   params: {
     name: workspaceName
     location: location
     tags: tags
-    skuName: pricingTier
-    dataRetention: retentionInDays
-    publicNetworkAccessForIngestion: publicNetworkAccessForIngestion
-    publicNetworkAccessForQuery: publicNetworkAccessForQuery
-    
-    // Additional security and compliance settings
-    disableLocalAuth: false
+    sku: {
+      name: pricingTier
+    }
+    retentionInDays: retentionInDays
   }
 }
 
