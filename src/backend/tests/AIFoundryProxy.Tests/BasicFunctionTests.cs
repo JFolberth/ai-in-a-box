@@ -23,7 +23,9 @@ namespace AIFoundryProxy.Tests
             _mockLoggerFactory
                 .Setup(x => x.CreateLogger(It.IsAny<string>()))
                 .Returns(_mockLogger.Object);
-        }        [Fact]
+        }
+
+        [Fact]
         public void Constructor_WithDefaultEnvironment_InitializesSuccessfully()
         {
             // Arrange & Act - Clear any existing environment variables
