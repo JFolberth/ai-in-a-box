@@ -74,7 +74,7 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 - `infra/main-orchestrator.bicep` - Subscription-level orchestrator
 - `infra/modules/frontend.bicep` - Static Web App and Application Insights
 - `infra/modules/backend.bicep` - Function App and dependencies
-- `infra/modules/rbac.bicep` - Cross-resource group permissions
+- `infra/environments/backend/rbac.bicep` - RBAC assignments for backend resources
 
 ## 🌐 **Testing & Validation**
 

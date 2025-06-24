@@ -26,13 +26,13 @@ namespace AIFoundryProxy.Tests
                 .Returns(_mockLogger.Object);
         }
 
-        [Fact]
-        public void Function_InitializationAndBasicWorkflow_CompletesSuccessfully()
+        [Fact]        public void Function_InitializationAndBasicWorkflow_CompletesSuccessfully()
         {
             // Arrange - Set up environment for testing
             Environment.SetEnvironmentVariable("AI_FOUNDRY_ENDPOINT", "https://test-ai-foundry.example.com/api/projects/test");
             Environment.SetEnvironmentVariable("AI_FOUNDRY_AGENT_ID", "test-agent-123");
             Environment.SetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME", "TestBot");
+            Environment.SetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME", "test-workspace");
 
             try
             {

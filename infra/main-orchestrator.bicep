@@ -88,14 +88,6 @@ module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' =
   }
 }
 
-// =========== EXISTING RESOURCES ===========
-
-// Reference to existing AI Foundry resource for RBAC assignment
-resource aiFoundryAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
-  name: aiFoundryResourceName
-  scope: resourceGroup(aiFoundryResourceGroupName)
-}
-
 // =========== FRONTEND DEPLOYMENT ===========
 
 // Deploy frontend infrastructure (Static Web App + Application Insights)
@@ -130,33 +122,16 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
     environmentName: environmentName
     applicationName: applicationName
     location: location
-    resourceToken: resourceToken
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
     logAnalyticsResourceGroupName: logAnalyticsResourceGroupName
+    aiFoundryInstanceName: aiFoundryResourceName
+    aiFoundryResourceGroupName: aiFoundryResourceGroupName
     aiFoundryAgentId: aiFoundryAgentId
     aiFoundryEndpoint: aiFoundryEndpoint
     aiFoundryAgentName: aiFoundryAgentName
-    aiFoundrySubscriptionId: aiFoundrySubscriptionId
-    aiFoundryResourceGroup: aiFoundryResourceGroup
-    aiFoundryProjectName: aiFoundryProjectName
     tags: union(tags, {
       Component: 'Backend'
     })
-  }
-}
-
-// =========== RBAC ASSIGNMENTS ===========
-
-// Azure AI User role assignment for Function App to access AI Foundry
-// Uses a separate module to deploy RBAC in the AI Foundry resource group
-module functionAppAIFoundryRoleAssignment 'shared/rbac.bicep' = {
-  name: 'functionApp-aiFoundry-rbac'
-  scope: resourceGroup(aiFoundryResourceGroupName)
-  params: {
-    principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI Developer
-    targetResourceId: aiFoundryAccount.id
-    principalType: 'ServicePrincipal'
   }
 }
 

@@ -4,33 +4,33 @@
 targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
+@description('Name for the Azure Deployment Environment')
+param adeName string = ''
 
-@description('AI Foundry agent ID for endpoint interaction')
-param aiFoundryAgentId string
+@description('AI Foundry hub/project instance name')
+param aiFoundryInstanceName string
 
-@description('AI Foundry agent name for endpoint interaction')
-param aiFoundryAgentName string
+@description('Resource Group containing the AI Foundry instance')
+param aiFoundryResourceGroupName string
 
-@description('AI Foundry endpoint URL for API calls')
+@description('AI Foundry endpoint URL')
 param aiFoundryEndpoint string
 
-@description('AI Foundry project name')
-param aiFoundryProjectName string
+@description('AI Foundry agent ID')
+param aiFoundryAgentId string
 
-@description('AI Foundry resource group name')
-param aiFoundryResourceGroup string
-
-@description('AI Foundry subscription ID')
-param aiFoundrySubscriptionId string
+@description('AI Foundry agent name')
+param aiFoundryAgentName string = 'CancerBot'
 
 @description('Application name used for resource naming')
 param applicationName string
 
+param devCenterProjectName string = ''
 @description('Environment name (e.g., dev, staging, prod)')
-param environmentName string
+param environmentName string ='dev'
 
 @description('Azure region for resource deployment')
-param location string
+param location string ='eastus2'
 
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string
@@ -38,20 +38,30 @@ param logAnalyticsWorkspaceName string
 @description('Resource Group containing the Log Analytics Workspace')
 param logAnalyticsResourceGroupName string
 
-@description('Resource token for unique naming')
-param resourceToken string
-
 @description('Tags to apply to all resources')
-param tags object
+param tags object = {
+  Environment: environmentName
+  Application: applicationName
+}
 
 // =========== VARIABLES ===========
+var nameSuffix = empty(adeName) ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}') : '${devCenterProjectName}-${adeName}'
+var nameSuffixShort = replace(nameSuffix, '-', '')
 
-var resourceNames = {
-  applicationInsights: 'appi-${applicationName}-backend-${environmentName}-${resourceToken}'
-  appServicePlan: 'asp-${applicationName}-backend-${environmentName}-${resourceToken}'
-  functionApp: 'func-${applicationName}-backend-${environmentName}-${resourceToken}'
-  functionStorageAccount: 'stfnbackspa${resourceToken}'
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
 }
+var resourceNames = {
+  applicationInsights: 'appi-${nameSuffix}'
+  appServicePlan: 'asp-${nameSuffix}'
+  functionApp: 'func-${nameSuffix}'
+  functionStorageAccount: 'st${nameSuffixShort}'
+}
+var typeInfrastructure = 'bk'
 
 // =========== EXISTING RESOURCES ===========
 
@@ -59,6 +69,12 @@ var resourceNames = {
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(logAnalyticsResourceGroupName)
+}
+
+// Reference to existing AI Foundry hub/project instance
+resource aiFoundryInstance 'Microsoft.MachineLearningServices/workspaces@2024-04-01' existing = {
+  name: aiFoundryInstanceName
+  scope: resourceGroup(aiFoundryResourceGroupName)
 }
 
 // =========== APPLICATION INSIGHTS (AVM) ===========
@@ -114,9 +130,18 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     blobServices: {
       deleteRetentionPolicyEnabled: true
       deleteRetentionPolicyDays: 7
-    }
-    
-    // Network access rules
+      containers:[
+        {
+          name: 'function-container'
+          properties: {
+            publicAccess: 'None'
+            metadata: {
+              createdBy: 'FunctionApp'
+            }
+          }
+        }
+      ]
+    }    // Network access rules
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -192,7 +217,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
     functionAppConfig:{
       deployment: {
         storage: {
-          value: functionStorageAccount.outputs.primaryBlobEndpoint
+          value: '${functionStorageAccount.outputs.primaryBlobEndpoint}function-container'
           type: 'blobContainer'
            authentication:{
               type: 'SystemAssignedIdentity'
@@ -210,8 +235,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
       }
     serverFarmResourceId: appServicePlan.id
     httpsOnly: true
-    publicNetworkAccess: 'Enabled'
-      // Site configuration for Function App
+    publicNetworkAccess: 'Enabled'      // Site configuration for Function App
     siteConfig: {
       alwaysOn: false
       http20Enabled: true
@@ -229,10 +253,6 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
           value: functionStorageAccount.outputs.name
         }
         {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet-isolated'
-        }
-        {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: applicationInsights.outputs.connectionString
         }
@@ -241,16 +261,8 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
           value: aiFoundryEndpoint
         }
         {
-          name: 'AI_FOUNDRY_SUBSCRIPTION_ID'
-          value: aiFoundrySubscriptionId
-        }
-        {
-          name: 'AI_FOUNDRY_RESOURCE_GROUP'
-          value: aiFoundryResourceGroup
-        }
-        {
-          name: 'AI_FOUNDRY_PROJECT_NAME'
-          value: aiFoundryProjectName
+          name: 'AI_FOUNDRY_WORKSPACE_NAME'
+          value: aiFoundryInstanceName
         }
         {
           name: 'AI_FOUNDRY_AGENT_ID'
@@ -267,10 +279,42 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
 
 // =========== RBAC ASSIGNMENTS ===========
 
-// Note: Azure AI Developer role assignment is handled at the orchestrator level
-// due to cross-resource group scope requirements
+// Storage Blob Data Contributor role for Function App managed identity
+// Required for Flex Consumption model to access storage account
+// Note: NEVER use literal strings for role assignment names - always use guid() to avoid conflicts
+resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, resourceNames.functionApp, resourceNames.functionStorageAccount, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    principalType: 'ServicePrincipal'
+    description: 'Grants Storage Blob Data Contributor access to Function App managed identity for Flex Consumption model'
+  }
+}
+
+// Azure AI Developer role for Function App managed identity to access AI Foundry
+// Required for AI Foundry API access with least privilege
+// Using a separate module deployment to handle cross-resource group RBAC assignment
+// NOTE: The deploying identity must have User Access Administrator or Owner role on the AI Foundry resource group
+module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
+  name: 'functionApp-aiFoundry-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+  scope: resourceGroup(aiFoundryResourceGroupName)
+  params: {
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI Developer
+    targetResourceId: aiFoundryInstance.id
+    principalType: 'ServicePrincipal'
+  }
+}
 
 // =========== OUTPUTS ===========
+
+@description('AI Foundry Instance Resource ID for RBAC assignments')
+output aiFoundryInstanceResourceId string = aiFoundryInstance.id
+
+@description('AI Foundry Instance Name')
+output aiFoundryInstanceName string = aiFoundryInstance.name
 
 @description('Application Insights Connection String')
 output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString

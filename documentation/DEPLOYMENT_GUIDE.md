@@ -1,0 +1,365 @@
+# Deployment Guide
+
+This guide provides comprehensive information about deploying the AI Foundry SPA project across different scenarios and environments.
+
+## 🎯 Deployment Overview
+
+The AI Foundry SPA supports multiple deployment patterns:
+
+1. **Infrastructure + Code** - Complete greenfield deployment
+2. **Code-Only** - Deploy application code to existing infrastructure (recommended for ADE)
+3. **Local Development** - Run application locally for development and testing
+
+## 🏗️ Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Deployment Workflow                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Infrastructure Deployment          Code Deployment             │
+│  ┌─────────────────────────────┐   ┌─────────────────────────────┐ │
+│  │                             │   │                             │ │
+│  │  Option A: Azure CLI+Bicep  │   │  Backend: deploy-backend-func-code.ps1│ │
+│  │  Option B: ADE Portal       │   │  Frontend: deploy-frontend- │ │
+│  │  Option C: CI/CD Pipeline   │   │           spa-code.ps1          │ │
+│  │                             │   │                             │ │
+│  └─────────────────────────────┘   └─────────────────────────────┘ │
+│              │                                   │                 │
+│              └───────────────┬───────────────────┘                 │
+│                              │                                     │
+│                   ┌─────────────────────────────┐                  │
+│                   │     Running Application     │                  │
+│                   │  Frontend + Backend + AI    │                  │
+│                   └─────────────────────────────┘                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📋 Deployment Scripts Overview
+
+The AI Foundry SPA includes **two focused deployment scripts** for code-only deployment to existing Azure infrastructure. These scripts are designed for Azure Deployment Environments (ADE), CI/CD pipelines, and scenarios where infrastructure is already provisioned.
+
+> **📝 Script Naming**: The scripts are named to clearly indicate their purpose:
+> - `deploy-backend-func-code.ps1` - Deploys **Function App code** only
+> - `deploy-frontend-spa-code.ps1` - Deploys **SPA (Single Page Application) code** only
+
+### `deploy-backend-func-code.ps1` - Backend Code-Only Deployment
+
+**Purpose**: Deploy C# Function App application code to an existing Azure Function App
+
+**Use Cases**:
+- ✅ After ADE infrastructure deployment
+- ✅ CI/CD pipeline code deployments  
+- ✅ Development iterations on existing infrastructure
+- ✅ Hotfixes and patches to running applications
+
+**Requirements**:
+- Existing Azure Function App (infrastructure already deployed)
+- Existing Resource Group
+- Azure CLI authentication
+- .NET 8 SDK
+
+**Parameters**:
+- `FunctionAppName` (required) - Name of the Azure Function App
+- `ResourceGroupName` (required) - Name of the resource group
+- `SkipBuild` (optional) - Skip the dotnet build step
+- `SkipTest` (optional) - Skip endpoint testing after deployment
+
+**Example**:
+```powershell
+./deploy-scripts/deploy-backend-func-code.ps1 `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+```
+
+**What it does**:
+1. ✅ Validates Azure CLI authentication
+2. ✅ Verifies Function App exists in specified resource group
+3. ✅ Builds .NET Function App (unless `-SkipBuild`)
+4. ✅ Creates deployment package (ZIP)
+5. ✅ Deploys code to Azure Function App
+6. ✅ Tests health endpoint (unless `-SkipTest`)
+7. ✅ Provides deployment summary with URLs
+
+### `deploy-frontend-spa-code.ps1` - Frontend Code-Only Deployment
+
+**Purpose**: Deploy JavaScript SPA application code to an existing Azure Static Web App
+
+**Use Cases**:
+- ✅ After ADE infrastructure deployment
+- ✅ CI/CD pipeline code deployments
+- ✅ Frontend updates and UI changes
+- ✅ Environment-specific configuration deployment
+
+**Requirements**:
+- Existing Azure Static Web App (infrastructure already deployed)
+- Existing Resource Group  
+- Azure CLI authentication
+- Node.js 20+ and npm
+
+**Parameters**:
+- `StaticWebAppName` (required) - Name of the Azure Static Web App
+- `ResourceGroupName` (required) - Name of the resource group
+- `BackendUrl` (optional) - Backend Function App URL for environment configuration
+- `SkipBuild` (optional) - Skip the npm build step
+
+**Example**:
+```powershell
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+```
+
+**What it does**:
+1. ✅ Validates Azure CLI authentication
+2. ✅ Verifies Static Web App exists in specified resource group
+3. ✅ Creates DEV environment configuration with AI Foundry settings
+4. ✅ Installs npm dependencies and builds frontend (unless `-SkipBuild`)
+5. ✅ Installs SWA CLI if needed
+6. ✅ Deploys to Azure Static Web Apps using SWA CLI
+7. ✅ Provides deployment summary with URLs
+
+## 🎯 Key Design Principles
+
+### Code-Only Focus
+- **No Infrastructure Deployment**: Scripts assume Azure resources already exist
+- **No Local Development Logic**: Scripts are Azure-only (use `npm run dev` and `func start` for local development)
+- **No Resource Discovery**: All resource names must be explicitly provided as parameters
+- **No Default Assumptions**: No default resource names or auto-detection logic
+
+### Infrastructure Separation
+- **Infrastructure First**: Deploy infrastructure through ADE, Bicep, or CI/CD pipelines
+- **Code Second**: Use these scripts to deploy application code to existing resources
+- **Clear Boundaries**: Scripts focus solely on application deployment, not infrastructure management
+
+## 🚀 Deployment Scenarios
+
+### ✅ When to Use These Scripts
+
+- **After ADE Infrastructure Deployment**: Perfect for code deployment after ADE creates infrastructure
+- **CI/CD Pipeline Integration**: Ideal for automated code deployment in DevOps workflows
+- **Development Iterations**: When making code changes to existing applications
+- **Environment Updates**: Deploying new configurations or features to running applications
+- **Hotfixes and Patches**: Quick code updates without infrastructure changes
+
+### ❌ When NOT to Use These Scripts
+
+- **Infrastructure Deployment**: Use ADE portal, Bicep templates, or CI/CD pipelines for infrastructure
+- **Local Development**: Use `npm run dev` and `func start` for local development and testing
+- **First-Time Setup**: Deploy infrastructure first through ADE or Bicep before using these scripts
+- **Resource Creation**: Scripts cannot create Azure resources; they only deploy code to existing resources
+
+### Scenario 1: Azure Deployment Environments (ADE) - Recommended
+
+Perfect for enterprise environments with governance and self-service requirements.
+
+#### Step 1: Deploy Infrastructure via ADE
+1. Navigate to Azure Deployment Environments portal
+2. Select your project and catalog
+3. Choose frontend/backend environment definitions
+4. Fill in required parameters
+5. Deploy through ADE portal
+
+#### Step 2: Discover Resource Names
+```powershell
+# Method 1: Check ADE environment "Resources" tab in portal
+
+# Method 2: Use Azure CLI
+az functionapp list --query "[?contains(name, 'func-ai-foundry-spa-backend')].{name:name,resourceGroup:resourceGroup,state:state}" --output table
+az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup,defaultHostname:defaultHostname}" --output table
+```
+
+#### Step 3: Deploy Application Code
+```powershell
+# Deploy backend code
+./deploy-scripts/deploy-backend-func-code.ps1 `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+
+# Deploy frontend code
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+```
+
+#### Step 4: Verify Deployment
+```powershell
+# Test Function App endpoints
+./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+
+# Access frontend application (URL provided in deployment output)
+```
+
+### Scenario 2: Direct Bicep Deployment
+
+For development environments or when ADE is not available.
+
+#### Step 1: Deploy Infrastructure
+```powershell
+# Deploy complete infrastructure
+az deployment sub create `
+    --template-file infra/main-orchestrator.bicep `
+    --parameters infra/dev-orchestrator.parameters.bicepparam `
+    --location eastus2
+```
+
+#### Step 2: Deploy Application Code
+Use the same code deployment steps as ADE scenario.
+
+### Scenario 3: CI/CD Pipeline Deployment
+
+For automated deployment in DevOps pipelines.
+
+#### GitHub Actions Example
+```yaml
+name: Deploy AI Foundry SPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        - name: Deploy Backend
+        run: |
+          ./deploy-scripts/deploy-backend-func-code.ps1 \
+            -FunctionAppName "${{ vars.FUNCTION_APP_NAME }}" \
+            -ResourceGroupName "${{ vars.BACKEND_RG_NAME }}"
+        shell: pwsh
+
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Deploy Frontend
+        run: |
+          ./deploy-scripts/deploy-frontend-spa-code.ps1 \
+            -StaticWebAppName "${{ vars.STATIC_WEB_APP_NAME }}" \
+            -ResourceGroupName "${{ vars.FRONTEND_RG_NAME }}" \
+            -BackendUrl "${{ vars.BACKEND_URL }}"
+        shell: pwsh
+```
+
+## 🔍 Resource Discovery Methods
+
+When working with existing infrastructure, use these methods to find resource names:
+
+### Azure Portal
+1. Navigate to Resource Groups
+2. Filter by naming patterns (e.g., "ai-foundry-spa")
+3. Note Function App and Static Web App names
+
+### Azure CLI Commands
+```powershell
+# Search by resource type and naming pattern
+az resource list --resource-type "Microsoft.Web/sites" --query "[?kind=='functionapp' && contains(name, 'ai-foundry-spa-backend')].{name:name,resourceGroup:resourceGroup}" --output table
+
+az resource list --resource-type "Microsoft.Web/staticSites" --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup}" --output table
+
+# List all resources in a specific resource group
+az resource list --resource-group "rg-ai-foundry-spa-*" --query "[].{name:name,type:type}" --output table
+```
+
+### PowerShell Resource Discovery Script
+```powershell
+# Save as: Get-AzureResources.ps1
+param(
+    [string]$NamePattern = "ai-foundry-spa"
+)
+
+Write-Host "🔍 Discovering AI Foundry SPA resources..." -ForegroundColor Yellow
+
+$functionApps = az functionapp list --query "[?contains(name, '$NamePattern-backend')].{name:name,resourceGroup:resourceGroup,state:state}" | ConvertFrom-Json
+$staticWebApps = az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup,defaultHostname:defaultHostname}" | ConvertFrom-Json
+
+Write-Host "📱 Function Apps:" -ForegroundColor Cyan
+$functionApps | Format-Table -AutoSize
+
+Write-Host "🌐 Static Web Apps:" -ForegroundColor Cyan  
+$staticWebApps | Format-Table -AutoSize
+
+if ($functionApps -and $staticWebApps) {
+    Write-Host "💡 Example deployment commands:" -ForegroundColor Green
+    Write-Host "Backend:" -ForegroundColor Yellow
+    Write-Host "  ./deploy-scripts/deploy-backend-func-code.ps1 -FunctionAppName '$($functionApps[0].name)' -ResourceGroupName '$($functionApps[0].resourceGroup)'" -ForegroundColor White
+    Write-Host "Frontend:" -ForegroundColor Yellow
+    Write-Host "  ./deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName '$($staticWebApps[0].name)' -ResourceGroupName '$($staticWebApps[0].resourceGroup)'" -ForegroundColor White
+}
+```
+
+## 🛠️ Local Development
+
+For local development, use the appropriate development tools instead of deployment scripts:
+
+### Frontend Development
+```bash
+cd src/frontend
+npm install
+npm run dev    # Starts dev server with hot reload at http://localhost:5173
+```
+
+### Backend Development
+```bash
+cd src/backend
+func start     # Starts Function App at http://localhost:7071
+```
+
+### VS Code Tasks
+Use predefined VS Code tasks for streamlined development:
+1. "Start Azurite" - Required for Function App local storage
+2. "🔧 Manual Start Function App" - Builds and starts Function App
+3. "AI Foundry SPA: Build and Run" - Starts frontend development server
+
+## ⚠️ Important Notes
+
+### Script Limitations and Design
+- **Code-Only Deployment**: Scripts only deploy application code, not infrastructure
+- **Existing Resources Required**: All Azure resources must exist before running scripts
+- **No Auto-Discovery**: Resource names must be explicitly provided (no default assumptions)
+- **Azure-Only**: No local development mode; use VS Code tasks for local development
+
+### Security Considerations
+- Both scripts require Azure CLI authentication
+- Function App uses system-assigned managed identity for AI Foundry access
+- No secrets are stored in configuration files
+- CORS policies restrict access to authorized origins
+
+### Environment Configuration
+- Frontend script includes hardcoded DEV environment AI Foundry settings
+- Backend URL can be configured via parameter for environment-specific deployments
+- Local development uses different endpoints than production
+
+### Troubleshooting
+- **Authentication Errors**: Run `az login` to authenticate with Azure
+- **Resource Not Found**: Verify resource names and resource group names are correct
+- **Build Failures**: Ensure Node.js 20+ and .NET 8 SDK are installed
+- **Permission Errors**: Verify Azure account has appropriate permissions on target resources
+- **Infrastructure Missing**: Deploy infrastructure through ADE or Bicep before using these scripts
+
+## 📚 Related Documentation
+
+- [Development Guide](DEVELOPMENT.md) - Local development setup and workflows
+- [Azure Deployment Environments Guide](AZURE_DEPLOYMENT_ENVIRONMENTS.md) - ADE-specific implementation
+- [Infrastructure Guide](INFRASTRUCTURE.md) - Architecture and resource details
+- [Configuration Guide](CONFIGURATION.md) - Environment variables and settings
+- [Setup Guide](SETUP.md) - Initial project setup instructions
+
+---
+
+For questions or issues, refer to the specific documentation guides or check the troubleshooting sections in each file.
