@@ -1,7 +1,7 @@
 // Log Analytics Workspace Module
 // This module creates a Log Analytics workspace using Azure Verified Modules (AVM)
 // Provides centralized logging for both frontend and backend Application Insights
-// Uses simplified parameter set for maximum compatibility with AVM versions
+// Uses AVM-compatible parameter names: skuName and dataRetention
 
 targetScope = 'resourceGroup'
 
@@ -34,10 +34,8 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
     name: workspaceName
     location: location
     tags: tags
-    sku: {
-      name: pricingTier
-    }
-    retentionInDays: retentionInDays
+    skuName: pricingTier
+    dataRetention: retentionInDays
   }
 }
 
