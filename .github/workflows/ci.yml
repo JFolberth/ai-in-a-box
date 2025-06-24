@@ -51,8 +51,7 @@ jobs:
         az deployment sub what-if \
           --location "eastus2" \
           --template-file "infra/main-orchestrator.bicep" \
-          --parameters "infra/dev-orchestrator.parameters.bicepparam" \
-          --parameters resourceToken="ci-validation"
+          --parameters "infra/dev-orchestrator.parameters.bicepparam"
         echo "✅ Main orchestrator validation completed"
           
     - name: Create temporary resource group for validation
