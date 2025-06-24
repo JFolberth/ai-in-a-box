@@ -31,7 +31,7 @@ namespace AIFoundryProxy
             _agentId = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_ID") 
                 ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4";
             _agentName = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME") 
-                ?? "CancerBot";
+                ?? "AI in a Box";
             
             _logger.LogInformation($"🔗 AI Foundry Connection Details:");
             _logger.LogInformation($"   📍 Project Endpoint: {_projectEndpoint}");
