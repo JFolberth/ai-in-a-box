@@ -1,0 +1,9 @@
+{
+  "applicationName": { "value": "aibox" },
+  "logAnalyticsWorkspaceName": { "value": "la-logging-dev-eus" },
+  "logAnalyticsResourceGroupName": { "value": "rg-logging-dev-eus" },
+  "adeName": { "value": "cicd-fd" },
+  "devCenterProjectName": { "value": "ai-foundry" },
+  "environmentName": { "value": "dev" },
+  "location": { "value": "eastus2" }
+}

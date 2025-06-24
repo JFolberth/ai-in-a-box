@@ -183,10 +183,179 @@ jobs:
         path: src/backend/publish/
         retention-days: 5
 
+  deploy-ade-frontend:
+    name: Deploy ADE Frontend
+    runs-on: ubuntu-latest
+    needs: [bicep-validation, frontend-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: ./src/frontend/dist/
+        
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Create ADE Environment
+      id: create-ade
+      run: |
+        echo "🚀 Creating ADE environment for frontend deployment..."
+        
+        # Generate unique environment name
+        ADE_ENV_NAME="cicd-fd-${{ github.run_number }}"
+        echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
+        
+        # Create ADE environment
+        echo "📦 Deploying ADE environment: $ADE_ENV_NAME"
+        az devcenter dev environment create \
+          --dev-center-name "devecnter-eus-dev" \
+          --project-name "ai-foundry" \
+          --catalog-name "ai-in-abox-infrastructure" \
+          --environment-definition-name "AI_Foundry_SPA_Frontend" \
+          --environment-type "dev" \
+          --name "$ADE_ENV_NAME" \
+          --parameters @infra/environments/frontend/ade.parameters.json \
+          --no-wait
+        
+        echo "⏳ Waiting for ADE environment deployment to complete..."
+        
+        # Wait for deployment to complete (timeout after 10 minutes)
+        timeout=600
+        elapsed=0
+        while [ $elapsed -lt $timeout ]; do
+          status=$(az devcenter dev environment show \
+            --dev-center-name "devecnter-eus-dev" \
+            --project-name "ai-foundry" \
+            --name "$ADE_ENV_NAME" \
+            --query "provisioningState" \
+            --output tsv 2>/dev/null || echo "NotFound")
+          
+          echo "🔍 Environment status: $status (${elapsed}s elapsed)"
+          
+          if [ "$status" = "Succeeded" ]; then
+            echo "✅ ADE environment deployed successfully!"
+            break
+          elif [ "$status" = "Failed" ]; then
+            echo "❌ ADE environment deployment failed!"
+            exit 1
+          fi
+          
+          sleep 30
+          elapsed=$((elapsed + 30))
+        done
+        
+        if [ $elapsed -ge $timeout ]; then
+          echo "❌ ADE environment deployment timed out after 10 minutes!"
+          exit 1
+        fi
+    
+    - name: Extract ADE Outputs
+      id: extract-outputs
+      run: |
+        echo "📋 Extracting outputs from ADE environment..."
+        
+        # Get environment details
+        ENV_DETAILS=$(az devcenter dev environment show \
+          --dev-center-name "devecnter-eus-dev" \
+          --project-name "ai-foundry" \
+          --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
+          --output json)
+        
+        # Extract resource group name (assuming it follows the pattern)
+        RESOURCE_GROUP=$(echo "$ENV_DETAILS" | jq -r '.resourceGroupId' | sed 's|.*/||')
+        echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
+        
+        # Find Static Web App in the resource group
+        STATIC_WEB_APP=$(az staticwebapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
+        
+        if [ -z "$STATIC_WEB_APP" ] || [ "$STATIC_WEB_APP" = "null" ]; then
+          echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
+          exit 1
+        fi
+        
+        echo "STATIC_WEB_APP_NAME=$STATIC_WEB_APP" >> $GITHUB_ENV
+        
+        # Get Static Web App URL
+        STATIC_WEB_APP_URL=$(az staticwebapp show \
+          --name "$STATIC_WEB_APP" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "defaultHostname" \
+          --output tsv)
+        
+        echo "STATIC_WEB_APP_URL=https://$STATIC_WEB_APP_URL" >> $GITHUB_ENV
+        
+        echo "✅ Extracted ADE outputs:"
+        echo "  - Resource Group: $RESOURCE_GROUP"
+        echo "  - Static Web App: $STATIC_WEB_APP"
+        echo "  - URL: https://$STATIC_WEB_APP_URL"
+    
+    - name: Deploy Frontend Code
+      run: |
+        echo "🚀 Deploying frontend code to ADE-created Static Web App..."
+        
+        # Deploy frontend code using PowerShell script
+        pwsh -Command "./deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName '${{ env.STATIC_WEB_APP_NAME }}' -ResourceGroupName '${{ env.RESOURCE_GROUP_NAME }}' -SkipBuild"
+        
+        echo "✅ Frontend code deployed successfully!"
+        echo "🔗 Application URL: ${{ env.STATIC_WEB_APP_URL }}"
+    
+    - name: ADE Deployment Summary
+      run: |
+        echo "## 🚀 ADE Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+        echo "- **ADE Environment**: \`${{ env.ADE_ENVIRONMENT_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: \`${{ env.RESOURCE_GROUP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Static Web App**: \`${{ env.STATIC_WEB_APP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application URL**: [${{ env.STATIC_WEB_APP_URL }}](${{ env.STATIC_WEB_APP_URL }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 ADE Configuration Used" >> $GITHUB_STEP_SUMMARY
+        echo "- **DevCenter**: devecnter-eus-dev" >> $GITHUB_STEP_SUMMARY
+        echo "- **Project**: ai-foundry" >> $GITHUB_STEP_SUMMARY
+        echo "- **Catalog**: ai-in-abox-infrastructure" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment Definition**: AI_Foundry_SPA_Frontend" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment Type**: dev" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🧹 Environment Cleanup" >> $GITHUB_STEP_SUMMARY
+        echo "⚠️ **Note**: ADE environment \`${{ env.ADE_ENVIRONMENT_NAME }}\` remains active for testing." >> $GITHUB_STEP_SUMMARY
+        echo "Manual cleanup may be required via ADE portal if automatic cleanup fails." >> $GITHUB_STEP_SUMMARY
+    
+    - name: Cleanup ADE Environment
+      if: always()
+      run: |
+        echo "🧹 Cleaning up ADE environment..."
+        
+        if [ -n "${{ env.ADE_ENVIRONMENT_NAME }}" ]; then
+          echo "🗑️ Deleting ADE environment: ${{ env.ADE_ENVIRONMENT_NAME }}"
+          
+          # Attempt to delete the ADE environment
+          az devcenter dev environment delete \
+            --dev-center-name "devecnter-eus-dev" \
+            --project-name "ai-foundry" \
+            --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
+            --yes \
+            --no-wait || echo "⚠️ Failed to delete ADE environment (may require manual cleanup)"
+          
+          echo "✅ ADE environment cleanup initiated"
+        else
+          echo "ℹ️ No ADE environment to clean up"
+        fi
+
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [bicep-validation, frontend-build, backend-build]
+    needs: [bicep-validation, frontend-build, backend-build, deploy-ade-frontend]
     if: always()
     
     steps:
@@ -240,20 +409,65 @@ jobs:
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # ADE deployment summary (only shows on main branch pushes)
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ needs.deploy-ade-frontend.result }}" = "success" ]; then
+            echo "### ✅ ADE Frontend Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Frontend deployed via Azure Deployment Environment" >> $GITHUB_STEP_SUMMARY
+            echo "- **Environment**: Automatically created and deployed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Cleanup**: Environment cleanup initiated automatically" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-ade-frontend.result }}" = "failure" ]; then
+            echo "### ❌ ADE Frontend Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: ${{ needs.deploy-ade-frontend.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-ade-frontend.result }}" = "skipped" ]; then
+            echo "### ⏭️ ADE Frontend Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- **Reason**: ADE deployment only runs on main branch pushes" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
         echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
         echo "- Review build artifacts if needed" >> $GITHUB_STEP_SUMMARY
         echo "- Run local tests: \`npm test\` (frontend) and \`dotnet test\` (backend)" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy to Azure using deployment scripts in \`deploy-scripts/\`" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "- ADE frontend deployment tested automatically on main branch" >> $GITHUB_STEP_SUMMARY
+        fi
         
     - name: Check build status
       run: |
-        if [ "${{ needs.bicep-validation.result }}" = "success" ] && [ "${{ needs.frontend-build.result }}" = "success" ] && [ "${{ needs.backend-build.result }}" = "success" ]; then
-          echo "✅ All builds and validations completed successfully!"
+        # Base build requirements (always checked)
+        base_success=true
+        if [ "${{ needs.bicep-validation.result }}" != "success" ]; then
+          base_success=false
+        fi
+        if [ "${{ needs.frontend-build.result }}" != "success" ]; then
+          base_success=false
+        fi
+        if [ "${{ needs.backend-build.result }}" != "success" ]; then
+          base_success=false
+        fi
+        
+        # ADE deployment check (only on main branch pushes)
+        ade_success=true
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ needs.deploy-ade-frontend.result }}" != "success" ]; then
+            ade_success=false
+          fi
+        fi
+        
+        if [ "$base_success" = "true" ] && [ "$ade_success" = "true" ]; then
+          echo "✅ All builds, validations, and deployments completed successfully!"
           exit 0
         else
-          echo "❌ One or more builds/validations failed:"
+          echo "❌ One or more jobs failed:"
           echo "Bicep Validation: ${{ needs.bicep-validation.result }}"
-          echo "Frontend: ${{ needs.frontend-build.result }}"
-          echo "Backend: ${{ needs.backend-build.result }}"
+          echo "Frontend Build: ${{ needs.frontend-build.result }}"
+          echo "Backend Build: ${{ needs.backend-build.result }}"
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "ADE Frontend Deployment: ${{ needs.deploy-ade-frontend.result }}"
+          fi
           exit 1
         fi
