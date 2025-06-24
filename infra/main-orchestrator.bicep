@@ -46,7 +46,7 @@ param logAnalyticsWorkspaceName string = 'la-logging-dev-eus'
 param logAnalyticsResourceGroupName string = 'rg-logging-dev-eus'
 
 @description('Resource token for unique naming')
-param resourceToken string = toLower('123')
+param resourceToken string
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -156,19 +156,6 @@ module functionAppAIFoundryRoleAssignment 'shared/rbac.bicep' = {
     principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI Developer
     targetResourceId: aiFoundryAccount.id
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Storage Blob Data Owner role assignment for Function App to access its storage account
-// Required for Flex Consumption Function Apps to access storage for runtime operations
-module functionAppStorageRoleAssignment 'shared/rbac.bicep' = {
-  name: 'functionApp-storage-rbac'
-  scope: resourceGroup(backendResourceGroupName)
-  params: {
-    principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b') // Storage Blob Data Owner
-    targetResourceId: backendInfrastructure.outputs.functionStorageAccountResourceId
     principalType: 'ServicePrincipal'
   }
 }
