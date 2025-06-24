@@ -344,10 +344,10 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
   C:\Users\BicepDeveloper\ai-in-a-box\infra\
     ├── main-orchestrator.bicep
     ├── dev-orchestrator.parameters.bicepparam
-    └── modules\
+    └── environments\
         ├── frontend.bicep
         ├── backend.bicep
-        └── rbac.bicep
+        └── backend\rbac.bicep
   ```
 - DevBox configuration: `C:\Users\BicepDeveloper\ai-in-a-box\devbox\`
 - Configuration: Root level (package.json, vite.config.js, etc.)

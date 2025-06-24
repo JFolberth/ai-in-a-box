@@ -36,7 +36,7 @@ infra/
 └── modules/
     ├── frontend.bicep                   # Frontend resources module
     ├── backend.bicep                    # Backend resources module
-    └── rbac.bicep                       # Cross-resource group RBAC module
+    └── rbac.bicep                       # Backend RBAC assignments (ADE-compliant)
 ```
 
 ## Deployment Process
