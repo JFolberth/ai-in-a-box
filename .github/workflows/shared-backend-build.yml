@@ -1,0 +1,67 @@
+name: Shared Backend Build
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-version:
+        description: '.NET version to use'
+        required: false
+        type: string
+        default: '8.0.x'
+      upload-artifacts:
+        description: 'Whether to upload build artifacts'
+        required: false
+        type: boolean
+        default: true
+      artifact-name:
+        description: 'Name for the backend build artifacts'
+        required: false
+        type: string
+        default: 'backend-publish'
+    outputs:
+      build-result:
+        description: 'Result of the backend build'
+        value: ${{ jobs.backend-build.outputs.result }}
+
+jobs:
+  backend-build:
+    name: Backend Build
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.build.outputs.result }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+        
+    - name: Restore backend dependencies
+      working-directory: ./src/backend
+      run: dotnet restore
+      
+    - name: Build backend
+      id: build
+      working-directory: ./src/backend
+      run: |
+        dotnet build --configuration Release --no-restore
+        echo "result=success" >> $GITHUB_OUTPUT
+      
+    - name: Test backend
+      working-directory: ./src/backend/tests/AIFoundryProxy.Tests
+      run: dotnet test --configuration Release --verbosity normal
+      
+    - name: Publish backend
+      working-directory: ./src/backend
+      run: dotnet publish --configuration Release --no-build --output ./publish
+      
+    - name: Upload backend build artifacts
+      if: ${{ inputs.upload-artifacts }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: src/backend/publish/
+        retention-days: 5

@@ -57,29 +57,3 @@ parameters:
     description: Resource group containing the Log Analytics workspace
     type: string
     required: true
-
-  - id: adeName
-    name: ADE Name
-    description: Name for the Azure Deployment Environment
-    type: string
-    required: false
-    
-  - id: devCenterProjectName
-    name: DevCenter Project Name
-    description: Name of the DevCenter project
-    type: string
-    required: false
-    
-  - id: environmentName
-    name: Environment Name
-    description: Environment name (e.g., dev, staging, prod)
-    type: string
-    required: false
-    default: dev
-    
-  - id: location
-    name: Location
-    description: Azure region for resource deployment
-    type: string
-    required: false
-    default: eastus2

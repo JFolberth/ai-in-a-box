@@ -1,0 +1,96 @@
+name: Shared Bicep Validation
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: 'Working directory for the workflow'
+        required: false
+        type: string
+        default: '.'
+    outputs:
+      validation-result:
+        description: 'Result of the Bicep validation'
+        value: ${{ jobs.bicep-validation.outputs.result }}
+
+jobs:
+  bicep-validation:
+    name: Bicep Infrastructure Validation
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.validation.outputs.result }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+    - name: Validate Main Orchestrator Template
+      id: validation
+      run: |
+        echo "🔍 Validating main orchestrator Bicep template..."
+        az deployment sub what-if \
+          --location "eastus2" \
+          --template-file "infra/main-orchestrator.bicep" \
+          --parameters "infra/dev-orchestrator.parameters.bicepparam"
+        echo "✅ Main orchestrator validation completed"
+        echo "result=success" >> $GITHUB_OUTPUT
+          
+    - name: Create temporary resource group for validation
+      run: |
+        echo "🏗️ Creating temporary resource group for validation..."
+        TEMP_RG="rg-temp-bicep-validation-${{ github.run_number }}"
+        az group create --name "$TEMP_RG" --location "eastus2" --tags Purpose=CI-Validation RunNumber=${{ github.run_number }}
+        echo "TEMP_RESOURCE_GROUP=$TEMP_RG" >> $GITHUB_ENV
+        
+    - name: Validate Backend Environment Template
+      run: |
+        echo "🔍 Validating backend environment Bicep template..."
+        az deployment group what-if \
+          --resource-group "${{ env.TEMP_RESOURCE_GROUP }}" \
+          --template-file "infra/environments/backend/main.bicep" \
+          --parameters "infra/environments/backend/example-parameters.bicepparam"
+        echo "✅ Backend environment validation completed"
+          
+    - name: Validate Frontend Environment Template
+      run: |
+        echo "🔍 Validating frontend environment Bicep template..."
+        az deployment group what-if \
+          --resource-group "${{ env.TEMP_RESOURCE_GROUP }}" \
+          --template-file "infra/environments/frontend/main.bicep" \
+          --parameters "infra/environments/frontend/example-parameters.bicepparam"
+        echo "✅ Frontend environment validation completed"
+          
+    - name: Cleanup temporary resource group
+      if: always()
+      run: |
+        echo "🧹 Cleaning up temporary resource group..."
+        if [ -n "${{ env.TEMP_RESOURCE_GROUP }}" ]; then
+          az group delete --name "${{ env.TEMP_RESOURCE_GROUP }}" --yes --no-wait
+        fi
+        
+    - name: Bicep validation summary
+      run: |
+        echo "## 🏗️ Bicep Infrastructure Validation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Templates Validated Successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- **Main Orchestrator**: \`infra/main-orchestrator.bicep\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Environment**: \`infra/environments/backend/main.bicep\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Environment**: \`infra/environments/frontend/main.bicep\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔍 Validation Scope" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Bicep template syntax and compilation" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Parameter file compatibility" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Module references and paths" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ RBAC role definitions and scope" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Resource dependencies and naming" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Deployment Ready" >> $GITHUB_STEP_SUMMARY
+        echo "Infrastructure templates are validated and ready for deployment using:" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "./deploy-scripts/deploy.ps1 -SubscriptionId \"your-subscription-id\"" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
