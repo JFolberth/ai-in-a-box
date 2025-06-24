@@ -283,6 +283,24 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
 - **Existing workspace**: Reference external Log Analytics workspace (`createLogAnalyticsWorkspace = false`)
 - **New workspace**: Create dedicated workspace using the module (`createLogAnalyticsWorkspace = true`)
 
+**Testing the Module:**
+```bash
+# Validate module structure
+./validate-log-analytics-module.sh
+
+# Test with existing workspace (default)
+az deployment sub create \
+  --template-file infra/main-orchestrator.bicep \
+  --parameters infra/dev-orchestrator.parameters.bicepparam \
+  --parameters createLogAnalyticsWorkspace=false
+
+# Test with new workspace creation
+az deployment sub create \
+  --template-file infra/main-orchestrator.bicep \
+  --parameters infra/dev-orchestrator.parameters.bicepparam \
+  --parameters createLogAnalyticsWorkspace=true
+```
+
 #### KQL Queries for Common Scenarios
 ```kusto
 // Function App errors in last 24 hours
