@@ -47,6 +47,7 @@ Automated build and validation pipeline ensures code quality:
 - **Frontend Build**: Node.js build, testing, and artifact generation
 - **Backend Build**: .NET build, testing, and publish artifacts  
 - **Bicep Validation**: Infrastructure what-if validation using Azure CLI
+- **ADE Testing**: Automated Azure Deployment Environment integration testing on main branch
 - **Parallel Execution**: All validations run simultaneously for fast feedback
 
 ### Bicep Infrastructure Validation
@@ -59,6 +60,17 @@ The CI pipeline includes comprehensive Bicep template validation:
 - Backend environment (resource group scope) 
 - Frontend environment (resource group scope)
 ```
+
+### Azure Deployment Environment (ADE) Testing
+
+**Automated ADE integration testing** runs on every push to `main` branch:
+
+- ✅ **Real Infrastructure**: Creates actual ADE environment for testing
+- ✅ **Frontend Deployment**: Deploys and validates frontend code automatically  
+- ✅ **Self-Cleaning**: Automatically cleans up test environments
+- ✅ **Continuous Validation**: Catches ADE configuration issues early
+
+**Configuration**: Uses `infra/environments/frontend/ade.parameters.json` with enterprise DevCenter setup.
 
 **Setup Requirements**: Configure `AZURE_CREDENTIALS` secret for Azure authentication. See [Bicep Validation Guide](.github/BICEP_VALIDATION.md) for details.
 

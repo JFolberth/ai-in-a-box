@@ -1,0 +1,69 @@
+name: Shared Frontend Build
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '20'
+      upload-artifacts:
+        description: 'Whether to upload build artifacts'
+        required: false
+        type: boolean
+        default: true
+      artifact-name:
+        description: 'Name for the frontend build artifacts'
+        required: false
+        type: string
+        default: 'frontend-dist'
+    outputs:
+      build-result:
+        description: 'Result of the frontend build'
+        value: ${{ jobs.frontend-build.outputs.result }}
+
+jobs:
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.build.outputs.result }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: src/frontend/package-lock.json
+        
+    - name: Install frontend dependencies
+      working-directory: ./src/frontend
+      run: npm ci
+      
+    - name: Build frontend
+      id: build
+      working-directory: ./src/frontend
+      run: |
+        npm run build
+        echo "result=success" >> $GITHUB_OUTPUT
+    
+    - name: Run frontend tests
+      working-directory: ./src/frontend
+      run: npm run test:ci
+      
+    - name: Build frontend (dev mode)
+      working-directory: ./src/frontend
+      run: npm run build:dev
+      
+    - name: Upload frontend build artifacts
+      if: ${{ inputs.upload-artifacts }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: src/frontend/dist/
+        retention-days: 5

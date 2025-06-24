@@ -256,6 +256,47 @@ jobs:
         shell: pwsh
 ```
 
+#### Automated ADE Testing (Built-in CI)
+
+The repository includes automated ADE frontend deployment testing that runs on every push to the `main` branch. This provides continuous validation of the ADE integration.
+
+**How it works:**
+1. **Triggered automatically** on main branch pushes after successful builds and validation
+2. **Creates ADE environment** using `az devcenter dev environment create`
+3. **Deploys frontend code** to the ADE-created Static Web App
+4. **Reports deployment status** in the CI summary
+5. **Cleans up automatically** to avoid resource accumulation
+
+**ADE Configuration Used:**
+```bash
+# DevCenter Configuration
+DevCenter: "devecnter-eus-dev"
+Project: "ai-foundry"  
+Catalog: "ai-in-abox-infrastructure"
+Environment Definition: "AI_Foundry_SPA_Frontend"
+Environment Type: "dev"
+
+# Parameters file: infra/environments/frontend/ade.parameters.json
+{
+  "applicationName": { "value": "aibox" },
+  "logAnalyticsWorkspaceName": { "value": "la-logging-dev-eus" },
+  "logAnalyticsResourceGroupName": { "value": "rg-logging-dev-eus" },
+  "adeName": { "value": "cicd-fd" },
+  "devCenterProjectName": { "value": "ai-foundry" }
+}
+```
+
+**Benefits:**
+- ✅ **Continuous Testing**: Every main branch change tests ADE deployment
+- ✅ **Early Detection**: Catches ADE configuration issues before manual deployment
+- ✅ **Zero Maintenance**: Fully automated with cleanup
+- ✅ **Real Environment**: Tests against actual ADE infrastructure, not mocks
+
+**Monitoring:**
+- Check GitHub Actions CI logs for ADE deployment status
+- Failed ADE deployments will fail the entire CI pipeline
+- Deployment URLs and resource names are logged in CI summary
+
 ## 🔍 Resource Discovery Methods
 
 When working with existing infrastructure, use these methods to find resource names:
