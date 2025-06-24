@@ -1,96 +1,59 @@
 # yaml-language-server: $schema=../manifest.schema.json
+
 name: AI_Foundry_SPA_Backend
-version: 1.0.0
-summary: Backend infrastructure for AI Foundry SPA application
-description: Deploys the backend infrastructure for the AI Foundry SPA application including Function App, Storage, and Application Insights
+summary: Backend Function App for AI Foundry SPA with proxy functionality
+description: |
+  Deploys a serverless Function App that acts as a proxy between the frontend SPA 
+  and AI Foundry services. Includes proper RBAC configuration and monitoring.
+
 runner: Bicep
-templatePath: ./main.bicep
+templatePath: main.bicep
 
 parameters:
-  - id: aiFoundryAgentId
-    name: AI Foundry Agent ID
-    description: AI Foundry agent ID for endpoint interaction
-    type: string
-    required: true
-    
-  - id: aiFoundryAgentName
-    name: AI Foundry Agent Name
-    description: AI Foundry agent name for endpoint interaction
-    type: string
-    required: true
-    
-  - id: aiFoundryEndpoint
-    name: AI Foundry Endpoint
-    description: AI Foundry endpoint URL for API calls
-    type: string
-    required: true
-    
-  - id: aiFoundryProjectName
-    name: AI Foundry Project Name
-    description: AI Foundry project name
-    type: string
-    required: true
-    
-  - id: aiFoundryResourceGroup
-    name: AI Foundry Resource Group
-    description: AI Foundry resource group name
-    type: string
-    required: true
-    
-  - id: aiFoundrySubscriptionId
-    name: AI Foundry Subscription ID
-    description: AI Foundry subscription ID
-    type: string
-    required: true
-    
   - id: applicationName
     name: Application Name
-    description: Name used for resource naming (e.g., aibox)
+    description: Name of the application used for resource naming
     type: string
     required: true
-    
-  - id: environmentName
-    name: Environment Name
-    description: Environment identifier (dev, staging, prod)
+
+  - id: aiFoundryEndpoint
+    name: AI Foundry Endpoint
+    description: The full endpoint URL for the AI Foundry service
     type: string
     required: true
-    allowed:
-      - dev
-      - staging
-      - prod
-      
-  - id: location
-    name: Azure Region
-    description: Azure region for resource deployment
+
+  - id: aiFoundryInstanceName
+    name: AI Foundry Workspace Name
+    description: The name of the AI Foundry workspace
     type: string
     required: true
-    allowed:
-      - centralus
-      - eastus
-      - eastus2
-      - westus
-      - westus2
-      
+
+  - id: aiFoundryResourceGroupName
+    name: AI Foundry Resource Group Name
+    description: The name of the AI Foundry workspace's Resource Group
+    type: string
+    required: true
+
+  - id: aiFoundryAgentId
+    name: AI Foundry Agent ID
+    description: The ID of the AI agent to use
+    type: string
+    required: true
+
+  - id: aiFoundryAgentName
+    name: AI Foundry Agent Name
+    description: The display name of the AI agent
+    type: string
+    required: true
+
   - id: logAnalyticsWorkspaceName
     name: Log Analytics Workspace Name
-    description: Name of existing Log Analytics Workspace for consolidated logging
+    description: Name of existing Log Analytics workspace for monitoring
     type: string
     required: true
-    
+
   - id: logAnalyticsResourceGroupName
     name: Log Analytics Resource Group
-    description: Resource Group containing the Log Analytics Workspace
+    description: Resource group containing the Log Analytics workspace
     type: string
     required: true
-    
-  - id: resourceToken
-    name: Resource Token
-    description: Resource token for unique naming
-    type: string
-    required: true
-    
-  - id: tags
-    name: Resource Tags
-    description: Tags to apply to all resources
-    type: object
-    required: false

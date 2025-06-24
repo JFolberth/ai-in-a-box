@@ -161,10 +161,14 @@ The project uses AVM modules for:
 infra/
 ├── main-orchestrator.bicep          # Main deployment orchestrator
 ├── dev-orchestrator.parameters.bicepparam  # Environment parameters
-└── modules/
-    ├── frontend.bicep               # Frontend resource module
-    ├── backend.bicep                # Backend resource module
-    └── rbac.bicep                   # Cross-RG permissions module
+└── environments/
+    ├── frontend/
+    │   ├── main.bicep               # Frontend infrastructure
+    │   └── environment.yaml        # ADE configuration
+    └── backend/
+        ├── main.bicep               # Backend infrastructure
+        ├── rbac.bicep               # Backend RBAC assignments
+        └── environment.yaml         # ADE configuration
 ```
 
 ### Deployment Strategy
@@ -201,15 +205,17 @@ module backend 'modules/backend.bicep' = {
 }
 ```
 
-#### 3. Cross-Resource Group Permissions
+#### 3. Environment-Specific RBAC Assignments
 ```bicep
-// RBAC assignments across resource groups
-module rbac 'modules/rbac.bicep' = {
-  scope: subscription()
-  name: 'ai-foundry-spa-rbac'
+// RBAC assignments are now handled within environment modules
+// Example: Backend RBAC is managed in environments/backend/rbac.bicep
+module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
+  name: 'function-app-ai-foundry-rbac'
+  scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
-    functionAppPrincipalId: backend.outputs.functionAppPrincipalId
-    aiFoundryResourceId: aiFoundryResourceId
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId
+    aiFoundryResourceId: aiFoundryInstance.id
+    roleDefinitionId: 'Azure AI Developer'
   }
 }
 ```

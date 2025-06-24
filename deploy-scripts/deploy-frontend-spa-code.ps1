@@ -1,17 +1,19 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-Deploy the frontend of AI Foundry SPA to Azure Static Web App (DEV Environment)
+Deploy the frontend of AI Foundry SPA to Azure Static Web App
 
 .DESCRIPTION
-This script deploys only the frontend portion of the AI Foundry SPA to Azure Static Web App.
-It builds the frontend and uploads it to an existing Azure Static Web App.
+This script deploys the frontend portion of the AI Foundry SPA to an existing Azure Static Web App.
+Both StaticWebAppName and ResourceGroupName are required parameters.
+
+For local development, use 'npm run dev' instead.
 
 .PARAMETER StaticWebAppName
-The name of the Azure Static Web App to deploy to. If not provided, the script will attempt to auto-detect from Bicep deployment outputs or use defaults.
+The name of the Azure Static Web App to deploy to. Required.
 
 .PARAMETER ResourceGroupName
-The name of the resource group containing the Static Web App. If not provided, the script will attempt to auto-detect from Bicep deployment outputs or use defaults.
+The name of the resource group containing the Static Web App. Required.
 
 .PARAMETER BackendUrl
 The backend Function App URL to configure (optional - will update .env for dev environment)
@@ -20,23 +22,20 @@ The backend Function App URL to configure (optional - will update .env for dev e
 Skip the npm build step if the application is already built
 
 .EXAMPLE
-./deploy-frontend-only.ps1
+./deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
 
 .EXAMPLE
-./deploy-frontend-only.ps1 -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+./deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
 
 .EXAMPLE
-./deploy-frontend-only.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
-
-.EXAMPLE
-./deploy-frontend-only.ps1 -StaticWebAppName "my-custom-static-web-app" -SkipBuild
+./deploy-frontend-spa-code.ps1 -StaticWebAppName "my-custom-static-web-app" -ResourceGroupName "my-rg" -SkipBuild
 #>
 
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [string]$StaticWebAppName,
     
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [string]$ResourceGroupName,
     
     [Parameter(Mandatory = $false)]
@@ -49,8 +48,8 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-Write-Host "🚀 AI Foundry SPA - Frontend Deployment (DEV Environment)" -ForegroundColor Green -BackgroundColor Black
-Write-Host "=========================================================" -ForegroundColor Green
+Write-Host "🚀 AI Foundry SPA - Frontend Deployment" -ForegroundColor Green -BackgroundColor Black
+Write-Host "=======================================" -ForegroundColor Green
 
 # Change to project root (go up one level from deploy-scripts)
 Set-Location (Join-Path $PSScriptRoot "..")
@@ -66,59 +65,9 @@ try {
     exit 1
 }
 
-# If Static Web App details not provided, try to get them from deployment outputs
-if (-not $StaticWebAppName -or -not $ResourceGroupName) {
-    Write-Host "🔍 Attempting to detect Static Web App from Bicep deployment..." -ForegroundColor Yellow
-    
-    # Try to get deployment outputs
-    try {
-        $subscriptionId = $account.id
-        $deploymentName = "ai-foundry-spa-orchestrator-dev"
-        
-        $deploymentOutputs = az deployment sub show `
-            --name $deploymentName `
-            --query "properties.outputs" `
-            --output json 2>$null | ConvertFrom-Json
-              if ($deploymentOutputs) {
-            $StaticWebAppName = $deploymentOutputs.frontendStaticWebAppName.value
-            $ResourceGroupName = $deploymentOutputs.frontendResourceGroupName.value
-            Write-Host "✅ Detected from deployment:" -ForegroundColor Green
-            Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor Cyan
-            Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor Cyan
-        }
-    } catch {
-        Write-Warning "⚠️ Could not auto-detect Static Web App. Please provide manually."
-    }
-}
-
-# If still not found, prompt user or use defaults
-if (-not $StaticWebAppName) {
-    Write-Host "📝 Static Web App details needed. Based on your configuration:" -ForegroundColor Yellow
-    $StaticWebAppName = "stapp-aibox-fd-dev-eus2"  # From bicep naming convention
-    
-    Write-Host "🔧 Using default names:" -ForegroundColor Cyan
-    Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor Cyan
-    
-    # If Resource Group is still not provided, use default
-    if (-not $ResourceGroupName) {
-        $ResourceGroupName = "rg-ai-foundry-spa-frontend-dev-001"
-        Write-Host "   Resource Group: $ResourceGroupName (default)" -ForegroundColor Cyan
-    }
-    
-    Write-Host ""
-    Write-Host "Press Enter to continue or Ctrl+C to cancel and specify manually..." -ForegroundColor Yellow
-    Read-Host
-} else {
-    Write-Host "🎯 Using provided Static Web App: $StaticWebAppName" -ForegroundColor Green
-    
-    # If Resource Group is still not provided, use default
-    if (-not $ResourceGroupName) {
-        $ResourceGroupName = "rg-ai-foundry-spa-frontend-dev-001"
-        Write-Host "🔧 Using default Resource Group: $ResourceGroupName" -ForegroundColor Cyan
-    } else {
-        Write-Host "🎯 Using provided Resource Group: $ResourceGroupName" -ForegroundColor Green
-    }
-}
+Write-Host "☁️ Deploying to Azure Static Web App" -ForegroundColor Yellow
+Write-Host "   Target Static Web App: $StaticWebAppName" -ForegroundColor Cyan
+Write-Host "   Target Resource Group: $ResourceGroupName" -ForegroundColor Cyan
 
 # Verify the Static Web App exists
 Write-Host "🔍 Verifying Static Web App '$StaticWebAppName' in resource group '$ResourceGroupName'..." -ForegroundColor Yellow
@@ -173,7 +122,9 @@ if (-not $SkipBuild) {
         if ($LASTEXITCODE -ne 0) {
             Write-Error "❌ npm install failed!"
             exit 1
-        }        # Build the application for dev environment
+        }
+        
+        # Build the application for dev environment
         Write-Host "🏗️ Building application for dev..." -ForegroundColor Cyan
         $env:NODE_ENV = "development"
         
@@ -255,22 +206,20 @@ if (Test-Path "src/frontend/.env.dev") {
 
 # Final summary
 Write-Host ""
-Write-Host "🎉 Dev Frontend deployment completed successfully! 🎉" -ForegroundColor Green -BackgroundColor Black
+Write-Host "🎉 Frontend deployment completed successfully! 🎉" -ForegroundColor Green -BackgroundColor Black
 Write-Host ""
-Write-Host "📋 Dev Deployment Summary:" -ForegroundColor Cyan
-Write-Host "   Environment: dev" -ForegroundColor White
+Write-Host "📋 Deployment Summary:" -ForegroundColor Cyan
 Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor White
 Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor White
 Write-Host "   Static Web App URL: $staticWebsiteUrl" -ForegroundColor White
 Write-Host ""
-Write-Host "🌍 Your AI Foundry SPA (dev) is now live at:" -ForegroundColor Green
+Write-Host "🌍 Your AI Foundry SPA is now live at:" -ForegroundColor Green
 Write-Host "   $staticWebsiteUrl" -ForegroundColor Yellow -BackgroundColor DarkBlue
 Write-Host ""
 
-Write-Host "⚠️  Important: This is a dev environment deployment!" -ForegroundColor Yellow
+Write-Host "📋 Configuration:" -ForegroundColor Cyan
 Write-Host "   Backend URL: $($BackendUrl -replace '^$', 'http://localhost:7071/api (local dev)')" -ForegroundColor White
 Write-Host "   AI Foundry: ai-foundry-dev-eus (dev environment)" -ForegroundColor White
 Write-Host ""
-Write-Host "💡 For production deployment, use the main deploy.ps1 script instead." -ForegroundColor Cyan
 
-Write-Host "✨ Dev deployment complete! ✨" -ForegroundColor Green
+Write-Host "✨ Frontend deployment complete! ✨" -ForegroundColor Green

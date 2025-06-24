@@ -4,6 +4,32 @@
 
 This is a JavaScript SPA project that integrates with a single AI Foundry endpoint and deploys to Azure Storage Static Websites using Azure CLI.
 
+## ⚠️ ⚠️ CRITICAL REQUIREMENT - ABSOLUTE PATHS ONLY ⚠️ ⚠️
+
+**🚨 ALL COMMANDS AND FILE OPERATIONS MUST USE ABSOLUTE PATHS 🚨**
+
+### MANDATORY ABSOLUTE PATH PATTERNS:
+```powershell
+# ✅ CORRECT - Always use these patterns:
+az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep"
+& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1"
+Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"
+dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
+
+# ❌ FORBIDDEN - Never use relative paths:
+az deployment sub create --template-file infra/main-orchestrator.bicep
+.\deploy-scripts\deploy-backend-func-code.ps1
+cd src/backend
+```
+
+**WHY THIS MATTERS:**
+- ✅ Commands work from any directory
+- ✅ No ambiguity about file locations  
+- ✅ Consistent results across environments
+- ✅ Easier debugging and troubleshooting
+
+---
+
 ## Project Context
 
 - **Frontend Framework**: Vanilla JavaScript with Vite build system
@@ -20,12 +46,13 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
 
 ### ⚠️ CRITICAL - Path Management and Local Testing
 
-#### Absolute Paths - REQUIRED
-- **✅ ALWAYS use absolute paths** for all file operations
-- **✅ Example**: `C:\Users\BicepDeveloper\ai-in-a-box\src\frontend\index.html`
-- **❌ NEVER use relative paths** like `./src/frontend` or `../backend`
-- **✅ Use workspace root**: `${workspaceFolder}` when available in tasks
-- **✅ Verify paths exist** before operations
+#### Absolute Paths - REQUIRED (REINFORCED)
+- **🚨 EVERY FILE OPERATION MUST USE ABSOLUTE PATHS 🚨**
+- **✅ ALWAYS**: `C:\Users\BicepDeveloper\ai-in-a-box\src\frontend\index.html`
+- **❌ NEVER**: `./src/frontend` or `../backend` or any relative path
+- **✅ Tasks**: Use `${workspaceFolder}` when available in VS Code tasks
+- **✅ Scripts**: Always verify absolute paths exist before operations
+- **🎯 NO EXCEPTIONS**: This applies to ALL commands, file operations, and scripts
 
 #### Local Testing - MANDATORY
 1. **Local Testing Sequence**:
@@ -125,8 +152,17 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
   - **❌ NO quoted strings**: Use unquoted strings for parameter IDs and simple values
   - **❌ NO defaults on required parameters**: Parameters with `required: true` MUST NOT have `default` values
   - **✅ Relative templatePath**: Use relative paths from catalog root (e.g., `../../modules/frontend.bicep`)
-  - **📋 Validation**: Always validate YAML syntax and schema compliance before deployment
-  - **⚠️ Parameter Rules**: `required: true` means user MUST provide value; `required: false` allows defaults
+  - **📋 Validation**: Always validate YAML syntax and schema compliance before deployment  - **⚠️ Parameter Rules**: `required: true` means user MUST provide value; `required: false` allows defaults
+- **🔄 Parameter Synchronization - MANDATORY**:
+  - **⚠️ CRITICAL**: When modifying Bicep parameters, ALWAYS update corresponding environment.yaml files
+  - **🔍 Check ALL environment.yaml files** in `infra/environments/*/environment.yaml` for parameter changes
+  - **📋 Parameter mapping**: Bicep `@description` maps to YAML `description`, Bicep type maps to YAML `type`
+  - **✅ Required sync**: Add, rename, or remove parameters in BOTH Bicep template AND environment.yaml
+  - **✅ Type consistency**: Ensure parameter types match between Bicep and YAML (string, boolean, integer, etc.)
+  - **✅ Default values**: Remove defaults from environment.yaml when Bicep parameter becomes required
+  - **❌ NEVER modify only Bicep**: Always check if environment.yaml needs updates too
+  - **📝 Validation**: Test both Bicep deployment and ADE deployment after parameter changes
+  - **🎯 Files to check**: `infra/environments/frontend/environment.yaml`, `infra/environments/backend/environment.yaml`
 - **🎯 Resource References vs Names - CRITICAL**:
   - **✅ ALWAYS use resource references**: `scope: myResourceGroup` (direct resource reference)
   - **❌ NEVER use resource names**: `scope: resourceGroup(myResourceGroupName)` (string-based lookup)
@@ -138,20 +174,82 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
   - **Example Good Practice**: `output rgName string = myResourceGroup.name` (not `myResourceGroupName`)
 - **🔒 RBAC in Bicep**: 
   - Always use least privilege roles (Azure AI Developer, not Contributor)
-  - Scope assignments to specific resources, not resource groups
+  - Scope assignments to specific resources, not resource groups when possible
+  - **⚠️ CRITICAL**: NEVER use literal strings for role assignment names - always use `guid()` to avoid conflicts
+  - Use deterministic GUID generation: `guid(resourceGroup().id, resourceName, roleDefinitionId)`
   - Document each role assignment with comments explaining necessity
   - Use resource IDs for scoping: `scope: aiFoundryResource.id`
-  - Never use subscription or resource group scope unless absolutely required
+  - Resource group scope acceptable when resource-level scoping creates circular dependencies
 
 ### Deployment Guidelines
 - **NEVER use azd (Azure Developer CLI)** - this project is azd-free by design
 - **ALWAYS test locally before deploying to Azure**
+- **🔄 ALWAYS verify parameter synchronization** between Bicep templates and environment.yaml files before deployment
 - Use only `az deployment sub create` for orchestrator deployment at subscription scope
 - Use Azure CLI for all resource management operations
-- **ALWAYS use absolute paths** in all operations and commands
-- Infrastructure deployment: `az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam`
+- **⚠️ CRITICAL: ALWAYS use absolute paths** in all operations and commands
+
+#### 🚀 Existing Deployment Scripts - USE THESE, DON'T CREATE NEW ONES
+- **✅ Full Infrastructure**: `deploy.ps1` - Deploys complete infrastructure + applications (main deployment script)
+- **✅ Backend Code Only**: `deploy-backend-func-code.ps1` - Deploys Function App code to existing infrastructure  
+- **✅ Frontend Code Only**: `deploy-frontend-spa-code.ps1` - Deploys frontend code to existing Static Web App
+- **✅ Unix/Linux Support**: `deploy.sh` - Bash version of main deployment for cross-platform compatibility
+- **❌ NEVER create new deployment scripts** - Use the existing ones that are already tested and working
+- **❌ NEVER create empty script files** - If a deployment need isn't covered, enhance existing scripts
+- **❌ NEVER create duplicate scripts** - Check existing scripts first before creating new ones
+
+#### Command Examples:
+- **✅ Example**: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`
+- **❌ NEVER**: `az deployment sub create --template-file infra/main-orchestrator.bicep` (relative path)
+- **✅ PowerShell commands**: `& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1"`
+- **❌ PowerShell commands**: `.\deploy-scripts\deploy-backend-func-code.ps1` (relative path)
+- **✅ Directory changes**: `Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"`
+- **❌ Directory changes**: `cd src\backend` (relative path)
+- Infrastructure deployment: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`
 - No azure.yaml file or azd configuration files
 - All deployment scripts use Azure CLI + Bicep exclusively
+
+### ⚠️ CRITICAL COMMAND PATH REQUIREMENTS - ZERO TOLERANCE
+
+#### Absolute Paths in Commands - MANDATORY (NO EXCEPTIONS)
+- **🚨 EVERY SINGLE COMMAND MUST USE FULL ABSOLUTE PATHS 🚨**
+- **🎯 ZERO TOLERANCE for relative paths in any form**
+- **✅ Azure CLI**: ALWAYS quote paths: `--template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main.bicep"`
+- **✅ PowerShell**: ALWAYS quote paths: `& "C:\Users\BicepDeveloper\ai-in-a-box\scripts\deploy.ps1"`
+- **✅ File operations**: `Copy-Item "C:\Users\BicepDeveloper\ai-in-a-box\src\file.txt" "C:\destination\file.txt"`
+- **✅ Directory navigation**: `Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"`
+- **❌ FORBIDDEN**: `./scripts/deploy.ps1`, `../infra/main.bicep`, `cd src/backend`, `.\deploy.ps1`
+
+#### Command Examples - FOLLOW THESE EXACT PATTERNS
+```powershell
+# ✅ CORRECT - Full absolute paths (COPY THESE PATTERNS)
+az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"
+
+& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1" -FunctionAppName "func-name" -ResourceGroupName "rg-name"
+
+Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"
+dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
+
+# ❌ WRONG - Relative paths (NEVER USE THESE)
+az deployment sub create --template-file infra/main-orchestrator.bicep
+.\deploy-scripts\deploy-backend-func-code.ps1
+cd src/backend
+```
+
+#### Why This Matters (Critical for Success)
+- **Reliability**: Commands work regardless of current working directory
+- **Clarity**: No ambiguity about which files are being referenced
+- **Debugging**: Easier to troubleshoot when paths are explicit
+- **Consistency**: All team members and automation get same results
+- **Professional**: Industry best practice for production scripts
+
+#### Terminal Command Guidelines
+- **❌ NEVER include sleep/wait commands** in terminal operations
+- **❌ Forbidden**: `Start-Sleep`, `sleep`, `timeout`, `Wait-Job`, or any delay commands
+- **✅ Use proper task dependencies** and background processes instead
+- **✅ Let services start naturally** without artificial delays
+- **✅ Use health checks** to verify service readiness rather than arbitrary waits
+- **✅ Provide immediate feedback** to user without suggesting they wait
 
 ### Security
 - Never expose secrets in client-side code
@@ -213,6 +311,28 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 - No multi-endpoint switching logic in the frontend
 - Use environment variables for endpoint URL, deployment, and agent name
 
+## Project Structure Guidelines
+
+### ✅ Required Files and Folders
+- **Frontend**: `src/frontend/` - Vanilla JavaScript SPA with Vite
+- **Backend**: `src/backend/` - Single C# Function App project
+- **Infrastructure**: `infra/` - Bicep templates and parameters
+- **Tests**: `tests/` - Testing scripts and utilities
+- **Documentation**: `documentation/` - Project guides and setup instructions
+
+### ❌ Files and Structures to NEVER Create
+- **🚫 NO .sln files**: This is NOT a Visual Studio solution - it's a simple SPA + Function App
+- **🚫 NO complex .NET project structures**: Single Function App project only
+- **🚫 NO azd files**: azure.yaml, azd-env files, or azd configurations
+- **🚫 NO Docker files**: Unless specifically requested for containerization
+- **🚫 NO unnecessary scaffolding**: Keep structure simple and focused
+
+### 🎯 Project Type: Simple Web Application
+- This is a **JavaScript SPA** with a **C# Function App backend**
+- NOT a complex enterprise solution requiring .sln files
+- NOT a multi-project .NET solution
+- Focus on simplicity and deployment efficiency
+
 ## File Patterns
 
 - Source code: 
@@ -224,10 +344,10 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
   C:\Users\BicepDeveloper\ai-in-a-box\infra\
     ├── main-orchestrator.bicep
     ├── dev-orchestrator.parameters.bicepparam
-    └── modules\
+    └── environments\
         ├── frontend.bicep
         ├── backend.bicep
-        └── rbac.bicep
+        └── backend\rbac.bicep
   ```
 - DevBox configuration: `C:\Users\BicepDeveloper\ai-in-a-box\devbox\`
 - Configuration: Root level (package.json, vite.config.js, etc.)
@@ -257,6 +377,7 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 - **🚫 No empty directories**: Remove empty directories unless they serve a structural purpose
 - **✅ Verify file necessity**: Before creating new files, ensure they're actually needed and will contain content
 - **⚠️ Check for duplicates**: Before creating files or folders, verify no duplicates exist with the same name in the project. If duplicates are detected, prompt for confirmation before proceeding
+- **🚫 Remove unnecessary project files**: Delete .sln files, unnecessary .csproj files, or other IDE-generated files that don't serve the simple SPA + Function App architecture
 
 ### 📝 GitHub Issue Creation Guidelines
 

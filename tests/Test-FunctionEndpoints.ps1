@@ -15,7 +15,7 @@ Write-Host "🎯 Target URL: $functionUrl" -ForegroundColor Gray
 $chatEndpoint = "$functionUrl/api/chat"
 $messageTypes = @(
     "What are my survival rates?",
-    "What treatment options are available?",
+    "What treatment options are available?"
 )
 
 # Function to test a chat message
