@@ -300,13 +300,37 @@ jobs:
         echo "  - Static Web App: $STATIC_WEB_APP"
         echo "  - URL: https://$STATIC_WEB_APP_URL"
     
-    - name: Deploy Frontend Code
+    - name: Get Static Web App Deployment Token
+      id: get-token
       run: |
-        echo "🚀 Deploying frontend code to ADE-created Static Web App..."
+        echo "🔑 Getting deployment token for Static Web App..."
         
-        # Deploy frontend code using PowerShell script
-        pwsh -Command "./deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName '${{ env.STATIC_WEB_APP_NAME }}' -ResourceGroupName '${{ env.RESOURCE_GROUP_NAME }}' -SkipBuild"
+        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+          --name "${{ env.STATIC_WEB_APP_NAME }}" \
+          --resource-group "${{ env.RESOURCE_GROUP_NAME }}" \
+          --query "properties.apiKey" \
+          --output tsv)
         
+        if [ -z "$DEPLOYMENT_TOKEN" ]; then
+          echo "❌ Failed to get deployment token for Static Web App!"
+          exit 1
+        fi
+        
+        echo "✅ Deployment token retrieved successfully"
+        echo "DEPLOYMENT_TOKEN=$DEPLOYMENT_TOKEN" >> $GITHUB_ENV
+    
+    - name: Deploy Frontend Code to Static Web App
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ env.DEPLOYMENT_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "./src/frontend/dist"
+        skip_app_build: true
+        skip_api_build: true
+    
+    - name: Deployment Success
+      run: |
         echo "✅ Frontend code deployed successfully!"
         echo "🔗 Application URL: ${{ env.STATIC_WEB_APP_URL }}"
     
