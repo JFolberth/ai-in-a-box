@@ -19,6 +19,11 @@ param location = 'eastus2'
 param logAnalyticsResourceGroupName = 'rg-logging-dev-eus'
 param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
 
+// Log Analytics workspace creation options (new parameters)
+param createLogAnalyticsWorkspace = false
+param logAnalyticsWorkspacePricingTier = 'PerGB2018'
+param logAnalyticsWorkspaceRetentionInDays = 90
+
 param resourceToken = '001'
 
 // Resource tags (alphabetized by key)

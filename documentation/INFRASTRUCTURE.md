@@ -161,6 +161,8 @@ The project uses AVM modules for:
 infra/
 ├── main-orchestrator.bicep          # Main deployment orchestrator
 ├── dev-orchestrator.parameters.bicepparam  # Environment parameters
+├── modules/
+│   └── log-analytics.bicep          # Log Analytics Workspace module
 └── environments/
     ├── frontend/
     │   ├── main.bicep               # Frontend infrastructure
@@ -243,6 +245,43 @@ module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
 - **Cross-service correlation** for troubleshooting
 - **Unified queries** and dashboards
 - **Cost optimization** through shared infrastructure
+
+#### Log Analytics Workspace Module
+
+The project includes a dedicated `infra/modules/log-analytics.bicep` module using Azure Verified Modules (AVM):
+
+**Module Features:**
+- **Azure Verified Module**: Uses `br/public:avm/res/operational-insights/workspace` for consistency
+- **Configurable retention**: 30-730 day retention period (default: 30 days in environments, 90 days in orchestrator)
+- **Flexible pricing**: Supports all Azure Log Analytics pricing tiers (default: PerGB2018)
+- **Security options**: Configurable public network access for ingestion and query
+- **Comprehensive outputs**: Provides all necessary details for Application Insights integration
+
+**Usage Patterns:**
+```bicep
+// Optional workspace creation in orchestrator
+module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyticsWorkspace) {
+  name: 'shared-log-analytics'
+  scope: logAnalyticsResourceGroup
+  params: {
+    workspaceName: logAnalyticsWorkspaceName
+    location: location
+    pricingTier: 'PerGB2018'
+    retentionInDays: 90
+    tags: tags
+  }
+}
+
+// Existing workspace reference in environments
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(logAnalyticsResourceGroupName)
+}
+```
+
+**Deployment Options:**
+- **Existing workspace**: Reference external Log Analytics workspace (`createLogAnalyticsWorkspace = false`)
+- **New workspace**: Create dedicated workspace using the module (`createLogAnalyticsWorkspace = true`)
 
 #### KQL Queries for Common Scenarios
 ```kusto
