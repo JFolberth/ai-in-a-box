@@ -143,7 +143,7 @@ VITE_USE_BACKEND=true
 VITE_PUBLIC_MODE=false
 
 # AI Foundry Configuration (Dev Environment)
-VITE_AI_FOUNDRY_AGENT_NAME=AI in A Box
+VITE_AI_FOUNDRY_AGENT_NAME=CancerBot
 VITE_AI_FOUNDRY_AGENT_ID=asst_dH7M0nbmdRblhSQO8nIGIYF4
 VITE_AI_FOUNDRY_PROJECT_URL=https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject
 VITE_AI_FOUNDRY_ENDPOINT=https://ai-foundry-dev-eus.azureml.net
