@@ -48,7 +48,7 @@ az deployment sub what-if \
 az deployment group what-if \
   --resource-group "rg-temp-bicep-validation-<run-number>" \
   --template-file "infra/environments/backend/main.bicep" \
-  --parameters @infra/environments/backend/example-parameters.json
+  --parameters "infra/environments/backend/example-parameters.bicepparam"
 ```
 
 #### Frontend Environment (Resource Group Scope)
@@ -56,14 +56,14 @@ az deployment group what-if \
 az deployment group what-if \
   --resource-group "rg-temp-bicep-validation-<run-number>" \
   --template-file "infra/environments/frontend/main.bicep" \
-  --parameters @infra/environments/frontend/example-parameters.json
+  --parameters "infra/environments/frontend/example-parameters.bicepparam"
 ```
 
 ### 3. Example Parameter Files
 
 Created example parameter files for environment-specific validation:
 
-#### Backend Parameters (`infra/environments/backend/example-parameters.json`)
+#### Backend Parameters (`infra/environments/backend/example-parameters.bicepparam`)
 ```json
 {
   "parameters": {
@@ -79,7 +79,7 @@ Created example parameter files for environment-specific validation:
 }
 ```
 
-#### Frontend Parameters (`infra/environments/frontend/example-parameters.json`)
+#### Frontend Parameters (`infra/environments/frontend/example-parameters.bicepparam`)
 ```json
 {
   "parameters": {
@@ -171,8 +171,8 @@ The implemented validation covers all requirements from the issue:
 
 ### New Files
 - `.github/BICEP_VALIDATION.md` - Setup and troubleshooting documentation
-- `infra/environments/backend/example-parameters.json` - Backend validation parameters
-- `infra/environments/frontend/example-parameters.json` - Frontend validation parameters
+- `infra/environments/backend/example-parameters.bicepparam` - Backend validation parameters
+- `infra/environments/frontend/example-parameters.bicepparam` - Frontend validation parameters
 - `tests/Test-BicepValidation.sh` - Local validation test script
 - `BICEP_VALIDATION_SUMMARY.md` - This summary document
 

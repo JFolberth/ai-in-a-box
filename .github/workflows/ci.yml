@@ -68,7 +68,7 @@ jobs:
         az deployment group what-if \
           --resource-group "${{ env.TEMP_RESOURCE_GROUP }}" \
           --template-file "infra/environments/backend/main.bicep" \
-          --parameters @infra/environments/backend/example-parameters.json
+          --parameters "infra/environments/backend/example-parameters.bicepparam"
         echo "✅ Backend environment validation completed"
           
     - name: Validate Frontend Environment Template
@@ -77,7 +77,7 @@ jobs:
         az deployment group what-if \
           --resource-group "${{ env.TEMP_RESOURCE_GROUP }}" \
           --template-file "infra/environments/frontend/main.bicep" \
-          --parameters @infra/environments/frontend/example-parameters.json
+          --parameters "infra/environments/frontend/example-parameters.bicepparam"
         echo "✅ Frontend environment validation completed"
           
     - name: Cleanup temporary resource group

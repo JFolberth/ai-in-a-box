@@ -36,8 +36,8 @@ echo ""
 echo "🔍 Checking parameter files..."
 
 MAIN_PARAMS="$PROJECT_ROOT/infra/dev-orchestrator.parameters.bicepparam"
-BACKEND_PARAMS="$PROJECT_ROOT/infra/environments/backend/example-parameters.json"
-FRONTEND_PARAMS="$PROJECT_ROOT/infra/environments/frontend/example-parameters.json"
+BACKEND_PARAMS="$PROJECT_ROOT/infra/environments/backend/example-parameters.bicepparam"
+FRONTEND_PARAMS="$PROJECT_ROOT/infra/environments/frontend/example-parameters.bicepparam"
 
 if [[ -f "$MAIN_PARAMS" ]]; then
     echo "✅ Main orchestrator parameters: $MAIN_PARAMS"
@@ -124,24 +124,24 @@ MAIN_RESULT=$?
 # Test backend environment what-if
 echo ""
 echo "🔍 Testing backend environment what-if..."
-echo "Command: az deployment group what-if --resource-group $TEMP_RG --template-file infra/environments/backend/main.bicep --parameters @infra/environments/backend/example-parameters.json"
+echo "Command: az deployment group what-if --resource-group $TEMP_RG --template-file infra/environments/backend/main.bicep --parameters infra/environments/backend/example-parameters.bicepparam"
 
 az deployment group what-if \
     --resource-group "$TEMP_RG" \
     --template-file "infra/environments/backend/main.bicep" \
-    --parameters @infra/environments/backend/example-parameters.json
+    --parameters "infra/environments/backend/example-parameters.bicepparam"
 
 BACKEND_RESULT=$?
 
 # Test frontend environment what-if
 echo ""
 echo "🔍 Testing frontend environment what-if..."
-echo "Command: az deployment group what-if --resource-group $TEMP_RG --template-file infra/environments/frontend/main.bicep --parameters @infra/environments/frontend/example-parameters.json"
+echo "Command: az deployment group what-if --resource-group $TEMP_RG --template-file infra/environments/frontend/main.bicep --parameters infra/environments/frontend/example-parameters.bicepparam"
 
 az deployment group what-if \
     --resource-group "$TEMP_RG" \
     --template-file "infra/environments/frontend/main.bicep" \
-    --parameters @infra/environments/frontend/example-parameters.json
+    --parameters "infra/environments/frontend/example-parameters.bicepparam"
 
 FRONTEND_RESULT=$?
 

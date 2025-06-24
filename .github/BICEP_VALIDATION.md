@@ -60,13 +60,13 @@ The CI pipeline validates:
 ### 2. Backend Environment Template  
 - **File**: `infra/environments/backend/main.bicep`
 - **Scope**: Resource group deployment
-- **Parameters**: Uses `infra/environments/backend/example-parameters.json`
+- **Parameters**: Uses `infra/environments/backend/example-parameters.bicepparam`
 - **What-if Command**: `az deployment group what-if`
 
 ### 3. Frontend Environment Template
 - **File**: `infra/environments/frontend/main.bicep`  
 - **Scope**: Resource group deployment
-- **Parameters**: Uses `infra/environments/frontend/example-parameters.json`
+- **Parameters**: Uses `infra/environments/frontend/example-parameters.bicepparam`
 - **What-if Command**: `az deployment group what-if`
 
 ## Validation Process
@@ -101,13 +101,13 @@ az group create --name "rg-local-validation" --location "eastus2"
 az deployment group what-if \
   --resource-group "rg-local-validation" \
   --template-file "infra/environments/backend/main.bicep" \
-  --parameters @infra/environments/backend/example-parameters.json
+  --parameters "infra/environments/backend/example-parameters.bicepparam"
 
 # Validate frontend environment  
 az deployment group what-if \
   --resource-group "rg-local-validation" \
   --template-file "infra/environments/frontend/main.bicep" \
-  --parameters @infra/environments/frontend/example-parameters.json
+  --parameters "infra/environments/frontend/example-parameters.bicepparam"
 
 # Cleanup
 az group delete --name "rg-local-validation" --yes
