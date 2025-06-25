@@ -72,6 +72,28 @@ function Test-Directory {
     }
 }
 
+# Function to test Azure CLI extension
+function Test-AzureCliExtension {
+    param([string]$ExtensionName, [string]$Description)
+    
+    try {
+        $result = az extension list --query "[?name=='$ExtensionName'].name" --output tsv 2>$null
+        if ($result -eq $ExtensionName) {
+            Write-Host "✅ $Description" -ForegroundColor Green
+            return $true
+        } else {
+            Write-Host "⚠️  $Description - Not installed" -ForegroundColor Yellow
+            Write-Host "   Install with: az extension add --name $ExtensionName" -ForegroundColor Gray
+            $script:warnings++
+            return $false
+        }
+    } catch {
+        Write-Host "❌ $Description - Azure CLI not accessible or extension check failed" -ForegroundColor Red
+        $script:errors++
+        return $false
+    }
+}
+
 Write-Host "1️⃣ Testing System-Level Tools..." -ForegroundColor Yellow
 Write-Host "================================" -ForegroundColor Yellow
 
@@ -102,6 +124,14 @@ try {
     Write-Host "   Install with: npm install -g azure-functions-core-tools@4 --unsafe-perm true" -ForegroundColor Gray
     $warnings++
 }
+
+# Test Azure CLI extensions
+Write-Host ""
+Write-Host "1️⃣.1 Testing Azure CLI Extensions..." -ForegroundColor Yellow
+Write-Host "====================================" -ForegroundColor Yellow
+
+Test-AzureCliExtension "bicep" "Azure Bicep Extension"
+Test-AzureCliExtension "devcenter" "Azure DevCenter Extension"
 
 Write-Host ""
 Write-Host "2️⃣ Testing User Environment..." -ForegroundColor Yellow

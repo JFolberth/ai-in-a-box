@@ -15,7 +15,7 @@ These run during DevBox provisioning:
 - **Azure CLI** - Infrastructure deployment and management
 - **Azure Functions Core Tools** - Local Function App development and testing
 - **Python 3.12** - Development scripting and tooling support
-- **Bicep Extension** - Infrastructure as Code templates (system-wide)
+- **Azure CLI Extensions** - Infrastructure deployment and ADE development (system-wide)
 
 ### User-Level Tasks (Run as User)
 These run after user first login:
