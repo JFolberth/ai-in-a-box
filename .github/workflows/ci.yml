@@ -100,7 +100,7 @@ jobs:
         elapsed=0
         while [ $elapsed -lt $timeout ]; do
           status=$(az devcenter dev environment show \
-            --dev-center-name "devecnter-eus-dev" \
+            --dev-center-name "devcenter-eus-dev" \
             --project-name "ai-foundry" \
             --name "$ADE_ENV_NAME" \
             --query "provisioningState" \
