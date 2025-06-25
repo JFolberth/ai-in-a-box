@@ -34,7 +34,7 @@ namespace AIFoundryProxy
             _agentId = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_ID") 
                 ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4"; // Default AI in A Box agent
             _agentName = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME") 
-                ?? "AI in a Box"; // Default agent name
+                ?? "AI in A Box"; // Default agent name
             
             var workspaceName = Environment.GetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME") ?? "Unknown";
           
