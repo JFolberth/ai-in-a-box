@@ -73,40 +73,14 @@ var regionReference = {
   eastus2: 'eus2'
   westus: 'wus'
   westus2: 'wus2'
-  westus3: 'wus3'
-  northcentralus: 'ncus'
-  southcentralus: 'scus'
-  westcentralus: 'wcus'
-  canadacentral: 'cac'
-  canadaeast: 'cae'
-  brazilsouth: 'brs'
-  northeurope: 'neu'
-  westeurope: 'weu'
-  uksouth: 'uks'
-  ukwest: 'ukw'
-  francecentral: 'frc'
-  francesouth: 'frs'
-  germanywestcentral: 'gwc'
-  switzerlandnorth: 'szn'
-  norwayeast: 'noe'
-  swedencentral: 'sec'
-  southafricanorth: 'san'
-  australiaeast: 'aue'
-  australiasoutheast: 'ause'
-  southeastasia: 'sea'
-  eastasia: 'ea'
-  japaneast: 'jpe'
-  japanwest: 'jpw'
-  koreacentral: 'krc'
-  koreasouth: 'krs'
-  southindia: 'sin'
-  centralindia: 'cin'
-  westindia: 'win'
-  uaenorth: 'uan'
 }
 
-var backendResourceGroupName = 'rg-${applicationName}-backend-${environmentName}-${regionReference[location]}'
-var frontendResourceGroupName = 'rg-${applicationName}-frontend-${environmentName}-${regionReference[location]}'
+// Name suffix patterns following backend naming convention
+var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-${regionReference[location]}')
+var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
+
+var backendResourceGroupName = 'rg-${backendNameSuffix}'
+var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
 
 // =========== RESOURCE GROUPS ===========
 
