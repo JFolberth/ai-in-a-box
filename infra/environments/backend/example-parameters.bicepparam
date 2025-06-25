@@ -25,5 +25,5 @@ param tags = {
   Environment: 'validation'
   Application: 'ai-box'
   Purpose: 'CI-Validation'
-  AIFoundryAgent: 'CancerBot'
+  AIFoundryAgent: 'AI in A Box'
 }

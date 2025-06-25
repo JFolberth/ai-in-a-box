@@ -68,7 +68,7 @@ Created example parameter files for environment-specific validation:
 {
   "parameters": {
     "aiFoundryAgentId": { "value": "asst_example_agent_id" },
-    "aiFoundryAgentName": { "value": "CancerBot" },
+    "aiFoundryAgentName": { "value": "AI in A Box" },
     "aiFoundryEndpoint": { "value": "https://example-ai-foundry.services.ai.azure.com/api/projects/exampleProject" },
     "applicationName": { "value": "ai-foundry-spa" },
     "environmentName": { "value": "validation" },

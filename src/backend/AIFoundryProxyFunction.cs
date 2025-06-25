@@ -32,9 +32,9 @@ namespace AIFoundryProxy
             // Agent configuration - can be hardcoded since it's application-specific
             // These could also be moved to app configuration or Key Vault for flexibility
             _agentId = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_ID") 
-                ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4"; // Default CancerBot agent
+                ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4"; // Default AI in A Box agent
             _agentName = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME") 
-                ?? "AI in a Box"; // Default agent name
+                ?? "AI in A Box"; // Default agent name
             
             var workspaceName = Environment.GetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME") ?? "Unknown";
           

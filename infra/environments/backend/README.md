@@ -38,7 +38,7 @@ These parameters have default values but can be customized:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `aiFoundryAgentName` | `CancerBot` | Display name for the AI Foundry agent |
+| `aiFoundryAgentName` | `AI in A Box` | Display name for the AI Foundry agent |
 | `adeName` | _(empty)_ | Name for the Azure Deployment Environment |
 | `devCenterProjectName` | _(empty)_ | Name of the DevCenter project |
 | `tags` | _(none)_ | Additional resource tags |
