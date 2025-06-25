@@ -90,7 +90,7 @@ jobs:
           --environment-definition-name "AI_Foundry_SPA_Frontend" \
           --environment-type "dev" \
           --name "$ADE_ENV_NAME" \
-          --parameters @infra/environments/frontend/ade.parameters.json \
+          --parameters infra/environments/frontend/ade.parameters.json \
           --no-wait
         
         echo "⏳ Waiting for ADE environment deployment to complete..."
