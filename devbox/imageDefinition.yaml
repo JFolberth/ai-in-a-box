@@ -29,13 +29,14 @@ tasks:
   - name: winget
     description: Install Python for development scripting and tooling
     parameters:
-      package: Python.Python.3.12
-  - name: powershell
-    description: Install Azure CLI Bicep extension system-wide
+      package: Python.Python.3.12  - name: powershell
+    description: Install Azure CLI Bicep extension and DevCenter extension system-wide
     parameters:
       command: |
         # Install Azure CLI Bicep extension (system-wide)
         az extension add --name bicep --only-show-errors
+        # Install Azure CLI DevCenter extension (system-wide)
+        az extension add --name devcenter --only-show-errors
         Write-Host "System-level setup complete!" -ForegroundColor Green
 userTasks:
   - name: powershell
