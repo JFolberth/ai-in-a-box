@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=./manifest.schema.json
 name: AI_Foundry_SPA_Backend
 version: 1.0.0
 summary: Backend infrastructure for AI Foundry SPA application
@@ -24,24 +23,13 @@ parameters:
     name: Environment Name
     description: Environment identifier
     type: string
-    required: true
-    allowed:
-      - dev
-      - staging
-      - prod
+    required: false
       
   - id: location
     name: Azure Region
     description: Azure region for resource deployment
     type: string
-    required: true
-    allowed:
-      - centralus
-      - eastus
-      - eastus2
-      - westus
-      - westus2
-      - westus3
+    required: false
       
   - id: aiFoundryInstanceName
     name: AI Foundry Instance Name
