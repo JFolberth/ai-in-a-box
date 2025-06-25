@@ -20,7 +20,7 @@ param aiFoundryEndpoint string
 param aiFoundryAgentId string
 
 @description('AI Foundry agent name')
-param aiFoundryAgentName string = 'CancerBot'
+param aiFoundryAgentName string = 'AI in A Box'
 
 @description('Application name used for resource naming')
 param applicationName string

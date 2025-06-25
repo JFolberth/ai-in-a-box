@@ -72,7 +72,7 @@ parameters:
     description: Display name for the AI Foundry agent
     type: string
     required: false
-    default: CancerBot
+    default: AI in A Box
     
   - id: adeName
     name: ADE Name

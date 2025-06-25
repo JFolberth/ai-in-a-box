@@ -4,6 +4,7 @@
   "aiFoundryResourceGroupName": "rg-ai-foundry-dev-eus",
   "aiFoundryEndpoint": "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject",
   "aiFoundryAgentId": "asst_dH7M0nbmdRblhSQO8nIGIYF4",
+  "aiFoundryAgentName": "AI in A Box",
   "logAnalyticsWorkspaceName": "la-logging-dev-eus",
   "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
   "adeName": "cicd-backend",
