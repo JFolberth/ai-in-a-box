@@ -57,8 +57,6 @@ param logAnalyticsWorkspacePricingTier string = 'PerGB2018'
 @maxValue(730)
 param logAnalyticsWorkspaceRetentionInDays int = 90
 
-// Resource token parameter removed - using uniqueString() for deterministic naming
-
 @description('Tags to apply to all resources')
 param tags object = {
   Environment: environmentName
@@ -68,8 +66,47 @@ param tags object = {
 
 // =========== VARIABLES ===========
 
-var backendResourceGroupName = 'rg-${applicationName}-backend-${environmentName}-${uniqueString(subscription().id, applicationName, 'backend')}'
-var frontendResourceGroupName = 'rg-${applicationName}-frontend-${environmentName}-${uniqueString(subscription().id, applicationName, 'frontend')}'
+// Region reference mapping for consistent naming
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
+  westus3: 'wus3'
+  northcentralus: 'ncus'
+  southcentralus: 'scus'
+  westcentralus: 'wcus'
+  canadacentral: 'cac'
+  canadaeast: 'cae'
+  brazilsouth: 'brs'
+  northeurope: 'neu'
+  westeurope: 'weu'
+  uksouth: 'uks'
+  ukwest: 'ukw'
+  francecentral: 'frc'
+  francesouth: 'frs'
+  germanywestcentral: 'gwc'
+  switzerlandnorth: 'szn'
+  norwayeast: 'noe'
+  swedencentral: 'sec'
+  southafricanorth: 'san'
+  australiaeast: 'aue'
+  australiasoutheast: 'ause'
+  southeastasia: 'sea'
+  eastasia: 'ea'
+  japaneast: 'jpe'
+  japanwest: 'jpw'
+  koreacentral: 'krc'
+  koreasouth: 'krs'
+  southindia: 'sin'
+  centralindia: 'cin'
+  westindia: 'win'
+  uaenorth: 'uan'
+}
+
+var backendResourceGroupName = 'rg-${applicationName}-backend-${environmentName}-${regionReference[location]}'
+var frontendResourceGroupName = 'rg-${applicationName}-frontend-${environmentName}-${regionReference[location]}'
 
 // =========== RESOURCE GROUPS ===========
 
