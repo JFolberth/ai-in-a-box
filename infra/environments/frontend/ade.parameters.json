@@ -1,5 +1,5 @@
 {
-  "applicationName": "aibox",
+  "applicationName": "aiboxcicd",
   "logAnalyticsWorkspaceName":"la-logging-dev-eus",
   "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
   "adeName": "cicd-fd",
