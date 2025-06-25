@@ -104,7 +104,7 @@ jobs:
             --project-name "ai-foundry" \
             --name "$ADE_ENV_NAME" \
             --query "provisioningState" \
-            --output tsv 2>/dev/null || echo "NotFound")
+            --output tsv || echo "NotFound")
           
           echo "🔍 Environment status: $status (${elapsed}s elapsed)"
           
