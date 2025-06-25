@@ -7,7 +7,7 @@ This guide covers local development setup, workflows, and best practices for the
 ### Prerequisites
 - **Node.js 20+** and npm (for frontend development)
 - **.NET 8 SDK** (for backend Function App development)
-- **Azure CLI** with Bicep extension
+- **Azure CLI** with Bicep and DevCenter extensions
 - **Azure Functions Core Tools v4** (for local Function App development)
 - **Python 3.12+** (for development tooling and scripting, optional)
 - **Azure subscription** with appropriate permissions
@@ -353,7 +353,7 @@ code .
 ```
 
 The DevContainer automatically:
-- Installs Node.js 20, .NET 8 SDK, Azure CLI, and Azure Functions Core Tools
+- Installs Node.js 20, .NET 8 SDK, Azure CLI with extensions, and Azure Functions Core Tools
 - Configures VS Code extensions for Bicep, Azure Functions, and C#
 - Sets up port forwarding for development servers (5173, 4173, 7071)
 - Runs `npm install` in the frontend directory and configures Azure tooling
@@ -374,10 +374,10 @@ For team development environments, use the DevBox configuration:
 ```
 
 The DevBox configuration automatically installs:
-- All required development tools (Node.js, .NET, Azure CLI, Python)
+- All required development tools (Node.js, .NET, Azure CLI with extensions, Python)
 - VS Code with pre-configured extensions including GitHub Copilot
 - Azure Functions Core Tools and Azurite
-- Bicep extension and Azure AI Toolkit
+- Azure CLI extensions (Bicep and DevCenter) and Azure AI Toolkit
 
 See [DevBox README](../devbox/README.md) for detailed setup instructions and troubleshooting.
 

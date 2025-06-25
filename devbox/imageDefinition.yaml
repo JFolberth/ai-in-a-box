@@ -31,11 +31,13 @@ tasks:
     parameters:
       package: Python.Python.3.12
   - name: powershell
-    description: Install Azure CLI Bicep extension system-wide
+    description: Install Azure CLI extensions system-wide
     parameters:
       command: |
         # Install Azure CLI Bicep extension (system-wide)
         az extension add --name bicep --only-show-errors
+        # Install Azure CLI DevCenter extension (system-wide)
+        az extension add --name devcenter --only-show-errors
         Write-Host "System-level setup complete!" -ForegroundColor Green
 userTasks:
   - name: powershell
