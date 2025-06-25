@@ -132,7 +132,7 @@ jobs:
         
         # Get environment details
         ENV_DETAILS=$(az devcenter dev environment show \
-          --dev-center-name "devecnter-eus-dev" \
+          --dev-center-name "devcenter-eus-dev" \
           --project-name "ai-foundry" \
           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
           --output json)
@@ -203,7 +203,7 @@ jobs:
         echo "- **Application URL**: [${{ env.STATIC_WEB_APP_URL }}](${{ env.STATIC_WEB_APP_URL }})" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 ADE Configuration Used" >> $GITHUB_STEP_SUMMARY
-        echo "- **DevCenter**: devecnter-eus-dev" >> $GITHUB_STEP_SUMMARY
+        echo "- **DevCenter**: devcenter-eus-dev" >> $GITHUB_STEP_SUMMARY
         echo "- **Project**: ai-foundry" >> $GITHUB_STEP_SUMMARY
         echo "- **Catalog**: ai-in-abox-infrastructure" >> $GITHUB_STEP_SUMMARY
         echo "- **Environment Definition**: AI_Foundry_SPA_Frontend" >> $GITHUB_STEP_SUMMARY
@@ -223,7 +223,7 @@ jobs:
           
           # Attempt to delete the ADE environment
           az devcenter dev environment delete \
-            --dev-center-name "devecnter-eus-dev" \
+            --dev-center-name "devcenter-eus-dev" \
             --project-name "ai-foundry" \
             --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
             --yes \
