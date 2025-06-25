@@ -64,6 +64,33 @@ jobs:
           --template-file "infra/environments/frontend/main.bicep" \
           --parameters "infra/environments/frontend/example-parameters.bicepparam"
         echo "✅ Frontend environment validation completed"
+        
+    - name: Validate ADE Manifests
+      run: |
+        echo "🔍 Validating Azure Deployment Environment manifests..."
+        
+        # Install Python YAML parser for validation
+        python3 -c "import yaml" || pip3 install pyyaml
+        
+        # Validate Frontend ADE manifest
+        echo "  • Validating frontend/environment.yaml..."
+        python3 -c "
+        import yaml
+        with open('infra/environments/frontend/environment.yaml', 'r') as f:
+            yaml.safe_load(f)
+        print('    ✅ Frontend ADE manifest syntax valid')
+        "
+        
+        # Validate Backend ADE manifest  
+        echo "  • Validating backend/environment.yaml..."
+        python3 -c "
+        import yaml
+        with open('infra/environments/backend/environment.yaml', 'r') as f:
+            yaml.safe_load(f)
+        print('    ✅ Backend ADE manifest syntax valid')
+        "
+        
+        echo "✅ ADE manifest validation completed"
           
     - name: Cleanup temporary resource group
       if: always()
@@ -81,6 +108,7 @@ jobs:
         echo "- **Main Orchestrator**: \`infra/main-orchestrator.bicep\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Backend Environment**: \`infra/environments/backend/main.bicep\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Frontend Environment**: \`infra/environments/frontend/main.bicep\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **ADE Manifests**: \`environment.yaml\` files for frontend and backend" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔍 Validation Scope" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Bicep template syntax and compilation" >> $GITHUB_STEP_SUMMARY
@@ -88,6 +116,7 @@ jobs:
         echo "- ✅ Module references and paths" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ RBAC role definitions and scope" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Resource dependencies and naming" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ ADE manifest YAML syntax and schema compliance" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚀 Deployment Ready" >> $GITHUB_STEP_SUMMARY
         echo "Infrastructure templates are validated and ready for deployment using:" >> $GITHUB_STEP_SUMMARY

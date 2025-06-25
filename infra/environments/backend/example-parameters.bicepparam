@@ -16,6 +16,10 @@ param location = 'eastus2'
 param logAnalyticsWorkspaceName = 'la-logging-validation-eus2'
 param logAnalyticsResourceGroupName = 'rg-logging-validation-eus2'
 
+// ADE-specific parameters (optional)
+param adeName = ''
+param devCenterProjectName = ''
+
 // Resource tags
 param tags = {
   Environment: 'validation'
