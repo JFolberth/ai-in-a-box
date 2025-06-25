@@ -39,8 +39,7 @@ The validation job implements the three what-if commands specified in the requir
 az deployment sub what-if \
   --location "eastus2" \
   --template-file "infra/main-orchestrator.bicep" \
-  --parameters "infra/dev-orchestrator.parameters.bicepparam" \
-  --parameters resourceToken="ci-validation"
+  --parameters "infra/dev-orchestrator.parameters.bicepparam"
 ```
 
 #### Backend Environment (Resource Group Scope)
@@ -72,8 +71,8 @@ Created example parameter files for environment-specific validation:
     "aiFoundryEndpoint": { "value": "https://example-ai-foundry.services.ai.azure.com/api/projects/exampleProject" },
     "applicationName": { "value": "ai-foundry-spa" },
     "environmentName": { "value": "validation" },
-    "location": { "value": "eastus2" },
-    "resourceToken": { "value": "val" }
+    "location": { "value": "eastus2" }
+    // resourceToken parameter removed - naming now uses uniqueString()
     // ... other required parameters
   }
 }

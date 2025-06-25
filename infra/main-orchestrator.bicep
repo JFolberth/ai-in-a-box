@@ -57,8 +57,7 @@ param logAnalyticsWorkspacePricingTier string = 'PerGB2018'
 @maxValue(730)
 param logAnalyticsWorkspaceRetentionInDays int = 90
 
-@description('Resource token for unique naming')
-param resourceToken string
+// Resource token parameter removed - using uniqueString() for deterministic naming
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -69,8 +68,8 @@ param tags object = {
 
 // =========== VARIABLES ===========
 
-var backendResourceGroupName = 'rg-${applicationName}-backend-${environmentName}-${resourceToken}'
-var frontendResourceGroupName = 'rg-${applicationName}-frontend-${environmentName}-${resourceToken}'
+var backendResourceGroupName = 'rg-${applicationName}-backend-${environmentName}-${uniqueString(subscription().id, applicationName, 'backend')}'
+var frontendResourceGroupName = 'rg-${applicationName}-frontend-${environmentName}-${uniqueString(subscription().id, applicationName, 'frontend')}'
 
 // =========== RESOURCE GROUPS ===========
 
