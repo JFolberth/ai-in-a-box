@@ -1,10 +1,14 @@
-# yaml-language-server: $schema=../manifest.schema.json
-
+# yaml-language-server: $schema=./manifest.schema.json
 name: AI_Foundry_SPA_Backend
-summary: Backend Function App for AI Foundry SPA with proxy functionality
+version: 1.0.0
+summary: Backend infrastructure for AI Foundry SPA application
 description: |
-  Deploys a serverless Function App that acts as a proxy between the frontend SPA 
-  and AI Foundry services. Includes proper RBAC configuration and monitoring.
+  Deploys the backend infrastructure for the AI Foundry SPA application including:
+  - Azure Function App for AI Foundry proxy service
+  - Storage Account for Function App runtime requirements
+  - Application Insights for backend monitoring and analytics
+  - RBAC assignments for AI Foundry integration with least privilege
+  - Cross-resource group permissions for AI Foundry access
 
 runner: Bicep
 templatePath: main.bicep
@@ -12,48 +16,90 @@ templatePath: main.bicep
 parameters:
   - id: applicationName
     name: Application Name
-    description: Name of the application used for resource naming
+    description: Name used for resource naming (e.g., ai-foundry-spa)
     type: string
     required: true
-
+    
+  - id: environmentName
+    name: Environment Name
+    description: Environment identifier
+    type: string
+    required: true
+    allowed:
+      - dev
+      - staging
+      - prod
+      
+  - id: location
+    name: Azure Region
+    description: Azure region for resource deployment
+    type: string
+    required: true
+    allowed:
+      - centralus
+      - eastus
+      - eastus2
+      - westus
+      - westus2
+      - westus3
+      
+  - id: aiFoundryInstanceName
+    name: AI Foundry Instance Name
+    description: Name of the AI Foundry hub/project instance
+    type: string
+    required: true
+    
+  - id: aiFoundryResourceGroupName
+    name: AI Foundry Resource Group
+    description: Resource Group containing the AI Foundry instance
+    type: string
+    required: true
+    
   - id: aiFoundryEndpoint
     name: AI Foundry Endpoint
-    description: The full endpoint URL for the AI Foundry service
+    description: AI Foundry endpoint URL (e.g., https://your-instance.services.ai.azure.com/api/projects/yourProject)
     type: string
     required: true
-
-  - id: aiFoundryInstanceName
-    name: AI Foundry Workspace Name
-    description: The name of the AI Foundry workspace
-    type: string
-    required: true
-
-  - id: aiFoundryResourceGroupName
-    name: AI Foundry Resource Group Name
-    description: The name of the AI Foundry workspace's Resource Group
-    type: string
-    required: true
-
+    
   - id: aiFoundryAgentId
     name: AI Foundry Agent ID
-    description: The ID of the AI agent to use
+    description: ID of the AI Foundry agent to use (e.g., asst_xxxxx)
+    type: string
+    required: true
+    
+  - id: logAnalyticsWorkspaceName
+    name: Log Analytics Workspace Name
+    description: Name of existing Log Analytics Workspace for consolidated logging
+    type: string
+    required: true
+    
+  - id: logAnalyticsResourceGroupName
+    name: Log Analytics Resource Group
+    description: Resource Group containing the Log Analytics Workspace
     type: string
     required: true
 
   - id: aiFoundryAgentName
     name: AI Foundry Agent Name
-    description: The display name of the AI agent
+    description: Display name for the AI Foundry agent
     type: string
-    required: true
-
-  - id: logAnalyticsWorkspaceName
-    name: Log Analytics Workspace Name
-    description: Name of existing Log Analytics workspace for monitoring
+    required: false
+    default: CancerBot
+    
+  - id: adeName
+    name: ADE Name
+    description: Name for the Azure Deployment Environment
     type: string
-    required: true
-
-  - id: logAnalyticsResourceGroupName
-    name: Log Analytics Resource Group
-    description: Resource group containing the Log Analytics workspace
+    required: false
+    
+  - id: devCenterProjectName
+    name: DevCenter Project Name
+    description: Name of the DevCenter project
     type: string
-    required: true
+    required: false
+    
+  - id: tags
+    name: Resource Tags
+    description: Additional tags to apply to all resources
+    type: object
+    required: false
