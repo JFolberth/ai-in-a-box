@@ -84,13 +84,13 @@ param existingLogAnalyticsResourceGroupName = 'your-existing-rg'
 
 The project uses a consistent naming pattern:
 ```
-{resourceType}-{projectName}-{environment}-{resourceToken}
+{resourceType}-{projectName}-{environment}-{uniqueString}
 ```
 
 Examples:
-- Static Web App: `stapp-ai-foundry-spa-frontend-dev-001`
-- Function App: `func-ai-foundry-spa-backend-dev-001`
-- Resource Groups: `rg-ai-foundry-spa-frontend-dev-001`
+- Static Web App: `stapp-ai-foundry-spa-frontend-dev-a1b2c3`
+- Function App: `func-ai-foundry-spa-backend-dev-a1b2c3`
+- Resource Groups: `rg-ai-foundry-spa-frontend-dev-a1b2c3`
 
 ## 🔒 Security Configuration
 

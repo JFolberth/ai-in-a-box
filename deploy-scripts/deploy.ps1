@@ -52,13 +52,9 @@ param(
 # Error handling
 $ErrorActionPreference = "Stop"
 
-# Generate resource token for uniqueness
-$ResourceToken = "rt$(Get-Random -Minimum 100 -Maximum 999)"
-
 Write-Host "🚀 Starting deployment of AI Foundry SPA using Azure CLI..." -ForegroundColor Green
 Write-Host "📋 Subscription: $SubscriptionId" -ForegroundColor Cyan
 Write-Host "📋 Location: $Location" -ForegroundColor Cyan
-Write-Host "📋 Resource Token: $ResourceToken" -ForegroundColor Cyan
 
 # Verify Azure CLI is installed and logged in
 try {
@@ -90,7 +86,6 @@ az deployment sub validate `
     --location $Location `
     --template-file "infra/main-orchestrator.bicep" `
     --parameters "infra/dev-orchestrator.parameters.bicepparam" `
-    --parameters resourceToken=$ResourceToken `
     --verbose
 
 if ($LASTEXITCODE -ne 0) {
@@ -107,7 +102,6 @@ $deploymentOutput = az deployment sub create `
     --name $deploymentName `
     --template-file "infra/main-orchestrator.bicep" `
     --parameters "infra/dev-orchestrator.parameters.bicepparam" `
-    --parameters resourceToken=$ResourceToken `
     --output json
 
 if ($LASTEXITCODE -ne 0) {

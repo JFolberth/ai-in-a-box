@@ -43,10 +43,15 @@ parameters:
     type: string
     required: false
     default: dev
-    
-  - id: location
+      - id: location
     name: Location
     description: Azure region for resource deployment
     type: string
     required: false
     default: eastus2
+
+  - id: tags
+    name: Resource Tags
+    description: Tags to apply to all resources
+    type: object
+    required: false

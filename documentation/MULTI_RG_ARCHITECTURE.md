@@ -7,17 +7,17 @@ The infrastructure has been restructured to deploy the frontend and backend comp
 ## Architecture Components
 
 ### Frontend Resource Group
-- **Name Pattern**: `rg-ai-foundry-spa-frontend-{environmentName}-{resourceToken}`
+- **Name Pattern**: `rg-ai-foundry-spa-frontend-{environmentName}-{uniqueString}`
 - **Resources**:
-  - Azure Static Web App for SPA hosting (`stapp-ai-foundry-spa-frontend-{environmentName}-{resourceToken}`)
+  - Azure Static Web App for SPA hosting (`stapp-ai-foundry-spa-frontend-{environmentName}-{uniqueString}`)
   - Application Insights for frontend monitoring
 - **Purpose**: Hosts the JavaScript SPA with modern static web app features
 
 ### Backend Resource Group  
-- **Name Pattern**: `rg-ai-foundry-spa-backend-{environmentName}-{resourceToken}`
+- **Name Pattern**: `rg-ai-foundry-spa-backend-{environmentName}-{uniqueString}`
 - **Resources**:
-  - Function App for AI Foundry proxy (`func-ai-foundry-spa-backend-{environmentName}-{resourceToken}`)
-  - Storage Account for Function App runtime (`stfnbackspa{resourceToken}`)
+  - Function App for AI Foundry proxy (`func-ai-foundry-spa-backend-{environmentName}-{uniqueString}`)
+  - Storage Account for Function App runtime (`stfnbackspa{uniqueString}`)
   - App Service Plan (Consumption)
   - Application Insights for backend monitoring
 - **Purpose**: Hosts the C# Azure Function that proxies AI Foundry requests with managed identity
@@ -79,14 +79,14 @@ npm run build:dev
 ## Resource Naming Conventions
 
 ### Frontend Resources
-- Static Web App: `stapp-ai-foundry-spa-frontend-{environmentName}-{resourceToken}` (e.g., `stapp-ai-foundry-spa-frontend-dev-001`)
-- Application Insights: `appi-ai-foundry-spa-frontend-{environmentName}-{resourceToken}`
+- Static Web App: `stapp-ai-foundry-spa-frontend-{environmentName}-{uniqueString}` (e.g., `stapp-ai-foundry-spa-frontend-dev-a1b2c3`)
+- Application Insights: `appi-ai-foundry-spa-frontend-{environmentName}-{uniqueString}`
 
 ### Backend Resources
-- Function App: `func-ai-foundry-spa-backend-{environmentName}-{resourceToken}` (e.g., `func-ai-foundry-spa-backend-dev-001`)
-- Function Storage: `stfnbackspa{resourceToken}` (e.g., `stfnbackspa001`)
-- App Service Plan: `asp-ai-foundry-spa-backend-{environmentName}-{resourceToken}`
-- Application Insights: `appi-ai-foundry-spa-backend-{environmentName}-{resourceToken}`
+- Function App: `func-ai-foundry-spa-backend-{environmentName}-{uniqueString}` (e.g., `func-ai-foundry-spa-backend-dev-a1b2c3`)
+- Function Storage: `stfnbackspa{uniqueString}` (e.g., `stfnbackspaa1b2c3`)
+- App Service Plan: `asp-ai-foundry-spa-backend-{environmentName}-{uniqueString}`
+- Application Insights: `appi-ai-foundry-spa-backend-{environmentName}-{uniqueString}`
 
 ## Deployment Outputs
 

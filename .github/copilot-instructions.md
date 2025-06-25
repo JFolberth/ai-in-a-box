@@ -259,6 +259,39 @@ cd src/backend
 - Use system-assigned managed identity for Azure resources
 - Store sensitive configuration in Azure Key Vault or parameter files
 
+### 🔐 Authentication & Authorization - CRITICAL SECURITY PRINCIPLE
+
+#### **🚨 MANAGED IDENTITY FIRST - AVOID KEYS 🚨**
+- **✅ ALWAYS use Managed Identity** for Azure service-to-service authentication
+- **❌ NEVER use `listKeys()` or connection strings** unless absolutely no alternative exists
+- **✅ Use RBAC assignments** instead of key-based authentication
+- **✅ Leverage Azure AD authentication** for all supported services
+
+#### **Key Usage Policy - LAST RESORT ONLY**
+- **🔑 Keys should only be used when:**
+  - Service doesn't support Managed Identity (rare with modern Azure services)
+  - External services that require API keys
+  - Legacy systems during migration periods
+- **⚠️ When keys are unavoidable:**
+  - Store in Azure Key Vault, never in code or parameters
+  - Use Key Vault references in ARM/Bicep templates
+  - Implement key rotation policies
+  - Monitor key usage with logging
+
+#### **Azure Service Authentication Hierarchy (Priority Order)**
+1. **🥇 System-Assigned Managed Identity** (preferred)
+2. **🥈 User-Assigned Managed Identity** (when shared identity needed)
+3. **🥉 Service Principal with certificate** (for CI/CD scenarios)
+4. **⚠️ Service Principal with secret** (avoid if possible)
+5. **🚫 Connection strings/keys** (last resort only)
+
+#### **Bicep/ARM Template Security**
+- **✅ Use RBAC modules** for permission assignments
+- **✅ Reference existing resources** instead of keys: `existingResource.properties.endpoint`
+- **❌ Avoid `listKeys()`** in templates unless absolutely necessary
+- **✅ Use `keyVault.getSecret()` pattern** for unavoidable secrets
+- **✅ Implement least privilege** role assignments scoped to specific resources
+
 ### 🧹 Debugging and Logging Cleanup - CRITICAL
 
 When debugging issues, it's important to clean up verbose logging after problems are resolved to maintain performance and security.

@@ -25,11 +25,11 @@ tasks:
   - name: winget
     description: Install Azure Functions Core Tools for local development
     parameters:
-      package: Microsoft.AzureFunctionsCoreTools
-  - name: winget
+      package: Microsoft.AzureFunctionsCoreTools  - name: winget
     description: Install Python for development scripting and tooling
     parameters:
-      package: Python.Python.3.12  - name: powershell
+      package: Python.Python.3.12
+  - name: powershell
     description: Install Azure CLI Bicep extension and DevCenter extension system-wide
     parameters:
       command: |

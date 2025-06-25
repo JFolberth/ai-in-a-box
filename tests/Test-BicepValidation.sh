@@ -108,7 +108,7 @@ trap cleanup EXIT
 # Test main orchestrator what-if
 echo ""
 echo "🔍 Testing main orchestrator what-if..."
-echo "Command: az deployment sub what-if --location eastus2 --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --parameters resourceToken=test"
+echo "Command: az deployment sub what-if --location eastus2 --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam"
 
 cd "$PROJECT_ROOT"
 set +e  # Don't exit on error for these tests
@@ -116,8 +116,7 @@ set +e  # Don't exit on error for these tests
 az deployment sub what-if \
     --location "eastus2" \
     --template-file "infra/main-orchestrator.bicep" \
-    --parameters "infra/dev-orchestrator.parameters.bicepparam" \
-    --parameters resourceToken="test"
+    --parameters "infra/dev-orchestrator.parameters.bicepparam"
 
 MAIN_RESULT=$?
 
