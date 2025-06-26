@@ -312,7 +312,8 @@ output aiFoundryConfig object = {
   agentName: aiFoundryAgentName
   endpoint: aiFoundryEndpoint
   subscriptionId: aiFoundrySubscriptionId
-  resourceGroup: aiFoundryResourceGroupName
+  resourceGroup: effectiveAiFoundryResourceGroupName
+
   projectName: aiFoundryProjectDisplayName
 }
 
