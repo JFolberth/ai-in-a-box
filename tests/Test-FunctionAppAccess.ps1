@@ -1,3 +1,55 @@
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+Test Azure Function App resource access and RBAC permissions
+
+.DESCRIPTION
+This script verifies that the Function App has proper access to required Azure resources
+including Storage Account and AI Foundry resources. It validates managed identity configuration,
+RBAC role assignments, and Function App settings to ensure proper deployment configuration.
+
+.PARAMETER ResourceGroupName
+The name of the resource group containing the Function App. Required.
+
+.PARAMETER FunctionAppName  
+The name of the Azure Function App to test. Required.
+
+.PARAMETER StorageAccountName
+The name of the Storage Account that the Function App should have access to. Required.
+
+.PARAMETER AIFoundryResourceId
+The full resource ID of the AI Foundry resource (optional). If provided, tests AI Foundry access permissions.
+
+.EXAMPLE
+./Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001" -FunctionAppName "func-ai-foundry-spa-backend-dev-001" -StorageAccountName "staifondryspabackdev001"
+
+.EXAMPLE
+./Test-FunctionAppAccess.ps1 -ResourceGroupName "my-rg" -FunctionAppName "my-func-app" -StorageAccountName "mystorageaccount" -AIFoundryResourceId "/subscriptions/12345/resourceGroups/ai-rg/providers/Microsoft.CognitiveServices/accounts/my-ai-foundry"
+
+.EXAMPLE
+& "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionAppAccess.ps1" -ResourceGroupName "rg-backend" -FunctionAppName "func-app-001" -StorageAccountName "storage001"
+
+.EXAMPLE
+./Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-prod" -FunctionAppName "func-prod-app" -StorageAccountName "prodstorageacct" -AIFoundryResourceId "/subscriptions/abcd/resourceGroups/ai-prod/providers/Microsoft.CognitiveServices/accounts/ai-prod-foundry"
+
+.NOTES
+Prerequisites:
+- Azure CLI installed and authenticated (az login)
+- PowerShell 7+ or Windows PowerShell 5.1
+- Sufficient Azure permissions to read resource information and role assignments
+- Function App must exist and have system-assigned managed identity enabled
+
+Expected Output:
+- Managed identity validation results
+- Storage Account access permissions analysis
+- AI Foundry access permissions (if resource ID provided)
+- Function App configuration validation
+- Function App status and runtime information
+- Recommendations for fixing any permission issues
+
+The script checks for optimal role assignments (least privilege) and warns about over-privileged assignments.
+#>
+
 # Azure Function App Resource Access Test
 # This script verifies that the Function App has proper access to required resources
 

@@ -1,6 +1,40 @@
 #!/bin/bash
 
 # AI Foundry SPA Backend Test Runner
+#
+# SYNOPSIS:
+#   Build and run the comprehensive test suite for the backend Azure Function
+#
+# DESCRIPTION:
+#   This script builds the backend Azure Function project and runs its complete test suite.
+#   It compiles both the main Function App project and the test project, then executes
+#   all unit tests, integration tests, and validation tests with detailed output.
+#
+# PARAMETERS:
+#   No parameters required. Script automatically detects project structure.
+#
+# EXAMPLES:
+#   ./run-backend-tests.sh
+#
+#   /home/runner/work/ai-in-a-box/ai-in-a-box/tests/run-backend-tests.sh
+#
+#   bash run-backend-tests.sh
+#
+# PREREQUISITES:
+#   - .NET SDK 8.0+ installed
+#   - Backend Function App project in src/backend/
+#   - Test project in src/backend/tests/AIFoundryProxy.Tests/
+#   - PowerShell or compatible shell environment
+#
+# EXPECTED OUTPUT:
+#   - Backend project build results
+#   - Test project compilation status  
+#   - Detailed test execution results with coverage summary
+#   - Test categories: Basic Function Tests, Chat Models Tests, Utility Method Tests, 
+#     Simulation Logic Tests, Integration Tests
+#   - Final success/failure summary
+#
+# AI Foundry SPA Backend Test Runner
 # Builds and runs the comprehensive test suite for the backend Azure Function
 
 set -e  # Exit on any error

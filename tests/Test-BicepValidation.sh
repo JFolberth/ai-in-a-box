@@ -1,6 +1,39 @@
 #!/bin/bash
 
 # Bicep Validation Test Script
+#
+# SYNOPSIS:
+#   Test Bicep template validation commands locally for CI/CD pipeline development
+#
+# DESCRIPTION:
+#   This script tests the Bicep validation commands locally that are used in the CI/CD pipeline.
+#   It validates both frontend and backend Bicep templates using 'az deployment what-if' commands
+#   with example parameter files. Helps developers test validation logic before pushing to CI.
+#
+# PARAMETERS:
+#   No parameters required. Script uses predefined example parameter files.
+#
+# EXAMPLES:
+#   ./Test-BicepValidation.sh
+#
+#   /home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-BicepValidation.sh
+#
+#   bash Test-BicepValidation.sh
+#
+# PREREQUISITES:
+#   - Azure CLI installed and authenticated (az login)
+#   - Bicep CLI extension installed (az bicep install)
+#   - Valid Azure subscription with permissions to perform what-if deployments
+#   - Example parameter files must exist in infra/environments/*/
+#
+# EXPECTED OUTPUT:
+#   - Azure CLI and authentication status validation
+#   - Frontend template what-if validation results
+#   - Backend template what-if validation results  
+#   - Summary of validation success/failure for both templates
+#   - Detailed error messages if validation fails
+#
+# Bicep Validation Test Script
 # This script tests the Bicep validation commands locally
 # Requires: Azure CLI installed and authenticated with 'az login'
 
