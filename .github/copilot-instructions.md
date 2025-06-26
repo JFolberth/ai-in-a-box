@@ -138,6 +138,57 @@ cd src/backend
 - **Multi-Resource Group**: Deploy frontend and backend to separate resource groups
 - **Cross-Resource Group RBAC**: Use dedicated RBAC modules for permissions across resource groups
 - Deploy using Azure CLI commands ONLY - never use azd (Azure Developer CLI)
+
+#### 🏷️ **Azure Resource Naming Standards - MANDATORY**
+Follow the established naming convention used throughout the project:
+
+**Pattern**: `{resourceTypePrefix}-{component}-{environment}-{regionCode}`
+
+**Region Mapping**:
+```bicep
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
+}
+```
+
+**Resource Type Prefixes**:
+- `rg-` - Resource Groups
+- `func-` - Function Apps
+- `plan-` - App Service Plans
+- `appi-` - Application Insights
+- `st-` - Storage Accounts
+- `cs-` - Cognitive Services
+- `aiproj-` - AI Foundry Projects (Cognitive Services Projects)
+- `la-` - Log Analytics Workspaces
+- `kv-` - Key Vaults
+- `swa-` - Static Web Apps
+
+**Examples**:
+- Resource Group: `rg-ai-foundry-spa-backend-dev-eus`
+- Function App: `func-ai-foundry-spa-backend-dev-eus`
+- Cognitive Services: `cs-ai-foundry-dev-eus`
+- AI Foundry Project: `aiproj-ai-foundry-dev-eus`
+- Application Insights: `appi-ai-foundry-spa-backend-dev-eus`
+
+**Naming Variables**:
+```bicep
+// Use consistent name suffix patterns with namePrefix parameter
+var nameSuffix = toLower('${namePrefix}-${environment}-${regionReference[location]}')
+var resourceGroupName = 'rg-${nameSuffix}'
+var functionAppName = 'func-${nameSuffix}'
+var cognitiveServicesName = 'cs-${nameSuffix}'
+var aiProjectName = 'aiproj-${nameSuffix}'
+```
+
+**❌ NEVER use**:
+- Random strings or unique suffixes in resource names
+- Inconsistent prefixes or formats
+- Mixed casing or special characters
+- Resource names without environment or region indicators
 - System-assigned managed identity only (no user-assigned)
 - **🏗️ Azure Deployment Environment (ADE) Schema - CRITICAL**:
   - **✅ Follow official schema**: https://learn.microsoft.com/en-us/azure/deployment-environments/concept-environment-yaml

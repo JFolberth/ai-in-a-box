@@ -10,8 +10,8 @@ targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
 
-@description('Prefix for all AI Foundry resource names')
-param namePrefix string = 'aifoundry'
+@description('Name prefix for AI Foundry resources')
+param namePrefix string = 'ai-foundry'
 
 @description('Azure region for resource deployment')
 param location string
@@ -46,9 +46,19 @@ param principalType string = 'ServicePrincipal'
 
 // =========== VARIABLES ===========
 
-var cognitiveServicesName = '${namePrefix}-cogserv-${environment}-${uniqueString(resourceGroup().id)}'
-var aiStudioWorkspaceName = '${namePrefix}-workspace-${environment}-${uniqueString(resourceGroup().id)}'
-var aiProjectName = '${namePrefix}-project-${environment}-${uniqueString(resourceGroup().id)}'
+// Region reference mapping for consistent naming
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
+}
+
+// Consistent naming pattern following project standards
+var nameSuffix = toLower('${namePrefix}-${environment}-${regionReference[location]}')
+var cognitiveServicesName = 'cs-${nameSuffix}'
+var aiProjectName = 'aiproj-${nameSuffix}'
 
 // Azure AI Developer role definition ID (least privilege for AI Foundry access)
 var azureAiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
@@ -56,7 +66,7 @@ var azureAiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
 // =========== RESOURCES ===========
 
 // Cognitive Services Account (Multi-service AI Services)
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
   name: cognitiveServicesName
   location: location
   tags: union(tags, {
@@ -65,16 +75,19 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   })
   kind: 'AIServices'
   properties: {
-    apiProperties: {
-      statisticsEnabled: false
-    }
     customSubDomainName: cognitiveServicesName
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
       ipRules: []
     }
+    allowProjectManagement: true
+    defaultProject: aiProjectName
+    associatedProjects: [
+      aiProjectName
+    ]
     publicNetworkAccess: 'Enabled'
+    
   }
   sku: {
     name: 'S0'
@@ -84,57 +97,8 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-// AI Studio Workspace (Machine Learning Services)
-resource aiStudioWorkspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
-  name: aiStudioWorkspaceName
-  location: location
-  tags: union(tags, {
-    Service: 'MachineLearningServices'
-    Purpose: 'AI-Studio-Workspace'
-  })
-  properties: {
-    friendlyName: '${projectName} Workspace'
-    description: 'AI Studio workspace for ${projectDescription}'
-    // Minimal configuration - no storage, key vault, or container registry dependencies
-    publicNetworkAccess: 'Enabled'
-    managedNetwork: {
-      isolationMode: 'Disabled'
-    }
-  }
-  identity: {
-    type: 'SystemAssigned'
-  }
-  sku: {
-    name: 'Basic'
-    tier: 'Basic'
-  }
-}
-
-// AI Project (Foundry Project Workspace)
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
-  name: aiProjectName
-  location: location
-  tags: union(tags, {
-    Service: 'MachineLearningServices'
-    Purpose: 'AI-Foundry-Project'
-  })
-  properties: {
-    friendlyName: projectName
-    description: projectDescription
-    hubResourceId: aiStudioWorkspace.id
-    publicNetworkAccess: 'Enabled'
-  }
-  identity: {
-    type: 'SystemAssigned'
-  }
-  sku: {
-    name: 'Basic'
-    tier: 'Basic'
-  }
-}
-
 // Model Deployment (GPT-4o-mini)
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
   parent: cognitiveServices
   name: modelDeploymentName
   properties: {
@@ -151,19 +115,17 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-
   }
 }
 
-// AI Connection (Links AI Project to Cognitive Services)
-resource aiConnection 'Microsoft.MachineLearningServices/workspaces/connections@2024-04-01' = {
-  parent: aiProject
-  name: 'aoai-connection'
+// AI Foundry Project (Cognitive Services Project)
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+  parent: cognitiveServices
+  name: aiProjectName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
-    category: 'AzureOpenAI'
-    target: cognitiveServices.properties.endpoint
-    authType: 'AAD'
-    isSharedToAll: true
-    metadata: {
-      ApiType: 'Azure'
-      ResourceId: cognitiveServices.id
-    }
+    description: projectDescription
+    displayName: projectName
   }
 }
 
@@ -187,9 +149,6 @@ output cognitiveServicesName string = cognitiveServices.name
 @description('Cognitive Services endpoint URL')
 output cognitiveServicesEndpoint string = cognitiveServices.properties.endpoint
 
-@description('AI Studio workspace name')
-output aiStudioWorkspaceName string = aiStudioWorkspace.name
-
 @description('AI project name')
 output aiProjectName string = aiProject.name
 
@@ -202,14 +161,8 @@ output modelEndpoint string = '${cognitiveServices.properties.endpoint}openai/de
 @description('AI Foundry Studio URL for project management')
 output aiFoundryStudioUrl string = 'https://ai.azure.com/projects/${aiProject.name}/overview'
 
-@description('AI connection name')
-output connectionName string = aiConnection.name
-
 @description('Cognitive Services resource ID')
 output cognitiveServicesId string = cognitiveServices.id
-
-@description('AI Studio workspace resource ID')
-output aiStudioWorkspaceId string = aiStudioWorkspace.id
 
 @description('AI project resource ID')
 output aiProjectId string = aiProject.id

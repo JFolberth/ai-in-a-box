@@ -6,23 +6,7 @@ targetScope = 'subscription'
 
 // =========== PARAMETERS ===========
 
-@description('AI Foundry agent ID for endpoint interaction')
-param aiFoundryAgentId string = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
-
-@description('AI Foundry agent name for endpoint interaction')
-param aiFoundryAgentName string = 'AI in A Box'
-
-@description('AI Foundry endpoint URL for API calls')
-param aiFoundryEndpoint string = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
-
-@description('AI Foundry resource group name for RBAC assignment')
-param aiFoundryResourceGroupName string = 'rg-foundry-dev-eus'
-
-@description('AI Foundry resource name for RBAC assignment')
-param aiFoundryResourceName string = 'ai-foundry-dev-eus'
-
-@description('AI Foundry subscription ID - defaults to current deployment subscription')
-param aiFoundrySubscriptionId string = subscription().subscriptionId
+// =========== CORE PARAMETERS ===========
 
 @description('Application name used for resource naming')
 param applicationName string = 'ai-foundry-spa'
@@ -32,6 +16,23 @@ param environmentName string = 'dev'
 
 @description('Azure region for resource deployment')
 param location string = 'eastus'
+
+@description('Tags to apply to all resources')
+param tags object = {
+  Environment: environmentName
+  Application: applicationName
+  AIFoundryAgent: 'AI in A Box'
+}
+
+// =========== FRONTEND PARAMETERS ===========
+
+// No specific frontend parameters currently - frontend uses core parameters
+
+// =========== BACKEND PARAMETERS ===========
+
+// No specific backend parameters currently - backend uses core parameters
+
+// =========== LOG ANALYTICS PARAMETERS ===========
 
 @description('Create new Log Analytics workspace or use existing')
 param createLogAnalyticsWorkspace bool = false
@@ -51,12 +52,25 @@ param logAnalyticsWorkspacePricingTier string = 'PerGB2018'
 @maxValue(730)
 param logAnalyticsWorkspaceRetentionInDays int = 90
 
-@description('Tags to apply to all resources')
-param tags object = {
-  Environment: environmentName
-  Application: applicationName
-  AIFoundryAgent: aiFoundryAgentName
-}
+// =========== AI FOUNDRY PARAMETERS ===========
+
+@description('AI Foundry agent ID for endpoint interaction')
+param aiFoundryAgentId string = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
+
+@description('AI Foundry agent name for endpoint interaction')
+param aiFoundryAgentName string = 'AI in A Box'
+
+@description('AI Foundry endpoint URL for API calls')
+param aiFoundryEndpoint string = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
+
+@description('AI Foundry resource group name for RBAC assignment')
+param aiFoundryResourceGroupName string = 'rg-foundry-dev-eus'
+
+@description('AI Foundry resource name for RBAC assignment')
+param aiFoundryResourceName string = 'ai-foundry-dev-eus'
+
+@description('AI Foundry subscription ID - defaults to current deployment subscription')
+param aiFoundrySubscriptionId string = subscription().subscriptionId
 
 @description('Create new AI Foundry resource group or use existing')
 param createAiFoundryResourceGroup bool = false
@@ -68,7 +82,7 @@ param aiFoundryModelDeploymentName string = 'gpt-4o-mini'
 param aiFoundryModelVersion string = '2024-07-18'
 
 @description('AI Foundry deployment capacity (TPM - Tokens Per Minute)')
-param aiFoundryDeploymentCapacity int = 10000
+param aiFoundryDeploymentCapacity int = 150
 
 @description('AI Foundry project display name')
 param aiFoundryProjectDisplayName string = 'AI in A Box Project'
@@ -221,7 +235,6 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
     newAiFoundryResourceGroup
   ]
   params: {
-    namePrefix: 'aifoundry'
     location: location
     environment: environmentName
     tags: union(tags, {
