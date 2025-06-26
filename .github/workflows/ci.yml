@@ -142,61 +142,36 @@ jobs:
         RESOURCE_GROUP="ai-foundry-${{ env.ADE_ENVIRONMENT_NAME }}"
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         
-        echo "🔍 Querying deployment outputs from resource group: $RESOURCE_GROUP"
+        echo "🔍 Querying resources directly from resource group: $RESOURCE_GROUP"
         
-        # Find the deployment name - ADE typically creates deployments with specific patterns
-        DEPLOYMENT_NAME=$(az deployment group list \
+        # Find Static Web App by resource type (more reliable than deployment outputs)
+        STATIC_WEB_APP_NAME=$(az staticwebapp list \
           --resource-group "$RESOURCE_GROUP" \
-          --query "[?provisioningState=='Succeeded'] | sort_by(@, &timestamp) | [-1].name" \
+          --query "[0].name" \
           --output tsv)
         
-        if [ -z "$DEPLOYMENT_NAME" ] || [ "$DEPLOYMENT_NAME" = "null" ]; then
-          echo "❌ No successful deployment found in resource group: $RESOURCE_GROUP"
-          echo "🔍 Available deployments:"
-          az deployment group list --resource-group "$RESOURCE_GROUP" --query "[].{name:name, state:provisioningState, timestamp:timestamp}" --output table
+        if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
+          echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
+          echo "🔍 Available resources:"
+          az resource list --resource-group "$RESOURCE_GROUP" --output table
           exit 1
         fi
         
-        echo "📦 Found deployment: $DEPLOYMENT_NAME"
+        echo "📦 Found Static Web App: $STATIC_WEB_APP_NAME"
         
-        # Get deployment outputs
-        DEPLOYMENT_OUTPUTS=$(az deployment group show \
+        # Get Static Web App URL directly from the resource
+        STATIC_WEB_APP_HOSTNAME=$(az staticwebapp show \
+          --name "$STATIC_WEB_APP_NAME" \
           --resource-group "$RESOURCE_GROUP" \
-          --name "$DEPLOYMENT_NAME" \
-          --query "properties.outputs" \
-          --output json)
+          --query "defaultHostname" \
+          --output tsv)
         
-        echo "🔍 Available deployment outputs:"
-        echo "$DEPLOYMENT_OUTPUTS" | jq -r 'keys[]' 2>/dev/null || echo "No outputs found or invalid JSON"
-        
-        # Extract Static Web App URL from deployment outputs
-        STATIC_WEB_APP_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.staticWebsiteUrl.value // empty' 2>/dev/null)
-        STATIC_WEB_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.staticWebAppName.value // empty' 2>/dev/null)
-        
-        # Fallback: If deployment outputs are not available, query resources directly
-        if [ -z "$STATIC_WEB_APP_URL" ] || [ "$STATIC_WEB_APP_URL" = "null" ]; then
-          echo "⚠️ staticWebsiteUrl not found in deployment outputs, falling back to resource query..."
-          
-          # Find Static Web App in the resource group
-          STATIC_WEB_APP_NAME=$(az staticwebapp list \
-            --resource-group "$RESOURCE_GROUP" \
-            --query "[0].name" \
-            --output tsv)
-          
-          if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
-            echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
-            exit 1
-          fi
-          
-          # Get Static Web App URL
-          STATIC_WEB_APP_HOSTNAME=$(az staticwebapp show \
-            --name "$STATIC_WEB_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --query "defaultHostname" \
-            --output tsv)
-          
-          STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_HOSTNAME"
+        if [ -z "$STATIC_WEB_APP_HOSTNAME" ] || [ "$STATIC_WEB_APP_HOSTNAME" = "null" ]; then
+          echo "❌ Failed to get Static Web App hostname"
+          exit 1
         fi
+        
+        STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_HOSTNAME"
         
         # Validate URLs are not empty
         if [ -z "$STATIC_WEB_APP_URL" ] || [ "$STATIC_WEB_APP_URL" = "https://" ] || [ "$STATIC_WEB_APP_URL" = "null" ]; then
@@ -235,9 +210,8 @@ jobs:
         echo "AI_FOUNDRY_INSTANCE_NAME=$AI_FOUNDRY_INSTANCE_NAME" >> $GITHUB_ENV
         echo "AI_FOUNDRY_RG_NAME=$AI_FOUNDRY_RG_NAME" >> $GITHUB_ENV
         
-        echo "✅ Successfully extracted ADE outputs and AI Foundry configuration:"
+        echo "✅ Successfully extracted resources and AI Foundry configuration:"
         echo "  - Resource Group: $RESOURCE_GROUP"
-        echo "  - Deployment: $DEPLOYMENT_NAME"
         echo "  - Static Web App: $STATIC_WEB_APP_NAME"
         echo "  - Static Web App URL: $STATIC_WEB_APP_URL"
         echo "  - AI Foundry Endpoint: $AI_FOUNDRY_ENDPOINT"
@@ -406,61 +380,36 @@ jobs:
         RESOURCE_GROUP="ai-foundry-${{ env.ADE_ENVIRONMENT_NAME }}"
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         
-        echo "🔍 Querying deployment outputs from resource group: $RESOURCE_GROUP"
+        echo "🔍 Querying resources directly from resource group: $RESOURCE_GROUP"
         
-        # Find the deployment name - ADE typically creates deployments with specific patterns
-        DEPLOYMENT_NAME=$(az deployment group list \
+        # Find Function App by resource type (more reliable than deployment outputs)
+        FUNCTION_APP_NAME=$(az functionapp list \
           --resource-group "$RESOURCE_GROUP" \
-          --query "[?provisioningState=='Succeeded'] | sort_by(@, &timestamp) | [-1].name" \
+          --query "[0].name" \
           --output tsv)
         
-        if [ -z "$DEPLOYMENT_NAME" ] || [ "$DEPLOYMENT_NAME" = "null" ]; then
-          echo "❌ No successful deployment found in resource group: $RESOURCE_GROUP"
-          echo "🔍 Available deployments:"
-          az deployment group list --resource-group "$RESOURCE_GROUP" --query "[].{name:name, state:provisioningState, timestamp:timestamp}" --output table
+        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
+          echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
+          echo "🔍 Available resources:"
+          az resource list --resource-group "$RESOURCE_GROUP" --output table
           exit 1
         fi
         
-        echo "📦 Found deployment: $DEPLOYMENT_NAME"
+        echo "📦 Found Function App: $FUNCTION_APP_NAME"
         
-        # Get deployment outputs
-        DEPLOYMENT_OUTPUTS=$(az deployment group show \
+        # Get Function App URL directly from the resource
+        FUNCTION_APP_HOSTNAME=$(az functionapp show \
+          --name "$FUNCTION_APP_NAME" \
           --resource-group "$RESOURCE_GROUP" \
-          --name "$DEPLOYMENT_NAME" \
-          --query "properties.outputs" \
-          --output json)
+          --query "defaultHostName" \
+          --output tsv)
         
-        echo "🔍 Available deployment outputs:"
-        echo "$DEPLOYMENT_OUTPUTS" | jq -r 'keys[]' 2>/dev/null || echo "No outputs found or invalid JSON"
-        
-        # Extract Function App URL from deployment outputs
-        FUNCTION_APP_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.functionAppUrl.value // empty' 2>/dev/null)
-        FUNCTION_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.functionAppName.value // empty' 2>/dev/null)
-        
-        # Fallback: If deployment outputs are not available, query resources directly
-        if [ -z "$FUNCTION_APP_URL" ] || [ "$FUNCTION_APP_URL" = "null" ]; then
-          echo "⚠️ functionAppUrl not found in deployment outputs, falling back to resource query..."
-          
-          # Find Function App in the resource group
-          FUNCTION_APP_NAME=$(az functionapp list \
-            --resource-group "$RESOURCE_GROUP" \
-            --query "[0].name" \
-            --output tsv)
-          
-          if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
-            echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
-            exit 1
-          fi
-          
-          # Get Function App URL
-          FUNCTION_APP_HOSTNAME=$(az functionapp show \
-            --name "$FUNCTION_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --query "defaultHostName" \
-            --output tsv)
-          
-          FUNCTION_APP_URL="https://$FUNCTION_APP_HOSTNAME"
+        if [ -z "$FUNCTION_APP_HOSTNAME" ] || [ "$FUNCTION_APP_HOSTNAME" = "null" ]; then
+          echo "❌ Failed to get Function App hostname"
+          exit 1
         fi
+        
+        FUNCTION_APP_URL="https://$FUNCTION_APP_HOSTNAME"
         
         # Validate URLs are not empty
         if [ -z "$FUNCTION_APP_URL" ] || [ "$FUNCTION_APP_URL" = "https://" ] || [ "$FUNCTION_APP_URL" = "null" ]; then
@@ -499,9 +448,8 @@ jobs:
         echo "AI_FOUNDRY_INSTANCE_NAME=$AI_FOUNDRY_INSTANCE_NAME" >> $GITHUB_ENV
         echo "AI_FOUNDRY_RG_NAME=$AI_FOUNDRY_RG_NAME" >> $GITHUB_ENV
         
-        echo "✅ Successfully extracted ADE outputs and AI Foundry configuration:"
+        echo "✅ Successfully extracted resources and AI Foundry configuration:"
         echo "  - Resource Group: $RESOURCE_GROUP"
-        echo "  - Deployment: $DEPLOYMENT_NAME" 
         echo "  - Function App: $FUNCTION_APP_NAME"
         echo "  - Function App URL: $FUNCTION_APP_URL"
         echo "  - AI Foundry Endpoint: $AI_FOUNDRY_ENDPOINT"
