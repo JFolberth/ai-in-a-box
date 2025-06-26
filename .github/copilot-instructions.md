@@ -138,6 +138,120 @@ cd src/backend
 - **Multi-Resource Group**: Deploy frontend and backend to separate resource groups
 - **Cross-Resource Group RBAC**: Use dedicated RBAC modules for permissions across resource groups
 - Deploy using Azure CLI commands ONLY - never use azd (Azure Developer CLI)
+
+#### 🔗 **Bicep Dependencies - CRITICAL GUIDANCE**
+
+**AVOID explicit `dependsOn` blocks when possible** - Bicep automatically handles dependencies through resource references.
+
+**✅ PREFERRED - Automatic Dependencies:**
+```bicep
+// Bicep automatically infers that storage account must be created before function app
+resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
+  properties: {
+    storageAccountRequired: true
+    storageAccountName: storageAccount.name  // Automatic dependency
+  }
+}
+```
+
+**⚠️ ONLY use explicit `dependsOn` when:**
+1. **Conditional Dependencies**: When dependency itself is conditionally deployed
+2. **Cross-Scope Dependencies**: Dependencies across different resource scopes
+3. **Timing Issues**: When automatic inference fails due to complex scenarios
+
+**📝 MANDATORY - Document WHY explicit `dependsOn` is needed:**
+```bicep
+module frontendInfrastructure 'environments/frontend/main.bicep' = {
+  name: 'frontend-deployment'
+  // EXPLICIT DEPENDENCY REQUIRED: Conditional dependencies cannot be automatically inferred by Bicep
+  // when the dependency itself is conditionally deployed. We need explicit dependsOn to ensure
+  // Log Analytics workspace is fully created before Application Insights tries to reference it.
+  dependsOn: createLogAnalyticsWorkspace ? [
+    logAnalyticsWorkspace  // Only depend on Log Analytics workspace if we're creating it
+  ] : []
+}
+```
+
+**❌ ANTI-PATTERNS:**
+- Using `dependsOn` when resource references would work
+- Adding unnecessary dependencies "just to be safe"
+- Failing to document why explicit dependencies are needed
+
+#### 🏷️ **Azure Resource Naming Standards - MANDATORY**
+Follow the established naming convention used throughout the project:
+
+**Pattern**: `{resourceTypePrefix}-{applicationName}-{component}-{environment}-{regionCode}`
+
+**Region Mapping**:
+```bicep
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
+}
+```
+
+**Resource Type Prefixes**:
+- `rg-` - Resource Groups
+- `func-` - Function Apps
+- `plan-` - App Service Plans  
+- `appi-` - Application Insights
+- `st-` - Storage Accounts (followed by concatenated name for uniqueness)
+- `cs-` - Cognitive Services
+- `aiproj-` - AI Foundry Projects (Cognitive Services Projects)
+- `la-` - Log Analytics Workspaces
+- `kv-` - Key Vaults
+- `swa-` - Static Web Apps
+
+**Component Naming Patterns**:
+- `backend` - Backend Function App resources
+- `frontend` - Frontend Static Web App resources  
+- `aifoundry` - AI Foundry related resources
+- `logging` - Log Analytics workspace resources
+
+**Examples Following Current Convention**:
+- Backend Resource Group: `rg-ai-foundry-spa-backend-dev-eus2`
+- Frontend Resource Group: `rg-ai-foundry-spa-frontend-dev-eus2`
+- AI Foundry Resource Group: `rg-ai-foundry-spa-aifoundry-dev-eus2`
+- Log Analytics Resource Group: `rg-ai-foundry-spa-logging-dev-eus2`
+- Function App: `func-ai-foundry-spa-backend-dev-eus2`
+- Log Analytics Workspace: `la-ai-foundry-spa-logging-dev-eus2`
+- Storage Account: `staifoundryspabkdeveus2` (concatenated, no hyphens)
+- Application Insights: `appi-ai-foundry-spa-backend-dev-eus2`
+
+**Naming Variables Pattern**:
+```bicep
+// Use consistent name suffix patterns 
+var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-${regionReference[location]}')
+var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
+var aiFoundryNameSuffix = toLower('${applicationName}-aifoundry-${environmentName}-${regionReference[location]}')
+var logAnalyticsNameSuffix = toLower('${applicationName}-logging-${environmentName}-${regionReference[location]}')
+
+// Resource names
+var backendResourceGroupName = 'rg-${backendNameSuffix}'
+var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
+var functionAppName = 'func-${backendNameSuffix}'
+var logAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
+```
+
+**Conditional Resource Naming**:
+```bicep
+// Create new resource names when conditionally deploying
+var newLogAnalyticsResourceGroupName = 'rg-${logAnalyticsNameSuffix}'
+var newLogAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
+
+// Use effective names that switch between new and existing
+var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroupName : logAnalyticsResourceGroupName
+var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace ? newLogAnalyticsWorkspaceName : logAnalyticsWorkspaceName
+```
+
+**❌ NEVER use**:
+- Random strings or unique suffixes in resource names
+- Inconsistent prefixes or formats
+- Mixed casing or special characters
+- Resource names without environment or region indicators
 - System-assigned managed identity only (no user-assigned)
 - **🏗️ Azure Deployment Environment (ADE) Schema - CRITICAL**:
   - **✅ Follow official schema**: https://learn.microsoft.com/en-us/azure/deployment-environments/concept-environment-yaml
@@ -197,6 +311,30 @@ cd src/backend
 - **❌ NEVER create new deployment scripts** - Use the existing ones that are already tested and working
 - **❌ NEVER create empty script files** - If a deployment need isn't covered, enhance existing scripts
 - **❌ NEVER create duplicate scripts** - Check existing scripts first before creating new ones
+
+#### 📝 Script Creation Requirements - MANDATORY
+**When creating ANY script, ALWAYS provide complete usage examples:**
+
+**✅ REQUIRED - Include these examples:**
+```powershell
+# Example 1: Basic usage
+.\Test-FunctionEndpoints.ps1
+
+# Example 2: With parameters
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+
+# Example 3: Full absolute path (recommended)
+& "C:\Users\BicepDeveloper\repo\ai-in-a-box\tests\Test-FunctionEndpoints.ps1" -BaseUrl "http://localhost:7071"
+```
+
+**📋 Required Components for Every Script:**
+- **Synopsis**: Clear description of what the script does
+- **Parameter Documentation**: All parameters with descriptions and examples
+- **Usage Examples**: At least 3 examples (basic, with params, absolute path)
+- **Prerequisites**: Any requirements (Azure CLI, npm, etc.)
+- **Expected Output**: What users should expect to see
+
+**❌ NEVER create scripts without usage examples** - Users must know how to run them!
 
 #### Command Examples:
 - **✅ Example**: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`

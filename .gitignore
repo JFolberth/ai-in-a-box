@@ -469,3 +469,7 @@ main-orchestrator.json
 
 # Bicep compiled JSON files in infra folder
 infra/**/main.json
+infra/**/*.json
+!infra/**/*parameters.json
+!infra/**/ade.parameters.json
+!infra/**/manifest.schema.json

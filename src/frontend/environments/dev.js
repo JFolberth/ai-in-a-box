@@ -10,7 +10,7 @@ export const environment = {  // Environment identifier
   aiFoundry: {
     // Using Azure Function App as proxy
     useBackend: true,
-    backendUrl: 'https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api',
+    backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:7071/api', // Default to local dev
     agentName: 'AI in A Box',
     agentId: 'asst_dH7M0nbmdRblhSQO8nIGIYF4',
     projectUrl: 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject',

@@ -1,28 +1,23 @@
 using 'main-orchestrator.bicep'
 
 // AI Foundry configuration (single endpoint) - Synced with local.settings.json
-param aiFoundryAgentId = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
-param aiFoundryAgentName = 'AI in A Box'
-param aiFoundryEndpoint = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
-param aiFoundryProjectName = 's'
-param aiFoundryResourceGroup = 'rg-ai-foundry-dev'
-param aiFoundryResourceGroupName = 'rg-ai-foundry-dev-eus'
-param aiFoundryResourceName = 'ai-foundry-dev-eus'
+param aiFoundryProjectDisplayName = 'AI in A Box Project (s)'
+param aiFoundryResourceName = 'cs-ai-foundry-dev-eus2'
+param aiFoundryResourceGroupName = 'rg-ai-foundry-spa-aifoundry-dev-eus2'
+param aiFoundryEndpoint = 'https://cs-ai-foundry-dev-eus2.services.ai.azure.com/api/projects/exampleProject'
+param aiFoundryAgentId = 'asst_r1FkmYZ9CPLMRDsJYhzzoVGa'
+param aiFoundryAgentName = 'AI In A Box'
 // aiFoundrySubscriptionId will use subscription() function default - no need to specify
 
 // Environment and application configuration
-param applicationName = 'ai-foundry-spa'
-param environmentName = 'dev'
 param location = 'eastus2'
 
-// Log Analytics workspace configuration (existing resource lookup)
+// Log Analytics workspace creation options - using defaults for pricing tier and retention
+param createLogAnalyticsWorkspace = false      // Creates new Log Analytics workspace and resource group with standard naming
+// When createLogAnalyticsWorkspace = true, creates: rg-ai-foundry-spa-logging-dev-eus2 and la-ai-foundry-spa-logging-dev-eus2
+// When createLogAnalyticsWorkspace = false, uses existing resources specified below:
 param logAnalyticsResourceGroupName = 'rg-logging-dev-eus'
 param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
-
-// Log Analytics workspace creation options (new parameters)
-param createLogAnalyticsWorkspace = false
-param logAnalyticsWorkspacePricingTier = 'PerGB2018'
-param logAnalyticsWorkspaceRetentionInDays = 90
 
 // Resource token parameter removed - naming now uses regionReference mapping
 
