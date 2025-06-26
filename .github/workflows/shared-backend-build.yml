@@ -58,10 +58,22 @@ jobs:
       working-directory: ./src/backend
       run: dotnet publish --configuration Release --no-build --output ./publish
       
+    - name: Create deployment package
+      working-directory: ./src/backend
+      run: |
+        # Create deployment package to preserve .azurefunctions directory
+        # GitHub Actions artifacts don't preserve directories starting with '.'
+        cd publish
+        zip -r ../backend-deployment.zip . -x "*.pdb"
+        cd ..
+        echo "Created backend deployment package: backend-deployment.zip"
+        echo "Package contents:"
+        unzip -l backend-deployment.zip | head -10
+      
     - name: Upload backend build artifacts
       if: ${{ inputs.upload-artifacts }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
-        path: src/backend/publish/
+        path: src/backend/backend-deployment.zip
         retention-days: 5
