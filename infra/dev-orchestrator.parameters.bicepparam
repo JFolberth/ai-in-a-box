@@ -1,28 +1,17 @@
 using 'main-orchestrator.bicep'
 
 // AI Foundry configuration (single endpoint) - Synced with local.settings.json
-param aiFoundryAgentId = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
-param aiFoundryAgentName = 'AI in A Box'
-param aiFoundryEndpoint = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
-param aiFoundryProjectName = 's'
-param aiFoundryResourceGroup = 'rg-ai-foundry-dev'
-param aiFoundryResourceGroupName = 'rg-ai-foundry-dev-eus'
-param aiFoundryResourceName = 'ai-foundry-dev-eus'
+param aiFoundryProjectDisplayName = 'AI in A Box Project (s)'
 // aiFoundrySubscriptionId will use subscription() function default - no need to specify
 
 // Environment and application configuration
-param applicationName = 'ai-foundry-spa'
-param environmentName = 'dev'
 param location = 'eastus2'
 
 // Log Analytics workspace configuration (existing resource lookup)
 param logAnalyticsResourceGroupName = 'rg-logging-dev-eus'
 param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
 
-// Log Analytics workspace creation options (new parameters)
-param createLogAnalyticsWorkspace = false
-param logAnalyticsWorkspacePricingTier = 'PerGB2018'
-param logAnalyticsWorkspaceRetentionInDays = 90
+// Log Analytics workspace creation options - using defaults for pricing tier and retention
 
 // Resource token parameter removed - naming now uses regionReference mapping
 

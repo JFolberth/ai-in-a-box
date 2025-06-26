@@ -198,6 +198,30 @@ cd src/backend
 - **❌ NEVER create empty script files** - If a deployment need isn't covered, enhance existing scripts
 - **❌ NEVER create duplicate scripts** - Check existing scripts first before creating new ones
 
+#### 📝 Script Creation Requirements - MANDATORY
+**When creating ANY script, ALWAYS provide complete usage examples:**
+
+**✅ REQUIRED - Include these examples:**
+```powershell
+# Example 1: Basic usage
+.\Test-FunctionEndpoints.ps1
+
+# Example 2: With parameters
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+
+# Example 3: Full absolute path (recommended)
+& "C:\Users\BicepDeveloper\repo\ai-in-a-box\tests\Test-FunctionEndpoints.ps1" -BaseUrl "http://localhost:7071"
+```
+
+**📋 Required Components for Every Script:**
+- **Synopsis**: Clear description of what the script does
+- **Parameter Documentation**: All parameters with descriptions and examples
+- **Usage Examples**: At least 3 examples (basic, with params, absolute path)
+- **Prerequisites**: Any requirements (Azure CLI, npm, etc.)
+- **Expected Output**: What users should expect to see
+
+**❌ NEVER create scripts without usage examples** - Users must know how to run them!
+
 #### Command Examples:
 - **✅ Example**: `az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep" --parameters "C:\Users\BicepDeveloper\ai-in-a-box\infra\dev-orchestrator.parameters.bicepparam"`
 - **❌ NEVER**: `az deployment sub create --template-file infra/main-orchestrator.bicep` (relative path)

@@ -15,14 +15,8 @@ param aiFoundryAgentName string = 'AI in A Box'
 @description('AI Foundry endpoint URL for API calls')
 param aiFoundryEndpoint string = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
 
-@description('AI Foundry project name')
-param aiFoundryProjectName string = 'ai-foundry-dev-eus'
-
-@description('AI Foundry resource group name')
-param aiFoundryResourceGroup string = 'rg-ai-foundry-dev'
-
 @description('AI Foundry resource group name for RBAC assignment')
-param aiFoundryResourceGroupName string = 'rg-ai-foundry-dev-eus'
+param aiFoundryResourceGroupName string = 'rg-foundry-dev-eus'
 
 @description('AI Foundry resource name for RBAC assignment')
 param aiFoundryResourceName string = 'ai-foundry-dev-eus'
@@ -64,6 +58,24 @@ param tags object = {
   AIFoundryAgent: aiFoundryAgentName
 }
 
+@description('Create new AI Foundry resource group or use existing')
+param createAiFoundryResourceGroup bool = false
+
+@description('AI Foundry model deployment name')
+param aiFoundryModelDeploymentName string = 'gpt-4o-mini'
+
+@description('AI Foundry model version')
+param aiFoundryModelVersion string = '2024-07-18'
+
+@description('AI Foundry deployment capacity (TPM - Tokens Per Minute)')
+param aiFoundryDeploymentCapacity int = 10000
+
+@description('AI Foundry project display name')
+param aiFoundryProjectDisplayName string = 'AI in A Box Project'
+
+@description('AI Foundry project description')
+param aiFoundryProjectDescription string = 'AI in A Box foundry project with GPT-4o-mini model deployment'
+
 // =========== VARIABLES ===========
 
 // Region reference mapping for consistent naming
@@ -78,9 +90,14 @@ var regionReference = {
 // Name suffix patterns following backend naming convention
 var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-${regionReference[location]}')
 var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
+var aiFoundryNameSuffix = toLower('${applicationName}-aifoundry-${environmentName}-${regionReference[location]}')
 
 var backendResourceGroupName = 'rg-${backendNameSuffix}'
 var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
+var newAiFoundryResourceGroupName = 'rg-${aiFoundryNameSuffix}'
+
+// AI Foundry resource group - either create new or use existing
+var effectiveAiFoundryResourceGroupName = createAiFoundryResourceGroup ? newAiFoundryResourceGroupName : aiFoundryResourceGroupName
 
 // =========== RESOURCE GROUPS ===========
 
@@ -106,6 +123,19 @@ module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' =
     tags: union(tags, {
       Component: 'Backend'
       ResourceType: 'FunctionApp'
+    })
+  }
+}
+
+// AI Foundry Resource Group (conditional deployment)
+module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createAiFoundryResourceGroup) {
+  name: 'aifoundry-rg-deployment'
+  params: {
+    name: newAiFoundryResourceGroupName
+    location: location
+    tags: union(tags, {
+      Component: 'AI-Foundry'
+      ResourceType: 'CognitiveServices-AIFoundry'
     })
   }
 }
@@ -181,6 +211,51 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
   }
 }
 
+// =========== AI FOUNDRY DEPLOYMENT ===========
+
+// Deploy AI Foundry infrastructure (Cognitive Services + AI Project + Model)
+module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryResourceGroup) {
+  name: 'aifoundry-deployment'
+  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
+  dependsOn: [
+    newAiFoundryResourceGroup
+  ]
+  params: {
+    namePrefix: 'aifoundry'
+    location: location
+    environment: environmentName
+    tags: union(tags, {
+      Component: 'AI-Foundry'
+    })
+    functionAppPrincipalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
+    modelDeploymentName: aiFoundryModelDeploymentName
+    modelVersion: aiFoundryModelVersion
+    deploymentCapacity: aiFoundryDeploymentCapacity
+    projectName: aiFoundryProjectDisplayName
+    projectDescription: aiFoundryProjectDescription
+  }
+}
+
+// =========== VALIDATION ===========
+
+// Validate AI Foundry resource group naming standard
+var aiFoundryRgNameValid = startsWith(aiFoundryResourceGroupName, 'rg-') && contains(aiFoundryResourceGroupName, '-ai') || contains(aiFoundryResourceGroupName, '-foundry') || contains(aiFoundryResourceGroupName, '-aifoundry')
+
+// Validate Log Analytics resource group naming standard  
+var logAnalyticsRgNameValid = startsWith(logAnalyticsResourceGroupName, 'rg-') && contains(logAnalyticsResourceGroupName, '-log')
+
+// Display warnings for non-standard naming (these will show as outputs)
+var aiFoundryNamingWarning = aiFoundryRgNameValid ? '' : 'WARNING: AI Foundry resource group name does not follow standard: rg-*-ai*|foundry*|aifoundry*'
+var logAnalyticsNamingWarning = logAnalyticsRgNameValid ? '' : 'WARNING: Log Analytics resource group name does not follow standard: rg-*-log*'
+
+// =========== VALIDATION OUTPUTS ===========
+
+@description('AI Foundry resource group naming validation')
+output aiFoundryNamingValidation string = aiFoundryNamingWarning
+
+@description('Log Analytics resource group naming validation')
+output logAnalyticsNamingValidation string = logAnalyticsNamingWarning
+
 // =========== OUTPUTS ===========
 
 @description('AI Foundry Configuration')
@@ -188,8 +263,8 @@ output aiFoundryConfig object = {
   agentName: aiFoundryAgentName
   endpoint: aiFoundryEndpoint
   subscriptionId: aiFoundrySubscriptionId
-  resourceGroup: aiFoundryResourceGroup
-  projectName: aiFoundryProjectName
+  resourceGroup: aiFoundryResourceGroupName
+  projectName: aiFoundryProjectDisplayName
 }
 
 @description('Backend API URL for frontend configuration')
@@ -230,3 +305,21 @@ output frontendStaticWebsiteUrl string = frontendInfrastructure.outputs.staticWe
 
 @description('Frontend Static Web App Name')
 output frontendStaticWebAppName string = frontendInfrastructure.outputs.staticWebAppName
+
+@description('AI Foundry Resource Group Name')
+output aiFoundryResourceGroupName string = createAiFoundryResourceGroup ? newAiFoundryResourceGroup.outputs.name : aiFoundryResourceGroupName
+
+@description('AI Foundry Resource Group Location')
+output aiFoundryResourceGroupLocation string = createAiFoundryResourceGroup ? newAiFoundryResourceGroup.outputs.location : location
+
+@description('Log Analytics Resource Group Name')
+output logAnalyticsResourceGroupName string = logAnalyticsResourceGroup.name
+
+@description('Log Analytics Workspace Name (when created)')
+output logAnalyticsWorkspaceName string = createLogAnalyticsWorkspace ? logAnalyticsWorkspace.outputs.workspaceName : logAnalyticsWorkspaceName
+
+@description('Log Analytics Workspace ID (when created)')
+output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace ? logAnalyticsWorkspace.outputs.workspaceId : ''
+
+@description('Log Analytics Resource Group Location')
+output logAnalyticsResourceGroupLocation string = logAnalyticsResourceGroup.location
