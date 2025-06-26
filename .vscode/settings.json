@@ -1,0 +1,33 @@
+{
+    "mcp.servers": {
+        "microsoft.docs.mcp": {
+            "url": "https://learn.microsoft.com/api/mcp",
+            "name": "Microsoft Learn",
+            "description": "Microsoft documentation and API reference for Azure, Bicep, and .NET development"
+        },
+        "github.mcp": {
+            "url": "https://api.githubcopilot.com/mcp/",
+            "name": "GitHub Integration",
+            "description": "Enhanced GitHub repository management and integration"
+        }
+    },
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "prettier.requireConfig": true,
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.bicep": "bicep",
+        "*.bicepparam": "bicep"
+    },
+    "bicep.trace.server": "Off",
+    "bicep.experimental.deployment": true,
+    "editor.quickSuggestions": {
+        "strings": true
+    },
+    "azureFunctions.showCoreToolsWarning": false,
+    "azureFunctions.projectRuntime": "~4",
+    "azureFunctions.deploySubpath": "src/backend",
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black"
+}
