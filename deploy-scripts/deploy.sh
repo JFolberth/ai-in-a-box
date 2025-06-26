@@ -70,13 +70,9 @@ if [[ ! -f "infra/dev-orchestrator.parameters.bicepparam" ]]; then
   exit 1
 fi
 
-# Generate resource token for uniqueness
-RESOURCE_TOKEN="rt$((RANDOM % 900 + 100))"
-
 echo "🚀 Starting deployment of AI Foundry SPA..."
 echo "📋 Subscription: $SUBSCRIPTION_ID"
 echo "📋 Location: $LOCATION"
-echo "📋 Resource Token: $RESOURCE_TOKEN"
 
 # Verify Azure CLI is installed and logged in
 if ! command -v az &> /dev/null; then
@@ -102,7 +98,6 @@ DEPLOYMENT_OUTPUT=$(az deployment sub create \
   --location "$LOCATION" \
   --template-file "infra/main-orchestrator.bicep" \
   --parameters "infra/dev-orchestrator.parameters.bicepparam" \
-  --parameters resourceToken="$RESOURCE_TOKEN" \
   --query 'properties.outputs' -o json)
 
 if [[ $? -ne 0 ]]; then

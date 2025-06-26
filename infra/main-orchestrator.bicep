@@ -57,9 +57,6 @@ param logAnalyticsWorkspacePricingTier string = 'PerGB2018'
 @maxValue(730)
 param logAnalyticsWorkspaceRetentionInDays int = 90
 
-@description('Resource token for unique naming')
-param resourceToken string
-
 @description('Tags to apply to all resources')
 param tags object = {
   Environment: environmentName
@@ -69,8 +66,21 @@ param tags object = {
 
 // =========== VARIABLES ===========
 
-var backendResourceGroupName = 'rg-${applicationName}-backend-${environmentName}-${resourceToken}'
-var frontendResourceGroupName = 'rg-${applicationName}-frontend-${environmentName}-${resourceToken}'
+// Region reference mapping for consistent naming
+var regionReference = {
+  centralus: 'cus'
+  eastus: 'eus'
+  eastus2: 'eus2'
+  westus: 'wus'
+  westus2: 'wus2'
+}
+
+// Name suffix patterns following backend naming convention
+var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-${regionReference[location]}')
+var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
+
+var backendResourceGroupName = 'rg-${backendNameSuffix}'
+var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
 
 // =========== RESOURCE GROUPS ===========
 

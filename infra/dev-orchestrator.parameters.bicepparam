@@ -24,7 +24,7 @@ param createLogAnalyticsWorkspace = false
 param logAnalyticsWorkspacePricingTier = 'PerGB2018'
 param logAnalyticsWorkspaceRetentionInDays = 90
 
-param resourceToken = '001'
+// Resource token parameter removed - naming now uses regionReference mapping
 
 // Resource tags (alphabetized by key)
 param tags = {
