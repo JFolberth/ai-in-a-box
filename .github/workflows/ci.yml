@@ -248,7 +248,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: backend-publish
-        path: ./src/backend/publish/
+        path: ./
         
     - name: Azure CLI Login
       uses: azure/login@v2
@@ -355,10 +355,10 @@ jobs:
       run: |
         echo "🚀 Deploying backend code to Function App..."
         
-        # Deploy using Azure CLI with zip deployment
-        cd ./src/backend/publish/
-        zip -r ../backend-deployment.zip . -x "*.pdb"
-        cd ..
+        # Use the pre-packaged deployment zip file
+        # The zip was created during build to preserve .azurefunctions directory
+        echo "📋 Verifying deployment package contents:"
+        unzip -l backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/" || echo "⚠️  .azurefunctions directory not found in package"
         
         echo "📦 Deploying backend code to ${{ env.FUNCTION_APP_NAME }}..."
         az functionapp deployment source config-zip \
