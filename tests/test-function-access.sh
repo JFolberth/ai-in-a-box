@@ -1,5 +1,47 @@
 #!/bin/bash
 
+# Azure Function App Resource Access Test (Bash Version)
+#
+# SYNOPSIS:
+#   Verify Azure Function App resource access and RBAC permissions using bash
+#
+# DESCRIPTION:
+#   This script verifies that the Function App has proper access to required Azure resources
+#   including Storage Account and AI Foundry resources. It validates managed identity configuration,
+#   RBAC role assignments, and Function App settings. This is the bash equivalent of the PowerShell
+#   Test-FunctionAppAccess.ps1 script for cross-platform compatibility.
+#
+# PARAMETERS:
+#   -g, --resource-group       Resource group name containing the Function App (required)
+#   -f, --function-app         Function App name to test (required)  
+#   -s, --storage-account      Storage Account name for access testing (required)
+#   -a, --ai-foundry-resource  AI Foundry resource ID (optional)
+#   -h, --help                 Show help message
+#
+# EXAMPLES:
+#   ./test-function-access.sh -g "rg-ai-foundry-spa-backend-dev-001" -f "func-ai-foundry-spa-backend-dev-001" -s "staifondryspabackdev001"
+#
+#   ./test-function-access.sh -g "my-rg" -f "my-func-app" -s "mystorageaccount" -a "/subscriptions/12345/resourceGroups/ai-rg/providers/Microsoft.CognitiveServices/accounts/my-ai-foundry"
+#
+#   /home/runner/work/ai-in-a-box/ai-in-a-box/tests/test-function-access.sh -g "rg-backend" -f "func-app-001" -s "storage001"
+#
+#   bash test-function-access.sh -g "rg-prod" -f "func-prod-app" -s "prodstorageacct" -a "/subscriptions/abcd/resourceGroups/ai-prod/providers/Microsoft.CognitiveServices/accounts/ai-prod-foundry"
+#
+# PREREQUISITES:
+#   - Azure CLI installed and authenticated (az login)
+#   - jq installed for JSON processing
+#   - Bash 4.0+ or compatible shell
+#   - Sufficient Azure permissions to read resource information and role assignments
+#   - Function App must exist and have system-assigned managed identity enabled
+#
+# EXPECTED OUTPUT:
+#   - Managed identity validation results
+#   - Storage Account access permissions analysis  
+#   - AI Foundry access permissions (if resource ID provided)
+#   - Function App configuration validation
+#   - Function App status and runtime information
+#   - Recommendations for fixing any permission issues
+#
 # Azure Function App Resource Access Test
 # This script verifies that the Function App has proper access to required resources
 # Requires: Azure CLI, jq (for JSON processing)

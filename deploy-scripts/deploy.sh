@@ -1,5 +1,47 @@
 #!/bin/bash
 
+# AI Foundry SPA Deployment Script
+# 
+# SYNOPSIS:
+#   Deploy the complete AI Foundry SPA application to Azure using Bicep templates
+#
+# DESCRIPTION:
+#   This script deploys the AI Foundry SPA to Azure using Azure CLI and Bicep templates.
+#   It creates separate resource groups for frontend (Storage Account for static website) 
+#   and backend (Function App for AI Foundry proxy). Uses pure Azure CLI commands with
+#   NO Azure Developer CLI (azd) dependencies.
+#
+# PARAMETERS:
+#   -s, --subscription      Azure subscription ID (required)
+#   -l, --location          Azure region (default: eastus)  
+#   -e, --environment       Environment name (default: dev)
+#   -a, --application       Application name (default: ai-foundry-spa)
+#   --skip-build           Skip npm build step
+#   -h, --help             Show help message
+#
+# EXAMPLES:
+#   ./deploy.sh -s "12345678-1234-1234-1234-123456789abc"
+#
+#   ./deploy.sh -s "12345678-1234-1234-1234-123456789abc" -l "westus2" 
+#
+#   ./deploy.sh -s "12345678-1234-1234-1234-123456789abc" --skip-build
+#
+#   /home/runner/work/ai-in-a-box/ai-in-a-box/deploy-scripts/deploy.sh -s "sub-id" -l "eastus" -e "prod"
+#
+# PREREQUISITES:
+#   - Azure CLI installed and authenticated (az login)
+#   - Node.js and npm installed
+#   - .NET SDK 8.0+ installed
+#   - Bicep CLI extension for Azure CLI
+#   - jq for JSON processing
+#   - zip utility for Function App packaging
+#
+# EXPECTED OUTPUT:
+#   - Infrastructure deployment via Bicep orchestrator
+#   - Frontend build and upload to Storage Account static website
+#   - Backend Function App compilation and deployment
+#   - Deployment summary with resource URLs and next steps
+#
 # AI Foundry SPA Deployment Script with separate resource groups for frontend and backend
 # This script deploys the AI Foundry SPA to Azure using Azure CLI and Bicep templates
 # Frontend: Storage Account for static website hosting  

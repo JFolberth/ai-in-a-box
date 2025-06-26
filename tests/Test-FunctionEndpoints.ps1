@@ -1,5 +1,48 @@
-# Test-FunctionEndpoints.ps1
-# Tests Function App endpoints with sample requests
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+Test Function App endpoints with comprehensive chat and threading scenarios
+
+.DESCRIPTION
+This script tests the Azure Function App endpoints for the AI Foundry SPA backend.
+It validates both individual chat messages and conversation threading functionality.
+The script sends sample requests to the /api/chat and /api/createThread endpoints 
+and validates the responses for proper AI integration.
+
+.PARAMETER BaseUrl
+The base URL of the Function App to test. Can be a local development URL or Azure Function App URL.
+Default: http://localhost:7071
+
+.EXAMPLE
+./Test-FunctionEndpoints.ps1
+
+.EXAMPLE
+./Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+
+.EXAMPLE
+./Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+
+.EXAMPLE
+& "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionEndpoints.ps1" -BaseUrl "https://my-function-app.azurewebsites.net"
+
+.NOTES
+Prerequisites: 
+- Function App must be running (locally or in Azure)
+- PowerShell 7+ or Windows PowerShell 5.1
+- Internet connectivity for Azure-hosted Function Apps
+
+Expected Output:
+- Test results for individual chat messages
+- Conversation threading validation
+- Thread creation endpoint testing
+- Response validation and error handling
+
+The script tests various scenarios:
+- Single message chat requests
+- Multi-turn conversation threading
+- Thread creation functionality
+- Error handling and response validation
+#>
 
 param(
     [Parameter(Mandatory=$false)]
