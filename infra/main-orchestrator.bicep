@@ -35,7 +35,7 @@ param tags object = {
 // =========== LOG ANALYTICS PARAMETERS ===========
 
 @description('Create new Log Analytics workspace or use existing')
-param createLogAnalyticsWorkspace bool = false
+param createLogAnalyticsWorkspace bool = true
 
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string = 'la-logging-dev-eus'
@@ -105,13 +105,22 @@ var regionReference = {
 var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-${regionReference[location]}')
 var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
 var aiFoundryNameSuffix = toLower('${applicationName}-aifoundry-${environmentName}-${regionReference[location]}')
+var logAnalyticsNameSuffix = toLower('${applicationName}-logging-${environmentName}-${regionReference[location]}')
 
 var backendResourceGroupName = 'rg-${backendNameSuffix}'
 var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
 var newAiFoundryResourceGroupName = 'rg-${aiFoundryNameSuffix}'
+var newLogAnalyticsResourceGroupName = 'rg-${logAnalyticsNameSuffix}'
+var newLogAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
 
 // AI Foundry resource group - either create new or use existing
 var effectiveAiFoundryResourceGroupName = createAiFoundryResourceGroup ? newAiFoundryResourceGroupName : aiFoundryResourceGroupName
+
+// Log Analytics resource group - either create new or use existing
+var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroupName : logAnalyticsResourceGroupName
+
+// Log Analytics workspace name - either create new or use existing
+var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace ? newLogAnalyticsWorkspaceName : logAnalyticsWorkspaceName
 
 // =========== RESOURCE GROUPS ===========
 
@@ -154,20 +163,36 @@ module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4
   }
 }
 
+// Log Analytics Resource Group (conditional deployment)
+module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createLogAnalyticsWorkspace) {
+  name: 'loganalytics-rg-deployment'
+  params: {
+    name: newLogAnalyticsResourceGroupName
+    location: location
+    tags: union(tags, {
+      Component: 'Log-Analytics'
+      ResourceType: 'LogAnalytics-Workspace'
+    })
+  }
+}
+
 // =========== LOG ANALYTICS WORKSPACE (OPTIONAL) ===========
 
 // Reference to existing Log Analytics workspace resource group
-resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
+resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = if (!createLogAnalyticsWorkspace) {
   name: logAnalyticsResourceGroupName
   scope: subscription()
 }
 
-// Conditionally create Log Analytics workspace using our module
+// Create Log Analytics workspace (conditionally creates both resource group and workspace)
 module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyticsWorkspace) {
   name: 'shared-log-analytics'
-  scope: logAnalyticsResourceGroup
+  scope: resourceGroup(effectiveLogAnalyticsResourceGroupName)
+  dependsOn: [
+    newLogAnalyticsResourceGroup
+  ]
   params: {
-    workspaceName: logAnalyticsWorkspaceName
+    workspaceName: effectiveLogAnalyticsWorkspaceName
     location: location
     pricingTier: logAnalyticsWorkspacePricingTier
     retentionInDays: logAnalyticsWorkspaceRetentionInDays
@@ -184,15 +209,21 @@ module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyt
 module frontendInfrastructure 'environments/frontend/main.bicep' = {
   name: 'frontend-deployment'
   scope: resourceGroup(frontendResourceGroupName)
-  dependsOn: [
+  // EXPLICIT DEPENDENCY REQUIRED: Conditional dependencies cannot be automatically inferred by Bicep
+  // when the dependency itself is conditionally deployed. We need explicit dependsOn to ensure
+  // Log Analytics workspace is fully created before Application Insights tries to reference it.
+  dependsOn: createLogAnalyticsWorkspace ? [
+    frontendResourceGroup
+    logAnalyticsWorkspace  // Only depend on Log Analytics workspace if we're creating it
+  ] : [
     frontendResourceGroup
   ]
   params: {
     environmentName: environmentName
     applicationName: applicationName
     location: location
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
-    logAnalyticsResourceGroupName: logAnalyticsResourceGroupName
+    logAnalyticsWorkspaceName: effectiveLogAnalyticsWorkspaceName
+    logAnalyticsResourceGroupName: effectiveLogAnalyticsResourceGroupName
     tags: union(tags, {
       Component: 'Frontend'
     })
@@ -205,15 +236,20 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
 module backendInfrastructure 'environments/backend/main.bicep' = {
   name: 'backend-deployment'
   scope: resourceGroup(backendResourceGroupName)
-  dependsOn: [
+  // EXPLICIT DEPENDENCY REQUIRED: Same as frontend - conditional dependencies for Log Analytics
+  // workspace cannot be automatically inferred when the workspace itself is conditionally deployed.
+  dependsOn: createLogAnalyticsWorkspace ? [
+    backendResourceGroup
+    logAnalyticsWorkspace  // Only depend on Log Analytics workspace if we're creating it
+  ] : [
     backendResourceGroup
   ]
   params: {
     environmentName: environmentName
     applicationName: applicationName
     location: location
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
-    logAnalyticsResourceGroupName: logAnalyticsResourceGroupName
+    logAnalyticsWorkspaceName: effectiveLogAnalyticsWorkspaceName
+    logAnalyticsResourceGroupName: effectiveLogAnalyticsResourceGroupName
     aiFoundryInstanceName: aiFoundryResourceName
     aiFoundryResourceGroupName: aiFoundryResourceGroupName
     aiFoundryAgentId: aiFoundryAgentId
@@ -326,13 +362,17 @@ output aiFoundryResourceGroupName string = createAiFoundryResourceGroup ? newAiF
 output aiFoundryResourceGroupLocation string = createAiFoundryResourceGroup ? newAiFoundryResourceGroup.outputs.location : location
 
 @description('Log Analytics Resource Group Name')
-output logAnalyticsResourceGroupName string = logAnalyticsResourceGroup.name
+output logAnalyticsResourceGroupName string = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroup.outputs.name : logAnalyticsResourceGroup.name
 
 @description('Log Analytics Workspace Name (when created)')
-output logAnalyticsWorkspaceName string = createLogAnalyticsWorkspace ? logAnalyticsWorkspace.outputs.workspaceName : logAnalyticsWorkspaceName
+output logAnalyticsWorkspaceName string = createLogAnalyticsWorkspace 
+  ? logAnalyticsWorkspace.outputs.workspaceName 
+  : effectiveLogAnalyticsWorkspaceName
 
 @description('Log Analytics Workspace ID (when created)')
-output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace ? logAnalyticsWorkspace.outputs.workspaceId : ''
+output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace 
+  ? logAnalyticsWorkspace.outputs.workspaceId 
+  : ''
 
 @description('Log Analytics Resource Group Location')
-output logAnalyticsResourceGroupLocation string = logAnalyticsResourceGroup.location
+output logAnalyticsResourceGroupLocation string = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroup.outputs.location : logAnalyticsResourceGroup.location

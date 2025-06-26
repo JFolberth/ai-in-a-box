@@ -139,10 +139,48 @@ cd src/backend
 - **Cross-Resource Group RBAC**: Use dedicated RBAC modules for permissions across resource groups
 - Deploy using Azure CLI commands ONLY - never use azd (Azure Developer CLI)
 
+#### 🔗 **Bicep Dependencies - CRITICAL GUIDANCE**
+
+**AVOID explicit `dependsOn` blocks when possible** - Bicep automatically handles dependencies through resource references.
+
+**✅ PREFERRED - Automatic Dependencies:**
+```bicep
+// Bicep automatically infers that storage account must be created before function app
+resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
+  properties: {
+    storageAccountRequired: true
+    storageAccountName: storageAccount.name  // Automatic dependency
+  }
+}
+```
+
+**⚠️ ONLY use explicit `dependsOn` when:**
+1. **Conditional Dependencies**: When dependency itself is conditionally deployed
+2. **Cross-Scope Dependencies**: Dependencies across different resource scopes
+3. **Timing Issues**: When automatic inference fails due to complex scenarios
+
+**📝 MANDATORY - Document WHY explicit `dependsOn` is needed:**
+```bicep
+module frontendInfrastructure 'environments/frontend/main.bicep' = {
+  name: 'frontend-deployment'
+  // EXPLICIT DEPENDENCY REQUIRED: Conditional dependencies cannot be automatically inferred by Bicep
+  // when the dependency itself is conditionally deployed. We need explicit dependsOn to ensure
+  // Log Analytics workspace is fully created before Application Insights tries to reference it.
+  dependsOn: createLogAnalyticsWorkspace ? [
+    logAnalyticsWorkspace  // Only depend on Log Analytics workspace if we're creating it
+  ] : []
+}
+```
+
+**❌ ANTI-PATTERNS:**
+- Using `dependsOn` when resource references would work
+- Adding unnecessary dependencies "just to be safe"
+- Failing to document why explicit dependencies are needed
+
 #### 🏷️ **Azure Resource Naming Standards - MANDATORY**
 Follow the established naming convention used throughout the project:
 
-**Pattern**: `{resourceTypePrefix}-{component}-{environment}-{regionCode}`
+**Pattern**: `{resourceTypePrefix}-{applicationName}-{component}-{environment}-{regionCode}`
 
 **Region Mapping**:
 ```bicep
@@ -158,30 +196,55 @@ var regionReference = {
 **Resource Type Prefixes**:
 - `rg-` - Resource Groups
 - `func-` - Function Apps
-- `plan-` - App Service Plans
+- `plan-` - App Service Plans  
 - `appi-` - Application Insights
-- `st-` - Storage Accounts
+- `st-` - Storage Accounts (followed by concatenated name for uniqueness)
 - `cs-` - Cognitive Services
 - `aiproj-` - AI Foundry Projects (Cognitive Services Projects)
 - `la-` - Log Analytics Workspaces
 - `kv-` - Key Vaults
 - `swa-` - Static Web Apps
 
-**Examples**:
-- Resource Group: `rg-ai-foundry-spa-backend-dev-eus`
-- Function App: `func-ai-foundry-spa-backend-dev-eus`
-- Cognitive Services: `cs-ai-foundry-dev-eus`
-- AI Foundry Project: `aiproj-ai-foundry-dev-eus`
-- Application Insights: `appi-ai-foundry-spa-backend-dev-eus`
+**Component Naming Patterns**:
+- `backend` - Backend Function App resources
+- `frontend` - Frontend Static Web App resources  
+- `aifoundry` - AI Foundry related resources
+- `logging` - Log Analytics workspace resources
 
-**Naming Variables**:
+**Examples Following Current Convention**:
+- Backend Resource Group: `rg-ai-foundry-spa-backend-dev-eus2`
+- Frontend Resource Group: `rg-ai-foundry-spa-frontend-dev-eus2`
+- AI Foundry Resource Group: `rg-ai-foundry-spa-aifoundry-dev-eus2`
+- Log Analytics Resource Group: `rg-ai-foundry-spa-logging-dev-eus2`
+- Function App: `func-ai-foundry-spa-backend-dev-eus2`
+- Log Analytics Workspace: `la-ai-foundry-spa-logging-dev-eus2`
+- Storage Account: `staifoundryspabkdeveus2` (concatenated, no hyphens)
+- Application Insights: `appi-ai-foundry-spa-backend-dev-eus2`
+
+**Naming Variables Pattern**:
 ```bicep
-// Use consistent name suffix patterns with namePrefix parameter
-var nameSuffix = toLower('${namePrefix}-${environment}-${regionReference[location]}')
-var resourceGroupName = 'rg-${nameSuffix}'
-var functionAppName = 'func-${nameSuffix}'
-var cognitiveServicesName = 'cs-${nameSuffix}'
-var aiProjectName = 'aiproj-${nameSuffix}'
+// Use consistent name suffix patterns 
+var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-${regionReference[location]}')
+var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
+var aiFoundryNameSuffix = toLower('${applicationName}-aifoundry-${environmentName}-${regionReference[location]}')
+var logAnalyticsNameSuffix = toLower('${applicationName}-logging-${environmentName}-${regionReference[location]}')
+
+// Resource names
+var backendResourceGroupName = 'rg-${backendNameSuffix}'
+var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
+var functionAppName = 'func-${backendNameSuffix}'
+var logAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
+```
+
+**Conditional Resource Naming**:
+```bicep
+// Create new resource names when conditionally deploying
+var newLogAnalyticsResourceGroupName = 'rg-${logAnalyticsNameSuffix}'
+var newLogAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
+
+// Use effective names that switch between new and existing
+var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroupName : logAnalyticsResourceGroupName
+var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace ? newLogAnalyticsWorkspaceName : logAnalyticsWorkspaceName
 ```
 
 **❌ NEVER use**:

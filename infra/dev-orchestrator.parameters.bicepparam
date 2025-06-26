@@ -12,12 +12,12 @@ param aiFoundryAgentName = 'AI In A Box'
 // Environment and application configuration
 param location = 'eastus2'
 
-// Log Analytics workspace configuration (existing resource lookup)
+// Log Analytics workspace creation options - using defaults for pricing tier and retention
+param createLogAnalyticsWorkspace = false      // Creates new Log Analytics workspace and resource group with standard naming
+// When createLogAnalyticsWorkspace = true, creates: rg-ai-foundry-spa-logging-dev-eus2 and la-ai-foundry-spa-logging-dev-eus2
+// When createLogAnalyticsWorkspace = false, uses existing resources specified below:
 param logAnalyticsResourceGroupName = 'rg-logging-dev-eus'
 param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
-
-
-// Log Analytics workspace creation options - using defaults for pricing tier and retention
 
 // Resource token parameter removed - naming now uses regionReference mapping
 
