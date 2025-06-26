@@ -5,50 +5,161 @@ This directory contains comprehensive test scripts to verify Azure Function App 
 ## Test Scripts
 
 ### Primary Test Script: `Test-FunctionEndpoints.ps1`
-**Comprehensive endpoint and conversation testing**
+**Comprehensive endpoint and conversation testing with multiple test modes**
 
 #### Usage
 ```powershell
-# Test local development endpoints
+# Test local development endpoints (standard mode)
 .\Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 # Test deployed Azure Function App
 .\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+
+# Health endpoint only (fast check for CI/CD)
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -HealthOnly
+
+# AI Foundry integration validation only
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -AiFoundryOnly
+
+# Skip chat endpoint tests (useful for basic connectivity)
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -SkipChat
+
+# Comprehensive testing (includes threading tests)
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -Comprehensive
 ```
 
+#### Test Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Standard** | Health check, createThread, and basic chat tests | Regular development testing |
+| **HealthOnly** | Only tests `/api/health` endpoint | CI/CD health validation |
+| **AiFoundryOnly** | Health check + AI Foundry integration validation | AI connectivity testing |
+| **SkipChat** | Health and createThread tests, no chat endpoints | Basic connectivity testing |
+| **Comprehensive** | All tests including conversation threading | Full feature validation |
+
+#### Exit Codes for CI Integration
+
+The script returns specific exit codes for automated CI/CD integration:
+
+| Exit Code | Meaning | Description |
+|-----------|---------|-------------|
+| `0` | All tests passed | Success - all selected tests completed successfully |
+| `1` | Health endpoint failed | Health check endpoint is not responding or unhealthy |
+| `2` | AI Foundry connection failed | AI Foundry integration is not working |
+| `3` | Chat functionality failed | Chat endpoints are not working properly |
+| `4` | Threading tests failed | Conversation threading is not working |
+
 #### What This Script Tests
+
+**Health Endpoint Testing:**
+- **Health Status**: Verifies `/api/health` endpoint responds with 200 OK
+- **AI Foundry Connection**: Validates AI Foundry connectivity status
+- **Managed Identity**: Checks managed identity configuration
+- **Response Format**: Validates JSON response structure and required fields
+
+**Core Functionality Testing:**
 - **Thread Creation**: Verifies `/api/createThread` endpoint
-- **Message Sending**: Tests `/api/sendMessage` endpoint
+- **Message Sending**: Tests `/api/chat` endpoint with various message types
 - **Conversation Threading**: Validates thread persistence across multiple messages
 - **Unique Responses**: Ensures each message gets a distinct AI response
 - **Response Quality**: Checks response length and content validity
 - **Error Handling**: Tests invalid inputs and error scenarios
 
-#### Example Output
-```
-🧪 Testing Function App Endpoints: http://localhost:7071
-================================================================
+**AI Foundry Integration Testing:**
+- **Connection Validation**: Verifies AI Foundry client can be initialized
+- **Agent Access**: Confirms the configured agent is accessible
+- **Real AI Responses**: Tests actual AI message processing (not simulation)
+- **Authentication**: Validates managed identity permissions for AI Foundry
 
+#### Example Output
+
+**Health-Only Mode:**
+```
+🔍 Testing Function App Endpoints...
+🎯 Target URL: https://func-app.azurewebsites.net
+🏥 Running HEALTH-ONLY tests
+
+=== HEALTH ENDPOINT TESTING ===
+
+🏥 Testing Health Endpoint: https://func-app.azurewebsites.net/api/health
+✅ Health Status: Healthy
+🕒 Timestamp: 2025-06-26T03:15:00Z
+📋 Version: 1.0.0.0
+🌍 Environment: Production
+🤖 Agent: AI in A Box (asst_dH7M0nbmdRblhSQO8nIGIYF4)
+🔗 AI Foundry: Connected - Agent 'AI in A Box' accessible
+🔐 Managed Identity: Active - System-assigned managed identity available
+🔑 AI Foundry Access: Authorized - Agent access confirmed
+
+============================================================
+🎯 TEST RESULTS SUMMARY
+============================================================
+✅ Health Endpoint: PASSED
+============================================================
+🎉 ALL TESTS PASSED!
+🔢 Exit Code: 0
+```
+
+**Standard Mode:**
+```
+🔍 Testing Function App Endpoints...
+🎯 Target URL: http://localhost:7071
+📋 Running STANDARD test suite
+
+=== HEALTH ENDPOINT TESTING ===
+✅ Health Status: Healthy
+🔗 AI Foundry: Connected - Agent 'AI in A Box' accessible
+
+=== CREATE THREAD TESTING ===
 ✅ Thread Creation Test
    Thread ID: thread_abc123def456
    Response time: 234ms
 
+=== CHAT ENDPOINT TESTING ===
 ✅ First Message Test  
-   Question: What is cancer treatment?
+   Question: What are my survival rates?
    Response length: 512 characters
    Response time: 4.2s
 
-✅ Follow-up Message Test
-   Question: What about side effects?
+✅ Second Message Test
+   Question: What treatment options are available?
    Response length: 487 characters  
    Response time: 3.8s
 
-✅ Conversation Threading Verification
-   ✓ Both messages used same thread ID
-   ✓ Responses are unique (different content)
-   ✓ Context maintained across conversation
+============================================================
+🎯 TEST RESULTS SUMMARY
+============================================================
+✅ Health Endpoint: PASSED
+✅ Create Thread: PASSED
+✅ Chat Functionality: PASSED
+============================================================
+🎉 ALL TESTS PASSED!
+🔢 Exit Code: 0
+```
 
-🎉 All endpoint tests passed!
+**AI Foundry Integration Mode:**
+```
+🔍 Testing Function App Endpoints...
+🎯 Target URL: https://func-app.azurewebsites.net
+🤖 Running AI FOUNDRY-ONLY tests
+
+🤖 Testing AI Foundry Integration...
+🏥 Testing Health Endpoint: https://func-app.azurewebsites.net/api/health
+✅ Health Status: Healthy
+🔗 AI Foundry: Connected - Agent 'AI in A Box' accessible
+🧪 Testing AI chat functionality...
+✅ AI Integration Test Successful
+📝 Response Length: 127 characters
+🧵 Thread ID: thread_xyz789
+
+============================================================
+🎯 TEST RESULTS SUMMARY
+============================================================
+✅ AI Foundry Integration: PASSED
+============================================================
+🎉 ALL TESTS PASSED!
+🔢 Exit Code: 0
 ```
 
 ### Resource Access Test: `Test-FunctionAppAccess.ps1`

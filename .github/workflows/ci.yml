@@ -255,6 +255,11 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
+    - name: Install PowerShell
+      run: |
+        # PowerShell should already be available in Ubuntu, but ensure it's working
+        pwsh --version || echo "PowerShell not available - using system default"
+    
     - name: Create ADE Environment
       id: create-ade
       run: |
@@ -375,11 +380,61 @@ jobs:
         # Wait a moment for the deployment to fully complete
         sleep 30
         
-        # Test health endpoint (if available)
-        echo "🔍 Testing Function App availability..."
-        curl -f "${{ env.FUNCTION_APP_URL }}/api/health" || echo "Health endpoint not available"
+        # Test health endpoint with retry logic
+        echo "🏥 Testing Health Endpoint with retry logic..."
+        max_attempts=10
+        attempt=1
+        health_passed=false
         
-        echo "✅ Function App deployment verified!"
+        while [ $attempt -le $max_attempts ]; do
+          echo "🔍 Health check attempt $attempt/$max_attempts..."
+          
+          if curl -f -s "${{ env.FUNCTION_APP_URL }}/api/health" -o /dev/null; then
+            echo "✅ Health endpoint responding!"
+            health_passed=true
+            break
+          else
+            echo "⏳ Health endpoint not ready yet (attempt $attempt/$max_attempts)..."
+            if [ $attempt -lt $max_attempts ]; then
+              sleep 30
+            fi
+          fi
+          
+          attempt=$((attempt + 1))
+        done
+        
+        if [ "$health_passed" = false ]; then
+          echo "❌ Health endpoint failed after $max_attempts attempts"
+          exit 1
+        fi
+        
+        # Test comprehensive endpoints using PowerShell script
+        echo "🧪 Running comprehensive endpoint tests..."
+        pwsh -File tests/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -HealthOnly
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ Health endpoint tests passed!"
+        else
+          echo "❌ Health endpoint tests failed!"
+          exit 1
+        fi
+        
+        # Test AI Foundry integration (if health passes)
+        echo "🤖 Testing AI Foundry integration..."
+        pwsh -File tests/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -AiFoundryOnly
+        
+        ai_result=$?
+        if [ $ai_result -eq 0 ]; then
+          echo "✅ AI Foundry integration tests passed!"
+        elif [ $ai_result -eq 2 ]; then
+          echo "⚠️ AI Foundry integration tests failed - this may be expected in CI environment"
+          echo "    (Missing AI Foundry configuration or permissions)"
+        else
+          echo "❌ AI Foundry integration tests failed with unexpected error"
+          exit 1
+        fi
+        
+        echo "✅ Function App deployment and testing completed successfully!"
     
     - name: Deployment Success
       run: |
