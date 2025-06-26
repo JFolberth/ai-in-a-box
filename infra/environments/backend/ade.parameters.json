@@ -1,7 +1,7 @@
 {
   "applicationName": "aiboxcicd",
-  "aiFoundryInstanceName": "ai-foundry-instance",
-  "aiFoundryResourceGroupName": "rg-ai-foundry-dev-eus",
+  "aiFoundryInstanceName": "ai-foundry-dev-eus",
+  "aiFoundryResourceGroupName": "rg-foundry-dev-eus",
   "aiFoundryEndpoint": "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject",
   "aiFoundryAgentId": "asst_dH7M0nbmdRblhSQO8nIGIYF4",
   "aiFoundryAgentName": "AI in A Box",
