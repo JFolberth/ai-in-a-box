@@ -137,36 +137,86 @@ jobs:
           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
           --output json)
         
-        # Extract resource group name (assuming it follows the pattern)
+        # Extract resource group name
         RESOURCE_GROUP=$(echo "$ENV_DETAILS" | jq -r '.resourceGroupId' | sed 's|.*/||')
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         
-        # Find Static Web App in the resource group
-        STATIC_WEB_APP=$(az staticwebapp list \
+        echo "🔍 Querying deployment outputs from resource group: $RESOURCE_GROUP"
+        
+        # Find the deployment name - ADE typically creates deployments with specific patterns
+        DEPLOYMENT_NAME=$(az deployment group list \
           --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
+          --query "[?provisioningState=='Succeeded'] | sort_by(@, &timestamp) | [-1].name" \
           --output tsv)
         
-        if [ -z "$STATIC_WEB_APP" ] || [ "$STATIC_WEB_APP" = "null" ]; then
-          echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
+        if [ -z "$DEPLOYMENT_NAME" ] || [ "$DEPLOYMENT_NAME" = "null" ]; then
+          echo "❌ No successful deployment found in resource group: $RESOURCE_GROUP"
+          echo "🔍 Available deployments:"
+          az deployment group list --resource-group "$RESOURCE_GROUP" --query "[].{name:name, state:provisioningState, timestamp:timestamp}" --output table
           exit 1
         fi
         
-        echo "STATIC_WEB_APP_NAME=$STATIC_WEB_APP" >> $GITHUB_ENV
+        echo "📦 Found deployment: $DEPLOYMENT_NAME"
         
-        # Get Static Web App URL
-        STATIC_WEB_APP_URL=$(az staticwebapp show \
-          --name "$STATIC_WEB_APP" \
+        # Get deployment outputs
+        DEPLOYMENT_OUTPUTS=$(az deployment group show \
           --resource-group "$RESOURCE_GROUP" \
-          --query "defaultHostname" \
-          --output tsv)
+          --name "$DEPLOYMENT_NAME" \
+          --query "properties.outputs" \
+          --output json)
         
-        echo "STATIC_WEB_APP_URL=https://$STATIC_WEB_APP_URL" >> $GITHUB_ENV
+        echo "🔍 Available deployment outputs:"
+        echo "$DEPLOYMENT_OUTPUTS" | jq -r 'keys[]' 2>/dev/null || echo "No outputs found or invalid JSON"
         
-        echo "✅ Extracted ADE outputs:"
+        # Extract Static Web App URL from deployment outputs
+        STATIC_WEB_APP_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.staticWebsiteUrl.value // empty' 2>/dev/null)
+        STATIC_WEB_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.staticWebAppName.value // empty' 2>/dev/null)
+        
+        # Fallback: If deployment outputs are not available, query resources directly
+        if [ -z "$STATIC_WEB_APP_URL" ] || [ "$STATIC_WEB_APP_URL" = "null" ]; then
+          echo "⚠️ staticWebsiteUrl not found in deployment outputs, falling back to resource query..."
+          
+          # Find Static Web App in the resource group
+          STATIC_WEB_APP_NAME=$(az staticwebapp list \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "[0].name" \
+            --output tsv)
+          
+          if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
+            echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
+            exit 1
+          fi
+          
+          # Get Static Web App URL
+          STATIC_WEB_APP_HOSTNAME=$(az staticwebapp show \
+            --name "$STATIC_WEB_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "defaultHostname" \
+            --output tsv)
+          
+          STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_HOSTNAME"
+        fi
+        
+        # Validate URLs are not empty
+        if [ -z "$STATIC_WEB_APP_URL" ] || [ "$STATIC_WEB_APP_URL" = "https://" ] || [ "$STATIC_WEB_APP_URL" = "null" ]; then
+          echo "❌ Invalid or empty Static Web App URL: '$STATIC_WEB_APP_URL'"
+          exit 1
+        fi
+        
+        if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
+          echo "❌ Invalid or empty Static Web App Name: '$STATIC_WEB_APP_NAME'"
+          exit 1
+        fi
+        
+        # Set environment variables
+        echo "STATIC_WEB_APP_NAME=$STATIC_WEB_APP_NAME" >> $GITHUB_ENV
+        echo "STATIC_WEB_APP_URL=$STATIC_WEB_APP_URL" >> $GITHUB_ENV
+        
+        echo "✅ Successfully extracted ADE outputs:"
         echo "  - Resource Group: $RESOURCE_GROUP"
-        echo "  - Static Web App: $STATIC_WEB_APP"
-        echo "  - URL: https://$STATIC_WEB_APP_URL"
+        echo "  - Deployment: $DEPLOYMENT_NAME"
+        echo "  - Static Web App: $STATIC_WEB_APP_NAME"
+        echo "  - URL: $STATIC_WEB_APP_URL"
     
     - name: Install SWA CLI
       run: |
@@ -325,36 +375,86 @@ jobs:
           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
           --output json)
         
-        # Extract resource group name (assuming it follows the pattern)
+        # Extract resource group name
         RESOURCE_GROUP=$(echo "$ENV_DETAILS" | jq -r '.resourceGroupId' | sed 's|.*/||')
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         
-        # Find Function App in the resource group
-        FUNCTION_APP=$(az functionapp list \
+        echo "🔍 Querying deployment outputs from resource group: $RESOURCE_GROUP"
+        
+        # Find the deployment name - ADE typically creates deployments with specific patterns
+        DEPLOYMENT_NAME=$(az deployment group list \
           --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
+          --query "[?provisioningState=='Succeeded'] | sort_by(@, &timestamp) | [-1].name" \
           --output tsv)
         
-        if [ -z "$FUNCTION_APP" ] || [ "$FUNCTION_APP" = "null" ]; then
-          echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
+        if [ -z "$DEPLOYMENT_NAME" ] || [ "$DEPLOYMENT_NAME" = "null" ]; then
+          echo "❌ No successful deployment found in resource group: $RESOURCE_GROUP"
+          echo "🔍 Available deployments:"
+          az deployment group list --resource-group "$RESOURCE_GROUP" --query "[].{name:name, state:provisioningState, timestamp:timestamp}" --output table
           exit 1
         fi
         
-        echo "FUNCTION_APP_NAME=$FUNCTION_APP" >> $GITHUB_ENV
+        echo "📦 Found deployment: $DEPLOYMENT_NAME"
         
-        # Get Function App URL
-        FUNCTION_APP_URL=$(az functionapp show \
-          --name "$FUNCTION_APP" \
+        # Get deployment outputs
+        DEPLOYMENT_OUTPUTS=$(az deployment group show \
           --resource-group "$RESOURCE_GROUP" \
-          --query "defaultHostName" \
-          --output tsv)
+          --name "$DEPLOYMENT_NAME" \
+          --query "properties.outputs" \
+          --output json)
         
-        echo "FUNCTION_APP_URL=https://$FUNCTION_APP_URL" >> $GITHUB_ENV
+        echo "🔍 Available deployment outputs:"
+        echo "$DEPLOYMENT_OUTPUTS" | jq -r 'keys[]' 2>/dev/null || echo "No outputs found or invalid JSON"
         
-        echo "✅ Extracted ADE outputs:"
+        # Extract Function App URL from deployment outputs
+        FUNCTION_APP_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.functionAppUrl.value // empty' 2>/dev/null)
+        FUNCTION_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.functionAppName.value // empty' 2>/dev/null)
+        
+        # Fallback: If deployment outputs are not available, query resources directly
+        if [ -z "$FUNCTION_APP_URL" ] || [ "$FUNCTION_APP_URL" = "null" ]; then
+          echo "⚠️ functionAppUrl not found in deployment outputs, falling back to resource query..."
+          
+          # Find Function App in the resource group
+          FUNCTION_APP_NAME=$(az functionapp list \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "[0].name" \
+            --output tsv)
+          
+          if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
+            echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
+            exit 1
+          fi
+          
+          # Get Function App URL
+          FUNCTION_APP_HOSTNAME=$(az functionapp show \
+            --name "$FUNCTION_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "defaultHostName" \
+            --output tsv)
+          
+          FUNCTION_APP_URL="https://$FUNCTION_APP_HOSTNAME"
+        fi
+        
+        # Validate URLs are not empty
+        if [ -z "$FUNCTION_APP_URL" ] || [ "$FUNCTION_APP_URL" = "https://" ] || [ "$FUNCTION_APP_URL" = "null" ]; then
+          echo "❌ Invalid or empty Function App URL: '$FUNCTION_APP_URL'"
+          exit 1
+        fi
+        
+        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
+          echo "❌ Invalid or empty Function App Name: '$FUNCTION_APP_NAME'"
+          exit 1
+        fi
+        
+        # Set environment variables
+        echo "FUNCTION_APP_NAME=$FUNCTION_APP_NAME" >> $GITHUB_ENV
+        echo "FUNCTION_APP_URL=$FUNCTION_APP_URL" >> $GITHUB_ENV
+        
+        echo "✅ Successfully extracted ADE outputs:"
         echo "  - Resource Group: $RESOURCE_GROUP"
-        echo "  - Function App: $FUNCTION_APP"
-        echo "  - URL: https://$FUNCTION_APP_URL"
+        echo "  - Deployment: $DEPLOYMENT_NAME" 
+        echo "  - Function App: $FUNCTION_APP_NAME"
+        echo "  - URL: $FUNCTION_APP_URL"
     
     - name: Deploy Backend Code to Function App
       run: |
