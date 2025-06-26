@@ -464,6 +464,7 @@ devbox-*.log
 *.bicepparam.new
 *.json.backup
 deploy.zip
+backend-deployment.zip
 main-orchestrator.json
 
 # Bicep compiled JSON files in infra folder
