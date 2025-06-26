@@ -210,29 +210,18 @@ jobs:
         
         echo "📋 Reading AI Foundry configuration from backend ade.parameters.json..."
         
-        # Read AI Foundry configuration from backend ade.parameters.json
-        # (Frontend needs backend's AI Foundry configuration for integration)
-        AI_FOUNDRY_ENDPOINT=$(jq -r '.aiFoundryEndpoint' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_AGENT_ID=$(jq -r '.aiFoundryAgentId' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_AGENT_NAME=$(jq -r '.aiFoundryAgentName' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_INSTANCE_NAME=$(jq -r '.aiFoundryInstanceName' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_RG_NAME=$(jq -r '.aiFoundryResourceGroupName' infra/environments/backend/ade.parameters.json)
+        # Use the reusable helper script to extract AI Foundry parameters
+        echo "🔧 Using extract-ade-parameters.sh helper script..."
         
-        # Validate AI Foundry configuration
-        if [ -z "$AI_FOUNDRY_ENDPOINT" ] || [ "$AI_FOUNDRY_ENDPOINT" = "null" ]; then
-          echo "❌ Missing or invalid AI Foundry endpoint in backend ade.parameters.json"
-          exit 1
+        # Extract parameters using the helper script
+        if ! PARAMETER_OUTPUT=$(./tests/extract-ade-parameters.sh -o export -q); then
+            echo "❌ Failed to extract AI Foundry parameters from backend ade.parameters.json"
+            echo "Please check that all required parameters are present and valid."
+            exit 1
         fi
         
-        if [ -z "$AI_FOUNDRY_AGENT_ID" ] || [ "$AI_FOUNDRY_AGENT_ID" = "null" ]; then
-          echo "❌ Missing or invalid AI Foundry agent ID in backend ade.parameters.json"
-          exit 1
-        fi
-        
-        if [ -z "$AI_FOUNDRY_AGENT_NAME" ] || [ "$AI_FOUNDRY_AGENT_NAME" = "null" ]; then
-          echo "❌ Missing or invalid AI Foundry agent name in backend ade.parameters.json"
-          exit 1
-        fi
+        # Source the extracted parameters into environment
+        eval "$PARAMETER_OUTPUT"
         
         # Set environment variables for standard ADE outputs
         echo "STATIC_WEB_APP_NAME=$STATIC_WEB_APP_NAME" >> $GITHUB_ENV
@@ -484,28 +473,18 @@ jobs:
         
         echo "📋 Reading AI Foundry configuration from ade.parameters.json..."
         
-        # Read AI Foundry configuration from ade.parameters.json
-        AI_FOUNDRY_ENDPOINT=$(jq -r '.aiFoundryEndpoint' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_AGENT_ID=$(jq -r '.aiFoundryAgentId' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_AGENT_NAME=$(jq -r '.aiFoundryAgentName' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_INSTANCE_NAME=$(jq -r '.aiFoundryInstanceName' infra/environments/backend/ade.parameters.json)
-        AI_FOUNDRY_RG_NAME=$(jq -r '.aiFoundryResourceGroupName' infra/environments/backend/ade.parameters.json)
+        # Use the reusable helper script to extract AI Foundry parameters
+        echo "🔧 Using extract-ade-parameters.sh helper script..."
         
-        # Validate AI Foundry configuration
-        if [ -z "$AI_FOUNDRY_ENDPOINT" ] || [ "$AI_FOUNDRY_ENDPOINT" = "null" ]; then
-          echo "❌ Missing or invalid AI Foundry endpoint in ade.parameters.json"
-          exit 1
+        # Extract parameters using the helper script
+        if ! PARAMETER_OUTPUT=$(./tests/extract-ade-parameters.sh -o export -q); then
+            echo "❌ Failed to extract AI Foundry parameters from ade.parameters.json"
+            echo "Please check that all required parameters are present and valid."
+            exit 1
         fi
         
-        if [ -z "$AI_FOUNDRY_AGENT_ID" ] || [ "$AI_FOUNDRY_AGENT_ID" = "null" ]; then
-          echo "❌ Missing or invalid AI Foundry agent ID in ade.parameters.json"
-          exit 1
-        fi
-        
-        if [ -z "$AI_FOUNDRY_AGENT_NAME" ] || [ "$AI_FOUNDRY_AGENT_NAME" = "null" ]; then
-          echo "❌ Missing or invalid AI Foundry agent name in ade.parameters.json"
-          exit 1
-        fi
+        # Source the extracted parameters into environment
+        eval "$PARAMETER_OUTPUT"
         
         # Set environment variables for standard ADE outputs
         echo "FUNCTION_APP_NAME=$FUNCTION_APP_NAME" >> $GITHUB_ENV
