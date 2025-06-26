@@ -30,6 +30,10 @@ tasks:
     description: Install Python for development scripting and tooling
     parameters:
       package: Python.Python.3.12
+  - name: winget
+    description: Install Docker Desktop for containerized development
+    parameters:
+      package: Docker.DockerDesktop
   - name: powershell
     description: Install Azure CLI extensions system-wide
     parameters:
@@ -73,6 +77,10 @@ userTasks:
         # DevBox Support
         code --install-extension ms-vscode.vscode-dev-containers
         
+        # Docker Development
+        code --install-extension ms-azuretools.vscode-docker
+        code --install-extension ms-vscode.vscode-docker
+        
         # Source Control
         code --install-extension github.vscode-github-actions
         
@@ -102,6 +110,15 @@ userTasks:
         python -m pip install --user --upgrade pip
         python -m pip install --user virtualenv
         
+        # Verify Docker Desktop installation and setup
+        $dockerPath = "${env:ProgramFiles}\Docker\Docker\Docker Desktop.exe"
+        if (Test-Path $dockerPath) {
+            Write-Host "✅ Docker Desktop installed successfully!" -ForegroundColor Green
+            Write-Host "📋 Docker will be available after DevBox restart and Docker Desktop startup" -ForegroundColor Yellow
+        } else {
+            Write-Host "⚠️  Docker Desktop installation may need completion" -ForegroundColor Yellow
+        }
+        
         Write-Host "=== User Development Environment Setup Complete ===" -ForegroundColor Green
         Write-Host "Next steps:" -ForegroundColor Yellow
         Write-Host "1. Configure Git with your credentials:" -ForegroundColor Gray
@@ -111,3 +128,5 @@ userTasks:
         Write-Host "3. Clone repository to: $workspaceDir" -ForegroundColor Gray
         Write-Host "4. Azurite data will be stored in: $azuriteDir" -ForegroundColor Gray
         Write-Host "5. Python and pip are available for development tooling" -ForegroundColor Gray
+        Write-Host "6. Start Docker Desktop for containerized development" -ForegroundColor Gray
+        Write-Host "7. Docker will be available for Azurite, Function App testing, and more" -ForegroundColor Gray
