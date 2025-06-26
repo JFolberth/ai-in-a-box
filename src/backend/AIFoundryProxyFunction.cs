@@ -131,6 +131,85 @@ namespace AIFoundryProxy
         }
 
         /// <summary>
+        /// Health check endpoint for monitoring Function App status and AI Foundry connectivity.
+        /// Returns comprehensive health information including AI Foundry connection status.
+        /// </summary>
+        [Function("health")]
+        public async Task<HttpResponseData> HealthAsync(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "options")] HttpRequestData req)
+        {
+            _logger.LogInformation("Health check request received");
+
+            // Handle CORS preflight requests
+            if (req.Method == "OPTIONS")
+            {
+                var corsResponse = req.CreateResponse(HttpStatusCode.OK);
+                AddCorsHeaders(corsResponse);
+                return corsResponse;
+            }
+
+            try
+            {
+                var healthCheck = new
+                {
+                    Status = "Healthy",
+                    Timestamp = DateTime.UtcNow,
+                    Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown",
+                    Environment = Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") ?? "Unknown",
+                    AiFoundryEndpoint = _projectEndpoint,
+                    AgentName = _agentName,
+                    AgentId = _agentId,
+                    ConnectionStatus = await CheckAiFoundryConnectionAsync(),
+                    Details = new
+                    {
+                        ManagedIdentity = CheckManagedIdentityStatus(),
+                        AiFoundryAccess = await CheckAiFoundryAccessAsync(),
+                        LastHealthCheck = DateTime.UtcNow
+                    }
+                };
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                AddCorsHeaders(response);
+                response.Headers.Add("Content-Type", "application/json");
+                
+                await response.WriteStringAsync(JsonSerializer.Serialize(healthCheck, new JsonSerializerOptions 
+                { 
+                    WriteIndented = true 
+                }));
+                
+                _logger.LogInformation("Health check completed successfully");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during health check");
+                
+                var errorHealthCheck = new
+                {
+                    Status = "Unhealthy",
+                    Timestamp = DateTime.UtcNow,
+                    Error = "Health check failed",
+                    Details = new
+                    {
+                        Exception = ex.GetType().Name,
+                        Message = ex.Message
+                    }
+                };
+
+                var errorResponse = req.CreateResponse(HttpStatusCode.ServiceUnavailable);
+                AddCorsHeaders(errorResponse);
+                errorResponse.Headers.Add("Content-Type", "application/json");
+                
+                await errorResponse.WriteStringAsync(JsonSerializer.Serialize(errorHealthCheck, new JsonSerializerOptions 
+                { 
+                    WriteIndented = true 
+                }));
+                
+                return errorResponse;
+            }
+        }
+
+        /// <summary>
         /// HTTP trigger function to create a new thread for conversation context.
         /// </summary>
         [Function("createThread")]
@@ -740,6 +819,106 @@ namespace AIFoundryProxy
                 _logger.LogWarning("💡 Check that the AI_FOUNDRY_ENDPOINT is correctly set in local.settings.json");
                 return null;
             }        }
+
+        /// <summary>
+        /// Checks AI Foundry connection status for health endpoint.
+        /// </summary>
+        private async Task<string> CheckAiFoundryConnectionAsync()
+        {
+            try
+            {
+                _logger.LogInformation("🔍 Health check: Testing AI Foundry connection...");
+                
+                var agentsClient = await InitializeAgentsClientAsync();
+                if (agentsClient == null)
+                {
+                    _logger.LogWarning("⚠️ Health check: AI Foundry client initialization failed");
+                    return "Disconnected - Client initialization failed";
+                }
+
+                // Test connection by trying to get the agent
+                var testAgent = await agentsClient.Administration.GetAgentAsync(_agentId);
+                if (testAgent?.Value != null)
+                {
+                    _logger.LogInformation($"✅ Health check: AI Foundry connection successful. Agent: {testAgent.Value.Name}");
+                    return $"Connected - Agent '{testAgent.Value.Name}' accessible";
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ Health check: Agent not found");
+                    return "Disconnected - Agent not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Health check: AI Foundry connection test failed");
+                return $"Disconnected - {ex.GetType().Name}: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Checks managed identity status for health endpoint.
+        /// </summary>
+        private string CheckManagedIdentityStatus()
+        {
+            try
+            {
+                // Check if running in Azure Functions environment with managed identity
+                var msiEndpoint = Environment.GetEnvironmentVariable("MSI_ENDPOINT");
+                var msiSecret = Environment.GetEnvironmentVariable("MSI_SECRET");
+                var azureClientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+                
+                if (!string.IsNullOrEmpty(msiEndpoint) && !string.IsNullOrEmpty(msiSecret))
+                {
+                    return "Active - System-assigned managed identity available";
+                }
+                else if (!string.IsNullOrEmpty(azureClientId))
+                {
+                    return "Active - User-assigned managed identity configured";
+                }
+                else
+                {
+                    // Check if running locally with Azure CLI credentials
+                    var localCredentials = Environment.GetEnvironmentVariable("AZURE_TENANT_ID") ?? 
+                                         Environment.GetEnvironmentVariable("AZURE_CLIENT_ID") ??
+                                         Environment.GetEnvironmentVariable("USERPROFILE"); // Windows indicator for local dev
+                    
+                    return localCredentials != null ? "Local Development - Azure CLI credentials" : "Inactive - No identity detected";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error checking managed identity status");
+                return $"Error - {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Checks AI Foundry access permissions for health endpoint.
+        /// </summary>
+        private async Task<string> CheckAiFoundryAccessAsync()
+        {
+            try
+            {
+                var agentsClient = await InitializeAgentsClientAsync();
+                if (agentsClient == null)
+                {
+                    return "Unauthorized - Cannot initialize client";
+                }
+
+                // Test basic access by trying to list agents (minimal permission test)
+                var testAgent = await agentsClient.Administration.GetAgentAsync(_agentId);
+                return testAgent?.Value != null ? "Authorized - Agent access confirmed" : "Unauthorized - Agent not accessible";
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return "Unauthorized - Authentication failed";
+            }
+            catch (Exception ex)
+            {
+                return $"Error - {ex.GetType().Name}: {ex.Message}";
+            }
+        }
 
         /// <summary>
         /// Helper method to determine if a run status indicates the run is still in progress.
