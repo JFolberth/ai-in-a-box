@@ -42,6 +42,18 @@
       ],
 
       "settings": {
+        "mcp.servers": {
+          "microsoft.docs.mcp": {
+            "url": "https://learn.microsoft.com/api/mcp",
+            "name": "Microsoft Learn",
+            "description": "Microsoft documentation and API reference for Azure, Bicep, and .NET development"
+          },
+          "github.mcp": {
+            "url": "https://api.githubcopilot.com/mcp/",
+            "name": "GitHub Integration",
+            "description": "Enhanced GitHub repository management and integration"
+          }
+        },
         "terminal.integrated.defaultProfile.linux": "bash",
         "prettier.requireConfig": true,
         "editor.formatOnSave": true,
