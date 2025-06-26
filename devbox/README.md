@@ -108,7 +108,6 @@ The DevBox includes Docker Desktop for containerized development workflows:
 
 ### Available Docker Tools
 - **Docker Engine** - Container runtime and management
-- **Docker Compose** - Multi-service application orchestration
 - **Docker Desktop** - GUI for container management (Windows)
 - **VS Code Docker Extensions** - Container development and debugging
 
@@ -136,39 +135,35 @@ docker run -p 7071:80 ai-foundry-backend
 ```
 
 #### 3. Multi-Service Development
-Use docker-compose for complex service dependencies:
-```yaml
-# docker-compose.yml example
-version: '3.8'
-services:
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    ports:
-      - "10000:10000"
-      - "10001:10001"
-      - "10002:10002"
-  
-  backend:
-    build: ./src/backend
-    ports:
-      - "7071:80"
-    depends_on:
-      - azurite
-    environment:
-      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;...
+Run multiple services with individual Docker containers:
+```powershell
+# Start Azurite in background
+docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 `
+  --name azurite `
+  mcr.microsoft.com/azure-storage/azurite
+
+# Build and start backend (if containerized)
+cd src\backend
+docker build -t ai-foundry-backend .
+docker run -d -p 7071:80 --name backend `
+  --link azurite:azurite `
+  ai-foundry-backend
 ```
 
 #### 4. Development Environment Isolation
 Create consistent, isolated development environments:
 ```powershell
-# Start complete development stack
-docker-compose up -d
+# Start services individually
+docker run -d --name azurite mcr.microsoft.com/azure-storage/azurite
+docker run -d --name backend --link azurite ai-foundry-backend
 
 # View logs
-docker-compose logs -f
+docker logs -f azurite
+docker logs -f backend
 
 # Clean up
-docker-compose down
+docker stop azurite backend
+docker rm azurite backend
 ```
 
 ### Docker Best Practices
@@ -231,7 +226,6 @@ After DevBox creation, verify the following components:
 - [ ] **Python 3.12**: `python --version` (should show Python 3.12.x)
 - [ ] **Git**: `git --version` (should show Git version)
 - [ ] **Docker Desktop**: `docker --version` (should show Docker version)
-- [ ] **Docker Compose**: `docker-compose --version` (should show Compose version)
 - [ ] **VS Code**: Should be available in Start Menu
 
 #### User-Level Configuration

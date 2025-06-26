@@ -145,25 +145,6 @@ try {
     $warnings++
 }
 
-# Test Docker Compose
-try {
-    $composeResult = docker-compose --version 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ Docker Compose" -ForegroundColor Green
-        if ($Detailed) {
-            Write-Host "   Version: $composeResult" -ForegroundColor Gray
-        }
-    } else {
-        Write-Host "⚠️  Docker Compose - Not available" -ForegroundColor Yellow
-        Write-Host "   Included with Docker Desktop" -ForegroundColor Gray
-        $warnings++
-    }
-} catch {
-    Write-Host "⚠️  Docker Compose - Not found" -ForegroundColor Yellow
-    Write-Host "   Included with Docker Desktop" -ForegroundColor Gray
-    $warnings++
-}
-
 # Test Azure CLI extensions
 Write-Host ""
 Write-Host "1️⃣.1 Testing Azure CLI Extensions..." -ForegroundColor Yellow

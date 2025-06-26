@@ -358,13 +358,12 @@ The DevContainer automatically:
 - Configures VS Code extensions for Bicep, Azure Functions, C#, and Docker
 - Sets up port forwarding for development servers (5173, 4173, 7071)
 - Runs `npm install` in the frontend directory and configures Azure tooling
-- Validates Docker installation with `docker --version` and `docker-compose --version`
+- Validates Docker installation with `docker --version`
 
 ### Docker in DevContainer
 The DevContainer includes Docker-in-Docker support for:
 - Running Azurite in containers instead of local installation
 - Testing Function Apps in containerized environments
-- Using docker-compose for multi-service development
 - Building and testing container images locally
 
 ## 🏗️ DevBox Support
@@ -393,7 +392,6 @@ The DevBox configuration automatically installs:
 The DevBox includes Docker Desktop for:
 - Running Azurite and other services in containers
 - Function App containerized testing and development
-- Multi-service orchestration with docker-compose
 - Consistent development environment isolation
 
 See [DevBox README](../devbox/README.md) for detailed setup instructions and troubleshooting.

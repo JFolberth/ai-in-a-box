@@ -79,17 +79,13 @@ Use the built-in VS Code tasks for automated setup:
 2. Install VS Code Dev Containers extension  
 3. Open project in VS Code
 4. Click "Reopen in Container" when prompted
-5. Verify Docker functionality: `docker --version && docker-compose --version`
-6. Use VS Code tasks to start services
-7. Optional: Use containerized Azurite: `docker-compose up azurite -d`
+5. Use VS Code tasks to start services
 
 #### Option D: DevBox
 1. Create a DevBox in Azure
 2. Use the provided `imageDefinition.yaml`
 3. Clone this repository in the DevBox
-4. Verify Docker Desktop is running: `docker --version && docker-compose --version`
-5. Use VS Code tasks to start services
-6. Optional: Use containerized services: `docker-compose up azurite -d`
+4. Use VS Code tasks to start services
 
 ### 4. Azure Deployment
 
@@ -169,17 +165,9 @@ az login
    ```bash
    # Check Docker installation
    docker --version
-   docker-compose --version
    
    # Test Docker functionality
    docker run hello-world
-   
-   # Test containerized Azurite (optional)
-   docker-compose up azurite -d
-   docker ps  # Should show azurite container running
-   
-   # Clean up test containers
-   docker-compose down
    ```
 
 ### 7. Troubleshooting

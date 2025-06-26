@@ -71,7 +71,7 @@
     }
   },
 
-  "postCreateCommand": "npm install && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install virtualenv black pylint && az extension add --name devcenter --only-show-errors && docker --version && docker-compose --version",
+  "postCreateCommand": "npm install && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install virtualenv black pylint && az extension add --name devcenter --only-show-errors && docker --version",
 
   "remoteUser": "node",
   

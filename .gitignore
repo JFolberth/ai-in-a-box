@@ -469,9 +469,3 @@ main-orchestrator.json
 
 # Bicep compiled JSON files in infra folder
 infra/**/main.json
-
-# Docker
-.docker/
-docker-compose.override.yml
-.env
-.env.*.local
