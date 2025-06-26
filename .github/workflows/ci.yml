@@ -137,8 +137,9 @@ jobs:
           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
           --output json)
         
-        # Extract resource group name
-        RESOURCE_GROUP=$(echo "$ENV_DETAILS" | jq -r '.resourceGroupId' | sed 's|.*/||')
+        # Construct resource group name using ADE naming convention: {project}-{adeName}
+        # Based on ade.parameters.json: devCenterProjectName + "-" + adeName
+        RESOURCE_GROUP="ai-foundry-${{ env.ADE_ENVIRONMENT_NAME }}"
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         
         echo "🔍 Querying deployment outputs from resource group: $RESOURCE_GROUP"
@@ -400,8 +401,9 @@ jobs:
           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
           --output json)
         
-        # Extract resource group name
-        RESOURCE_GROUP=$(echo "$ENV_DETAILS" | jq -r '.resourceGroupId' | sed 's|.*/||')
+        # Construct resource group name using ADE naming convention: {project}-{adeName}
+        # Based on ade.parameters.json: devCenterProjectName + "-" + adeName
+        RESOURCE_GROUP="ai-foundry-${{ env.ADE_ENVIRONMENT_NAME }}"
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         
         echo "🔍 Querying deployment outputs from resource group: $RESOURCE_GROUP"
