@@ -1,6 +1,6 @@
 # Azure Deployment Environments (ADE) Guide
 
-This guide provides comprehensive information about Azure Deployment Environments implementation in the AI Foundry SPA project.
+This guide provides comprehensive information about [Azure Deployment Environments](https://learn.microsoft.com/en-us/azure/deployment-environments/) implementation in the [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) SPA project.
 
 ## 📋 Overview
 

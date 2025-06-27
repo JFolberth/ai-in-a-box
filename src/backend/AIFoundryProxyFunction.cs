@@ -8,12 +8,16 @@ using Azure.Identity;
 
 namespace AIFoundryProxy
 {    /// <summary>
-    /// Azure Function that acts as a proxy to AI Foundry, enabling browser-based applications
-    /// to securely connect to AI Foundry agents using managed identity authentication.
+    /// Azure Function that acts as a proxy to Azure AI Foundry, enabling browser-based applications
+    /// to securely connect to Azure AI Foundry agents using managed identity authentication.
+    /// 
+    /// See: https://learn.microsoft.com/en-us/azure/azure-functions/ for Azure Functions documentation
+    /// See: https://learn.microsoft.com/en-us/azure/ai-foundry/ for Azure AI Foundry documentation
+    /// See: https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/ for Managed Identity documentation
     /// 
     /// Architecture Decision: Agent ID and Name are kept as application configuration
     /// rather than infrastructure parameters for better separation of concerns.
-    /// The AI Foundry workspace endpoint is automatically retrieved from infrastructure.
+    /// The Azure AI Foundry workspace endpoint is automatically retrieved from infrastructure.
     /// </summary>
     public class AIFoundryProxyFunction
     {
@@ -25,12 +29,12 @@ namespace AIFoundryProxy
         {
             _logger = loggerFactory.CreateLogger<AIFoundryProxyFunction>();
             
-            // Get environment variables for AI Foundry connection
+            // Get environment variables for Azure AI Foundry connection
             _projectEndpoint = Environment.GetEnvironmentVariable("AI_FOUNDRY_ENDPOINT") 
                 ?? "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject";
             
             // Agent configuration - can be hardcoded since it's application-specific
-            // These could also be moved to app configuration or Key Vault for flexibility
+            // These could also be moved to app configuration or Azure Key Vault for flexibility
             _agentId = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_ID") 
                 ?? "asst_dH7M0nbmdRblhSQO8nIGIYF4"; // Default AI in A Box agent
             _agentName = Environment.GetEnvironmentVariable("AI_FOUNDRY_AGENT_NAME") 
@@ -38,7 +42,7 @@ namespace AIFoundryProxy
             
             var workspaceName = Environment.GetEnvironmentVariable("AI_FOUNDRY_WORKSPACE_NAME") ?? "Unknown";
           
-            _logger.LogInformation($"🔗 AI Foundry Connection Details:");
+            _logger.LogInformation($"🔗 Azure AI Foundry Connection Details:");
             _logger.LogInformation($"   📍 Project Endpoint: {_projectEndpoint}");
             _logger.LogInformation($"   🏢 Workspace: {workspaceName}");
             _logger.LogInformation($"   🤖 Agent: {_agentName} ({_agentId})");
@@ -46,7 +50,7 @@ namespace AIFoundryProxy
             // Don't initialize the AI client in constructor - do it lazily on first use
             _agentsClient = null;
             
-            _logger.LogInformation("🚀 AI Foundry proxy function initialized - AI client will be created on first request");
+            _logger.LogInformation("🚀 Azure AI Foundry proxy function initialized - AI client will be created on first request");
         }
 
         /// <summary>

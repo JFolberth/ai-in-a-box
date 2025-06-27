@@ -1,4 +1,4 @@
-// AI Foundry SPA Infrastructure Orchestrator
+// Azure AI Foundry SPA Infrastructure Orchestrator
 // This template orchestrates the deployment of frontend and backend to separate resource groups
 // Each component gets its own Application Insights instance for better isolation
 
