@@ -1,13 +1,13 @@
 # Deployment Guide
 
-This guide provides comprehensive information about deploying the AI Foundry SPA project across different scenarios and environments.
+This guide provides comprehensive information about deploying the [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) SPA project across different scenarios and environments.
 
 ## 🎯 Deployment Overview
 
-The AI Foundry SPA supports multiple deployment patterns:
+The Azure AI Foundry SPA supports multiple deployment patterns:
 
 1. **Infrastructure + Code** - Complete greenfield deployment
-2. **Code-Only** - Deploy application code to existing infrastructure (recommended for ADE)
+2. **Code-Only** - Deploy application code to existing infrastructure (recommended for [Azure Deployment Environments](https://learn.microsoft.com/en-us/azure/deployment-environments/))
 3. **Local Development** - Run application locally for development and testing
 
 ## 🏗️ Deployment Architecture
@@ -20,7 +20,7 @@ The AI Foundry SPA supports multiple deployment patterns:
 │  Infrastructure Deployment          Code Deployment             │
 │  ┌─────────────────────────────┐   ┌─────────────────────────────┐ │
 │  │                             │   │                             │ │
-│  │  Option A: Azure CLI+Bicep  │   │  Backend: deploy-backend-func-code.ps1│ │
+│  │  Option A: [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/)+[Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)  │   │  Backend: deploy-backend-func-code.ps1│ │
 │  │  Option B: ADE Portal       │   │  Frontend: deploy-frontend- │ │
 │  │  Option C: CI/CD Pipeline   │   │           spa-code.ps1          │ │
 │  │                             │   │                             │ │
@@ -37,15 +37,15 @@ The AI Foundry SPA supports multiple deployment patterns:
 
 ## 📋 Deployment Scripts Overview
 
-The AI Foundry SPA includes **two focused deployment scripts** for code-only deployment to existing Azure infrastructure. These scripts are designed for Azure Deployment Environments (ADE), CI/CD pipelines, and scenarios where infrastructure is already provisioned.
+The Azure AI Foundry SPA includes **two focused deployment scripts** for code-only deployment to existing [Azure](https://learn.microsoft.com/en-us/azure/) infrastructure. These scripts are designed for Azure Deployment Environments (ADE), CI/CD pipelines, and scenarios where infrastructure is already provisioned.
 
 > **📝 Script Naming**: The scripts are named to clearly indicate their purpose:
-> - `deploy-backend-func-code.ps1` - Deploys **Function App code** only
+> - `deploy-backend-func-code.ps1` - Deploys **[Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) code** only
 > - `deploy-frontend-spa-code.ps1` - Deploys **SPA (Single Page Application) code** only
 
 ### `deploy-backend-func-code.ps1` - Backend Code-Only Deployment
 
-**Purpose**: Deploy C# Function App application code to an existing Azure Function App
+**Purpose**: Deploy C# Azure Functions application code to an existing Azure Functions app
 
 **Use Cases**:
 - ✅ After ADE infrastructure deployment
@@ -54,13 +54,13 @@ The AI Foundry SPA includes **two focused deployment scripts** for code-only dep
 - ✅ Hotfixes and patches to running applications
 
 **Requirements**:
-- Existing Azure Function App (infrastructure already deployed)
+- Existing [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) app (infrastructure already deployed)
 - Existing Resource Group
 - Azure CLI authentication
-- .NET 8 SDK
+- [.NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8)
 
 **Parameters**:
-- `FunctionAppName` (required) - Name of the Azure Function App
+- `FunctionAppName` (required) - Name of the Azure Functions app
 - `ResourceGroupName` (required) - Name of the resource group
 - `SkipBuild` (optional) - Skip the dotnet build step
 - `SkipTest` (optional) - Skip endpoint testing after deployment
@@ -74,16 +74,16 @@ The AI Foundry SPA includes **two focused deployment scripts** for code-only dep
 
 **What it does**:
 1. ✅ Validates Azure CLI authentication
-2. ✅ Verifies Function App exists in specified resource group
-3. ✅ Builds .NET Function App (unless `-SkipBuild`)
+2. ✅ Verifies Azure Functions app exists in specified resource group
+3. ✅ Builds .NET Azure Functions app (unless `-SkipBuild`)
 4. ✅ Creates deployment package (ZIP)
-5. ✅ Deploys code to Azure Function App
+5. ✅ Deploys code to Azure Functions app
 6. ✅ Tests health endpoint (unless `-SkipTest`)
 7. ✅ Provides deployment summary with URLs
 
 ### `deploy-frontend-spa-code.ps1` - Frontend Code-Only Deployment
 
-**Purpose**: Deploy JavaScript SPA application code to an existing Azure Static Web App
+**Purpose**: Deploy JavaScript SPA application code to an existing [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
 
 **Use Cases**:
 - ✅ After ADE infrastructure deployment
@@ -92,15 +92,15 @@ The AI Foundry SPA includes **two focused deployment scripts** for code-only dep
 - ✅ Environment-specific configuration deployment
 
 **Requirements**:
-- Existing Azure Static Web App (infrastructure already deployed)
+- Existing Azure Static Web Apps (infrastructure already deployed)
 - Existing Resource Group  
 - Azure CLI authentication
-- Node.js 20+ and npm
+- [Node.js](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-overview) 20+ and npm
 
 **Parameters**:
-- `StaticWebAppName` (required) - Name of the Azure Static Web App
+- `StaticWebAppName` (required) - Name of the Azure Static Web Apps
 - `ResourceGroupName` (required) - Name of the resource group
-- `BackendUrl` (optional) - Backend Function App URL for environment configuration
+- `BackendUrl` (optional) - Backend Azure Functions URL for environment configuration
 - `SkipBuild` (optional) - Skip the npm build step
 
 **Example**:
@@ -113,10 +113,10 @@ The AI Foundry SPA includes **two focused deployment scripts** for code-only dep
 
 **What it does**:
 1. ✅ Validates Azure CLI authentication
-2. ✅ Verifies Static Web App exists in specified resource group
-3. ✅ Creates DEV environment configuration with AI Foundry settings
+2. ✅ Verifies Azure Static Web Apps exists in specified resource group
+3. ✅ Creates DEV environment configuration with Azure AI Foundry settings
 4. ✅ Installs npm dependencies and builds frontend (unless `-SkipBuild`)
-5. ✅ Installs SWA CLI if needed
+5. ✅ Installs [SWA CLI](https://learn.microsoft.com/en-us/azure/static-web-apps/static-web-apps-cli-overview) if needed
 6. ✅ Deploys to Azure Static Web Apps using SWA CLI
 7. ✅ Provides deployment summary with URLs
 
@@ -129,7 +129,7 @@ The AI Foundry SPA includes **two focused deployment scripts** for code-only dep
 - **No Default Assumptions**: No default resource names or auto-detection logic
 
 ### Infrastructure Separation
-- **Infrastructure First**: Deploy infrastructure through ADE, Bicep, or CI/CD pipelines
+- **Infrastructure First**: Deploy infrastructure through ADE, Azure Bicep, or CI/CD pipelines
 - **Code Second**: Use these scripts to deploy application code to existing resources
 - **Clear Boundaries**: Scripts focus solely on application deployment, not infrastructure management
 
@@ -145,12 +145,12 @@ The AI Foundry SPA includes **two focused deployment scripts** for code-only dep
 
 ### ❌ When NOT to Use These Scripts
 
-- **Infrastructure Deployment**: Use ADE portal, Bicep templates, or CI/CD pipelines for infrastructure
+- **Infrastructure Deployment**: Use ADE portal, Azure Bicep templates, or CI/CD pipelines for infrastructure
 - **Local Development**: Use `npm run dev` and `func start` for local development and testing
-- **First-Time Setup**: Deploy infrastructure first through ADE or Bicep before using these scripts
+- **First-Time Setup**: Deploy infrastructure first through ADE or Azure Bicep before using these scripts
 - **Resource Creation**: Scripts cannot create Azure resources; they only deploy code to existing resources
 
-### Scenario 1: Azure Deployment Environments (ADE) - Recommended
+### Scenario 1: [Azure Deployment Environments (ADE)](https://learn.microsoft.com/en-us/azure/deployment-environments/) - Recommended
 
 Perfect for enterprise environments with governance and self-service requirements.
 
@@ -192,7 +192,7 @@ az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,res
 # Access frontend application (URL provided in deployment output)
 ```
 
-### Scenario 2: Direct Bicep Deployment
+### Scenario 2: Direct [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/) Deployment
 
 For development environments or when ADE is not available.
 
@@ -212,7 +212,7 @@ Use the same code deployment steps as ADE scenario.
 
 For automated deployment in DevOps pipelines.
 
-#### Automated GitHub Actions (Current Implementation)
+#### Automated [GitHub Actions](https://learn.microsoft.com/en-us/azure/developer/github/github-actions) (Current Implementation)
 
 The project includes a **fully automated CI/CD pipeline** that deploys both infrastructure and application code on main branch pushes:
 
@@ -226,7 +226,7 @@ jobs:
   # 1. Build and validate
   bicep-validation: # Validates infrastructure templates
   frontend-build:   # Builds JavaScript SPA
-  backend-build:    # Builds .NET Function App
+  backend-build:    # Builds .NET Azure Functions
   
   # 2. Deploy infrastructure
   deploy-dev-infrastructure:
@@ -244,8 +244,8 @@ jobs:
 ```
 
 **✅ Fully Automated Features:**
-- **Infrastructure deployment** via Azure CLI + Bicep
-- **Backend code deployment** via existing PowerShell script
+- **Infrastructure deployment** via Azure CLI + Azure Bicep
+- **Backend code deployment** via existing [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview) script
 - **Frontend code deployment** via existing PowerShell script
 - **Resource discovery** from infrastructure outputs
 - **Dependency management** (infrastructure → backend → frontend)
@@ -253,9 +253,9 @@ jobs:
 
 **🎯 Automatic Deployment Flow:**
 1. **Push to main branch** triggers the workflow
-2. **Infrastructure** is deployed to Azure via Bicep templates
-3. **Backend Function App code** is deployed automatically using resource names from infrastructure
-4. **Frontend Static Web App code** is deployed automatically with backend integration
+2. **Infrastructure** is deployed to Azure via Azure Bicep templates
+3. **Backend Azure Functions code** is deployed automatically using resource names from infrastructure
+4. **Frontend Azure Static Web Apps code** is deployed automatically with backend integration
 5. **Complete application** is ready and accessible
 
 #### Manual GitHub Actions Example (For Reference)
