@@ -125,6 +125,26 @@ try {
     $warnings++
 }
 
+# Test Docker installation
+Write-Host ""
+try {
+    $dockerResult = docker --version 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✅ Docker Engine" -ForegroundColor Green
+        if ($Detailed) {
+            Write-Host "   Version: $dockerResult" -ForegroundColor Gray
+        }
+    } else {
+        Write-Host "⚠️  Docker Engine - Not available" -ForegroundColor Yellow
+        Write-Host "   Start Docker Desktop or install Docker" -ForegroundColor Gray
+        $warnings++
+    }
+} catch {
+    Write-Host "⚠️  Docker Engine - Not found" -ForegroundColor Yellow
+    Write-Host "   Install Docker Desktop or ensure Docker is in PATH" -ForegroundColor Gray
+    $warnings++
+}
+
 # Test Azure CLI extensions
 Write-Host ""
 Write-Host "1️⃣.1 Testing Azure CLI Extensions..." -ForegroundColor Yellow
@@ -199,6 +219,8 @@ if (-not $SkipExtensions) {
         @("ms-python.python", "Python Language Support"),
         @("ms-python.pylint", "Python Linting"),
         @("ms-vscode.vscode-dev-containers", "DevContainer Support"),
+        @("ms-azuretools.vscode-docker", "Docker Development Tools"),
+        @("ms-vscode.vscode-docker", "Docker Language Support"),
         @("github.vscode-github-actions", "GitHub Actions Integration")
     )
     

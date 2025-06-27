@@ -15,6 +15,7 @@ These run during DevBox provisioning:
 - **Azure CLI** - Infrastructure deployment and management
 - **Azure Functions Core Tools** - Local Function App development and testing
 - **Python 3.12** - Development scripting and tooling support
+- **Docker Desktop** - Container platform for development and testing
 - **Azure CLI Extensions** - Infrastructure deployment and ADE development (system-wide)
 
 ### User-Level Tasks (Run as User)
@@ -34,6 +35,8 @@ These run after user first login:
   - `ms-python.python` - Python language support
   - `ms-python.pylint` - Python linting and code analysis
   - `ms-vscode.vscode-dev-containers` - DevContainer and DevBox support
+  - `ms-azuretools.vscode-docker` - Docker development tools
+  - `ms-vscode.vscode-docker` - Docker language support
   - `github.vscode-github-actions` - GitHub Actions integration
 - **Azurite** - Azure Storage emulator for local development (user-specific installation)
 - **Python Development** - User-specific pip and virtualenv setup
@@ -97,6 +100,78 @@ The DevBox is configured for the standard development workflow:
 3. **Infrastructure**: Azure CLI + Bicep templates with full IntelliSense
 4. **Deployment**: Azure CLI deployment scripts (no azd dependency)
 5. **Source Control**: Git with GitHub integration and Actions support
+6. **Containerized Development**: Docker for service isolation and testing
+
+## 🐳 Docker Integration
+
+The DevBox includes Docker Desktop for containerized development workflows:
+
+### Available Docker Tools
+- **Docker Engine** - Container runtime and management
+- **Docker Desktop** - GUI for container management (Windows)
+- **VS Code Docker Extensions** - Container development and debugging
+
+### Common Docker Use Cases
+
+#### 1. Azurite in Container
+Run Azure Storage emulator without local installation:
+```powershell
+# Start Azurite in background
+docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 `
+  --name azurite `
+  mcr.microsoft.com/azure-storage/azurite
+
+# Use with Function App
+$env:AzureWebJobsStorage = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+```
+
+#### 2. Function App Testing
+Test Azure Functions in isolated containers:
+```powershell
+# Build and run Function App in container
+cd src\backend
+docker build -t ai-foundry-backend .
+docker run -p 7071:80 ai-foundry-backend
+```
+
+#### 3. Multi-Service Development
+Run multiple services with individual Docker containers:
+```powershell
+# Start Azurite in background
+docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 `
+  --name azurite `
+  mcr.microsoft.com/azure-storage/azurite
+
+# Build and start backend (if containerized)
+cd src\backend
+docker build -t ai-foundry-backend .
+docker run -d -p 7071:80 --name backend `
+  --link azurite:azurite `
+  ai-foundry-backend
+```
+
+#### 4. Development Environment Isolation
+Create consistent, isolated development environments:
+```powershell
+# Start services individually
+docker run -d --name azurite mcr.microsoft.com/azure-storage/azurite
+docker run -d --name backend --link azurite ai-foundry-backend
+
+# View logs
+docker logs -f azurite
+docker logs -f backend
+
+# Clean up
+docker stop azurite backend
+docker rm azurite backend
+```
+
+### Docker Best Practices
+- **Resource Management**: Monitor Docker Desktop resource usage
+- **Image Cleanup**: Regularly remove unused images with `docker system prune`
+- **Networking**: Use Docker networks for service communication
+- **Volumes**: Use volumes for persistent data and bind mounts for development
+- **Security**: Keep Docker Desktop updated for security patches
 
 ## 📝 Customization Notes
 
@@ -111,6 +186,8 @@ The DevBox is configured for the standard development workflow:
 - GitHub Copilot provides AI-powered code completion and chat assistance
 - Python environment configured for development tooling and scripting
 - Azure AI Toolkit integrated for AI model development workflows
+- Docker Desktop provides containerized development capabilities
+- Docker extensions enable container development and debugging in VS Code
 
 ## 🔗 Related Documentation
 
@@ -148,6 +225,7 @@ After DevBox creation, verify the following components:
 - [ ] **Azure Functions Core Tools**: `func --version` (should show v4.x.x)
 - [ ] **Python 3.12**: `python --version` (should show Python 3.12.x)
 - [ ] **Git**: `git --version` (should show Git version)
+- [ ] **Docker Desktop**: `docker --version` (should show Docker version)
 - [ ] **VS Code**: Should be available in Start Menu
 
 #### User-Level Configuration
@@ -156,10 +234,12 @@ After DevBox creation, verify the following components:
   - Azure AI Toolkit should be available
   - Python extension should provide IntelliSense
   - Bicep extension should provide syntax highlighting
+  - Docker extensions should be available for container development
 - [ ] **Azurite**: `azurite --version` (should show Azurite version)
 - [ ] **Python pip**: `pip --version` (should show pip version)
 - [ ] **Workspace Directory**: `%USERPROFILE%\Workspaces` should exist
 - [ ] **Azurite Directory**: `%USERPROFILE%\.azurite` should exist
+- [ ] **Docker Desktop**: Should be running and accessible from system tray
 
 ### Common Issues and Solutions
 
@@ -191,6 +271,31 @@ If Azure CLI commands fail:
 1. **Login**: Run `az login` and complete browser authentication
 2. **Subscription**: Set correct subscription: `az account set -s <subscription-id>`
 3. **Permissions**: Verify account has required permissions for resources
+
+#### Docker Desktop Issues
+If Docker commands fail or Docker Desktop is not working:
+1. **Installation Check**: Verify Docker Desktop is installed via `docker --version`
+2. **Service Status**: Ensure Docker Desktop is running (check system tray)
+3. **WSL Integration**: On Windows, enable WSL 2 integration in Docker Desktop settings
+4. **Resource Limits**: Adjust memory and CPU limits in Docker Desktop settings if needed
+5. **Firewall**: Configure Windows Firewall to allow Docker Desktop
+6. **Restart Docker**: Restart Docker Desktop service if containers fail to start
+7. **Clean Up**: Run `docker system prune` to clean up unused resources
+
+Common Docker Desktop commands for troubleshooting:
+```powershell
+# Check Docker status
+docker info
+
+# Test Docker functionality
+docker run hello-world
+
+# View running containers
+docker ps
+
+# Clean up unused resources
+docker system prune -a
+```
 
 ### Development Workflow Testing
 

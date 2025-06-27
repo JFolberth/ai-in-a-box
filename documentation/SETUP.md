@@ -76,7 +76,7 @@ Use the built-in VS Code tasks for automated setup:
 
 #### Option C: DevContainer (Recommended for consistent environment)
 1. Install Docker Desktop
-2. Install VS Code Dev Containers extension
+2. Install VS Code Dev Containers extension  
 3. Open project in VS Code
 4. Click "Reopen in Container" when prompted
 5. Use VS Code tasks to start services
@@ -158,7 +158,16 @@ az login
    ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
    
    # Test Azure endpoints
-   .   .   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+   ```
+
+4. **Verify Docker installation (DevContainer/DevBox):**
+   ```bash
+   # Check Docker installation
+   docker --version
+   
+   # Test Docker functionality
+   docker run hello-world
    ```
 
 ### 7. Troubleshooting

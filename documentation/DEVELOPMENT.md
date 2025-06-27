@@ -354,9 +354,17 @@ code .
 
 The DevContainer automatically:
 - Installs Node.js 20, .NET 8 SDK, Azure CLI with extensions, and Azure Functions Core Tools
-- Configures VS Code extensions for Bicep, Azure Functions, and C#
+- Configures Docker-in-Docker for containerized development workflows
+- Configures VS Code extensions for Bicep, Azure Functions, C#, and Docker
 - Sets up port forwarding for development servers (5173, 4173, 7071)
 - Runs `npm install` in the frontend directory and configures Azure tooling
+- Validates Docker installation with `docker --version`
+
+### Docker in DevContainer
+The DevContainer includes Docker-in-Docker support for:
+- Running Azurite in containers instead of local installation
+- Testing Function Apps in containerized environments
+- Building and testing container images locally
 
 ## 🏗️ DevBox Support
 
@@ -375,9 +383,16 @@ For team development environments, use the DevBox configuration:
 
 The DevBox configuration automatically installs:
 - All required development tools (Node.js, .NET, Azure CLI with extensions, Python)
-- VS Code with pre-configured extensions including GitHub Copilot
+- Docker Desktop for containerized development workflows
+- VS Code with pre-configured extensions including GitHub Copilot and Docker tools
 - Azure Functions Core Tools and Azurite
 - Azure CLI extensions (Bicep and DevCenter) and Azure AI Toolkit
+
+### Docker in DevBox
+The DevBox includes Docker Desktop for:
+- Running Azurite and other services in containers
+- Function App containerized testing and development
+- Consistent development environment isolation
 
 See [DevBox README](../devbox/README.md) for detailed setup instructions and troubleshooting.
 
