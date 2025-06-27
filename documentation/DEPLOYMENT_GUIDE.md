@@ -212,14 +212,68 @@ Use the same code deployment steps as ADE scenario.
 
 For automated deployment in DevOps pipelines.
 
-#### GitHub Actions Example
-```yaml
-name: Deploy AI Foundry SPA
+#### Automated GitHub Actions (Current Implementation)
 
+The project includes a **fully automated CI/CD pipeline** that deploys both infrastructure and application code on main branch pushes:
+
+```yaml
+# .github/workflows/ci.yml
 on:
   push:
     branches: [main]
+
+jobs:
+  # 1. Build and validate
+  bicep-validation: # Validates infrastructure templates
+  frontend-build:   # Builds JavaScript SPA
+  backend-build:    # Builds .NET Function App
+  
+  # 2. Deploy infrastructure
+  deploy-dev-infrastructure:
+    needs: [bicep-validation]
+    uses: ./.github/workflows/shared-infrastructure-deploy.yml
+    
+  # 3. Deploy application code automatically
+  deploy-backend-code:
+    needs: [backend-build, deploy-dev-infrastructure]
+    # Uses deploy-backend-func-code.ps1 with infrastructure outputs
+    
+  deploy-frontend-code:
+    needs: [frontend-build, deploy-dev-infrastructure, deploy-backend-code]
+    # Uses deploy-frontend-spa-code.ps1 with infrastructure outputs
+```
+
+**✅ Fully Automated Features:**
+- **Infrastructure deployment** via Azure CLI + Bicep
+- **Backend code deployment** via existing PowerShell script
+- **Frontend code deployment** via existing PowerShell script
+- **Resource discovery** from infrastructure outputs
+- **Dependency management** (infrastructure → backend → frontend)
+- **Error handling** and deployment status reporting
+
+**🎯 Automatic Deployment Flow:**
+1. **Push to main branch** triggers the workflow
+2. **Infrastructure** is deployed to Azure via Bicep templates
+3. **Backend Function App code** is deployed automatically using resource names from infrastructure
+4. **Frontend Static Web App code** is deployed automatically with backend integration
+5. **Complete application** is ready and accessible
+
+#### Manual GitHub Actions Example (For Reference)
+
+For manual deployments or other environments, you can use a simpler workflow pattern:
+
+```yaml
+name: Manual Deploy AI Foundry SPA
+
+on:
   workflow_dispatch:
+    inputs:
+      function_app_name:
+        description: 'Function App Name'
+        required: true
+      frontend_rg_name:
+        description: 'Frontend Resource Group Name'  
+        required: true
 
 jobs:
   deploy-backend:
@@ -227,14 +281,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-        - name: Deploy Backend
+      - name: Deploy Backend
         run: |
           ./deploy-scripts/deploy-backend-func-code.ps1 \
-            -FunctionAppName "${{ vars.FUNCTION_APP_NAME }}" \
-            -ResourceGroupName "${{ vars.BACKEND_RG_NAME }}"
+            -FunctionAppName "${{ github.event.inputs.function_app_name }}" \
+            -ResourceGroupName "${{ github.event.inputs.backend_rg_name }}"
         shell: pwsh
 
   deploy-frontend:
@@ -243,16 +297,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
       - name: Deploy Frontend
         run: |
           ./deploy-scripts/deploy-frontend-spa-code.ps1 \
-            -StaticWebAppName "${{ vars.STATIC_WEB_APP_NAME }}" \
-            -ResourceGroupName "${{ vars.FRONTEND_RG_NAME }}" \
-            -BackendUrl "${{ vars.BACKEND_URL }}"
+            -StaticWebAppName "${{ github.event.inputs.static_web_app_name }}" \
+            -ResourceGroupName "${{ github.event.inputs.frontend_rg_name }}" \
+            -BackendUrl "${{ github.event.inputs.backend_url }}"
         shell: pwsh
 ```
 
