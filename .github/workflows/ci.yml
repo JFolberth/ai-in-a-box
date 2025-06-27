@@ -64,6 +64,156 @@ jobs:
       validate-only: false
     secrets: inherit
 
+  deploy-backend-code:
+    name: Deploy Backend Code
+    runs-on: ubuntu-latest
+    needs: [backend-build, deploy-dev-infrastructure]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-publish
+        path: ./backend-artifacts/
+        
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Validate Infrastructure Outputs
+      run: |
+        echo "🔍 Validating infrastructure deployment outputs..."
+        
+        FUNCTION_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}"
+        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}"
+        
+        if [ "$FUNCTION_APP_NAME" = "not-found" ] || [ -z "$FUNCTION_APP_NAME" ]; then
+          echo "❌ Backend Function App name not found in infrastructure outputs"
+          exit 1
+        fi
+        
+        if [ "$RESOURCE_GROUP_NAME" = "not-found" ] || [ -z "$RESOURCE_GROUP_NAME" ]; then
+          echo "❌ Backend Resource Group name not found in infrastructure outputs"
+          exit 1
+        fi
+        
+        echo "✅ Infrastructure outputs validated:"
+        echo "  - Function App: $FUNCTION_APP_NAME"
+        echo "  - Resource Group: $RESOURCE_GROUP_NAME"
+        
+    - name: Deploy Backend Code
+      run: |
+        echo "🚀 Deploying backend code to Function App..."
+        
+        # Use the existing deployment script with infrastructure outputs
+        pwsh -File "./deploy-scripts/deploy-backend-func-code.ps1" \
+          -FunctionAppName "${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}" \
+          -ResourceGroupName "${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}" \
+          -SkipBuild
+        
+        if [ $? -ne 0 ]; then
+          echo "❌ Backend code deployment failed!"
+          exit 1
+        fi
+        
+        echo "✅ Backend code deployed successfully!"
+        
+    - name: Backend Deployment Summary
+      run: |
+        echo "## 🚀 Backend Code Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+        echo "- **Function App**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Function App URL**: [${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Script Used**: deploy-backend-func-code.ps1" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deploy Method**: Azure CLI deployment" >> $GITHUB_STEP_SUMMARY
+
+  deploy-frontend-code:
+    name: Deploy Frontend Code
+    runs-on: ubuntu-latest
+    needs: [frontend-build, deploy-dev-infrastructure, deploy-backend-code]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded' && needs.deploy-backend-code.result == 'success'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: ./src/frontend/dist/
+        
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Validate Infrastructure Outputs
+      run: |
+        echo "🔍 Validating infrastructure deployment outputs..."
+        
+        STATIC_WEB_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}"
+        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}"
+        BACKEND_URL="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}"
+        
+        if [ "$STATIC_WEB_APP_NAME" = "not-found" ] || [ -z "$STATIC_WEB_APP_NAME" ]; then
+          echo "❌ Frontend Static Web App name not found in infrastructure outputs"
+          exit 1
+        fi
+        
+        if [ "$RESOURCE_GROUP_NAME" = "not-found" ] || [ -z "$RESOURCE_GROUP_NAME" ]; then
+          echo "❌ Frontend Resource Group name not found in infrastructure outputs"
+          exit 1
+        fi
+        
+        echo "✅ Infrastructure outputs validated:"
+        echo "  - Static Web App: $STATIC_WEB_APP_NAME"
+        echo "  - Resource Group: $RESOURCE_GROUP_NAME"
+        echo "  - Backend URL: $BACKEND_URL"
+        
+    - name: Deploy Frontend Code
+      run: |
+        echo "🚀 Deploying frontend code to Static Web App..."
+        
+        # Use the existing deployment script with infrastructure outputs
+        pwsh -File "./deploy-scripts/deploy-frontend-spa-code.ps1" \
+          -StaticWebAppName "${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}" \
+          -ResourceGroupName "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" \
+          -BackendUrl "${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api" \
+          -SkipBuild
+        
+        if [ $? -ne 0 ]; then
+          echo "❌ Frontend code deployment failed!"
+          exit 1
+        fi
+        
+        echo "✅ Frontend code deployed successfully!"
+        
+    - name: Frontend Deployment Summary
+      run: |
+        echo "## 🌐 Frontend Code Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+        echo "- **Static Web App**: \`${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: \`${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application URL**: [${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Integration**: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Script Used**: deploy-frontend-spa-code.ps1" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deploy Method**: SWA CLI deployment" >> $GITHUB_STEP_SUMMARY
+
   # ============================================================================
   # ADE DEPLOYMENT JOBS - DISABLED (PRESERVED FOR FUTURE USE)
   # ============================================================================
@@ -607,7 +757,7 @@ jobs:
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [bicep-validation, frontend-build, backend-build, deploy-dev-infrastructure]
+    needs: [bicep-validation, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
     if: always()
     
     steps:
@@ -680,14 +830,49 @@ jobs:
             echo "- **Reason**: Infrastructure deployment only runs on main branch pushes" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Backend code deployment summary
+          if [ "${{ needs.deploy-backend-code.result }}" = "success" ]; then
+            echo "### ✅ Backend Code Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Backend Function App code deployed automatically" >> $GITHUB_STEP_SUMMARY
+            echo "- **Script**: deploy-backend-func-code.ps1" >> $GITHUB_STEP_SUMMARY
+            echo "- **Dependency**: Triggered after successful infrastructure deployment" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-backend-code.result }}" = "failure" ]; then
+            echo "### ❌ Backend Code Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: ${{ needs.deploy-backend-code.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-backend-code.result }}" = "skipped" ]; then
+            echo "### ⏭️ Backend Code Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- **Reason**: Skipped due to infrastructure deployment failure or not on main branch" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Frontend code deployment summary  
+          if [ "${{ needs.deploy-frontend-code.result }}" = "success" ]; then
+            echo "### ✅ Frontend Code Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Frontend Static Web App code deployed automatically" >> $GITHUB_STEP_SUMMARY
+            echo "- **Script**: deploy-frontend-spa-code.ps1" >> $GITHUB_STEP_SUMMARY
+            echo "- **Dependency**: Triggered after successful backend deployment" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-frontend-code.result }}" = "failure" ]; then
+            echo "### ❌ Frontend Code Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: ${{ needs.deploy-frontend-code.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-frontend-code.result }}" = "skipped" ]; then
+            echo "### ⏭️ Frontend Code Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- **Reason**: Skipped due to backend deployment failure or not on main branch" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
         echo "- Review build artifacts if needed" >> $GITHUB_STEP_SUMMARY
         echo "- Run local tests: \`npm test\` (frontend) and \`dotnet test\` (backend)" >> $GITHUB_STEP_SUMMARY
-        echo "- Deploy to Azure using deployment scripts in \`deploy-scripts/\`" >> $GITHUB_STEP_SUMMARY
         if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          echo "- Infrastructure deployment tested automatically on main branch" >> $GITHUB_STEP_SUMMARY
+          echo "- **Automated Deployment**: Infrastructure and application code deployed automatically on main branch" >> $GITHUB_STEP_SUMMARY
+          echo "- **Manual Deployment**: Use deployment scripts in \`deploy-scripts/\` for other environments" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- Deploy to Azure using deployment scripts in \`deploy-scripts/\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Automated deployment only runs on main branch pushes" >> $GITHUB_STEP_SUMMARY
         fi
         
     - name: Check build status
@@ -706,13 +891,21 @@ jobs:
         
         # Infrastructure deployment check (only on main branch pushes)
         infrastructure_success=true
+        backend_deploy_success=true
+        frontend_deploy_success=true
         if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
           if [ "${{ needs.deploy-dev-infrastructure.result }}" != "success" ]; then
             infrastructure_success=false
           fi
+          if [ "${{ needs.deploy-backend-code.result }}" != "success" ]; then
+            backend_deploy_success=false
+          fi
+          if [ "${{ needs.deploy-frontend-code.result }}" != "success" ]; then
+            frontend_deploy_success=false
+          fi
         fi
         
-        if [ "$base_success" = "true" ] && [ "$infrastructure_success" = "true" ]; then
+        if [ "$base_success" = "true" ] && [ "$infrastructure_success" = "true" ] && [ "$backend_deploy_success" = "true" ] && [ "$frontend_deploy_success" = "true" ]; then
           echo "✅ All builds, validations, and deployments completed successfully!"
           exit 0
         else
@@ -722,6 +915,8 @@ jobs:
           echo "Backend Build: ${{ needs.backend-build.result }}"
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "Dev Infrastructure Deployment: ${{ needs.deploy-dev-infrastructure.result }}"
+            echo "Backend Code Deployment: ${{ needs.deploy-backend-code.result }}"
+            echo "Frontend Code Deployment: ${{ needs.deploy-frontend-code.result }}"
           fi
           exit 1
         fi

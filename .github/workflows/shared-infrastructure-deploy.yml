@@ -37,6 +37,12 @@ on:
       backend-function-app-url:
         description: 'Backend Function App URL'
         value: ${{ jobs.deploy-infrastructure.outputs.backend-function-app-url }}
+      frontend-static-web-app-name:
+        description: 'Frontend Static Web App Name'
+        value: ${{ jobs.deploy-infrastructure.outputs.frontend-static-web-app-name }}
+      backend-function-app-name:
+        description: 'Backend Function App Name'
+        value: ${{ jobs.deploy-infrastructure.outputs.backend-function-app-name }}
       deployment-status:
         description: 'Deployment Status'
         value: ${{ jobs.deploy-infrastructure.outputs.deployment-status }}
@@ -51,6 +57,8 @@ jobs:
       backend-resource-group-name: ${{ steps.extract-outputs.outputs.backend-resource-group-name }}
       frontend-static-web-app-url: ${{ steps.extract-outputs.outputs.frontend-static-web-app-url }}
       backend-function-app-url: ${{ steps.extract-outputs.outputs.backend-function-app-url }}
+      frontend-static-web-app-name: ${{ steps.extract-outputs.outputs.frontend-static-web-app-name }}
+      backend-function-app-name: ${{ steps.extract-outputs.outputs.backend-function-app-name }}
       deployment-status: ${{ steps.deploy.outputs.deployment-status }}
     
     steps:
@@ -163,16 +171,24 @@ jobs:
         BACKEND_RG=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendResourceGroupName.value // "not-found"')
         FRONTEND_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.frontendStaticWebAppUrl.value // "not-found"')
         BACKEND_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendFunctionAppUrl.value // "not-found"')
+        FRONTEND_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.frontendStaticWebAppName.value // "not-found"')
+        BACKEND_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendFunctionAppName.value // "not-found"')
         
         # Set outputs
         echo "frontend-resource-group-name=$FRONTEND_RG" >> $GITHUB_OUTPUT
         echo "backend-resource-group-name=$BACKEND_RG" >> $GITHUB_OUTPUT
         echo "frontend-static-web-app-url=$FRONTEND_URL" >> $GITHUB_OUTPUT
         echo "backend-function-app-url=$BACKEND_URL" >> $GITHUB_OUTPUT
+        echo "frontend-static-web-app-name=$FRONTEND_APP_NAME" >> $GITHUB_OUTPUT
+        echo "backend-function-app-name=$BACKEND_APP_NAME" >> $GITHUB_OUTPUT
         
         echo "✅ Successfully extracted deployment outputs:"
         echo "  - Frontend Resource Group: $FRONTEND_RG"
         echo "  - Backend Resource Group: $BACKEND_RG"
+        echo "  - Frontend URL: $FRONTEND_URL"
+        echo "  - Backend URL: $BACKEND_URL"
+        echo "  - Frontend Static Web App Name: $FRONTEND_APP_NAME"
+        echo "  - Backend Function App Name: $BACKEND_APP_NAME"
         echo "  - Frontend URL: $FRONTEND_URL"
         echo "  - Backend URL: $BACKEND_URL"
     
@@ -198,6 +214,8 @@ jobs:
             echo "### 📋 Deployed Resources" >> $GITHUB_STEP_SUMMARY
             echo "- **Frontend Resource Group**: \`${{ steps.extract-outputs.outputs.frontend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- **Backend Resource Group**: \`${{ steps.extract-outputs.outputs.backend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Frontend Static Web App**: \`${{ steps.extract-outputs.outputs.frontend-static-web-app-name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Backend Function App**: \`${{ steps.extract-outputs.outputs.backend-function-app-name }}\`" >> $GITHUB_STEP_SUMMARY
             if [ "${{ steps.extract-outputs.outputs.frontend-static-web-app-url }}" != "not-found" ]; then
               echo "- **Frontend URL**: [${{ steps.extract-outputs.outputs.frontend-static-web-app-url }}](${{ steps.extract-outputs.outputs.frontend-static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
             fi
