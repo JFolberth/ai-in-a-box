@@ -42,13 +42,25 @@ cd ../backend && func start
 
 ## 🔄 CI/CD Pipeline
 
-Automated build and validation pipeline ensures code quality:
+**Fully automated** build, validation, and deployment pipeline for main branch:
 
 - **Frontend Build**: Node.js build, testing, and artifact generation
 - **Backend Build**: .NET build, testing, and publish artifacts  
 - **Bicep Validation**: Infrastructure what-if validation using Azure CLI
-- **ADE Testing**: Automated Azure Deployment Environment integration testing on main branch
-- **Parallel Execution**: All validations run simultaneously for fast feedback
+- **Infrastructure Deployment**: Automated deployment to dev environment on main branch
+- **Backend Code Deployment**: Automatic deployment of Function App code after infrastructure
+- **Frontend Code Deployment**: Automatic deployment of Static Web App code after backend
+- **Parallel Execution**: Build and validation jobs run simultaneously for fast feedback
+
+### 🚀 Automated Deployment Flow (Main Branch)
+
+1. **Build & Validate** - Frontend, backend, and infrastructure validation run in parallel
+2. **Deploy Infrastructure** - Bicep templates deploy Azure resources to dev environment  
+3. **Deploy Backend Code** - Function App code deployed automatically using infrastructure outputs
+4. **Deploy Frontend Code** - Static Web App code deployed automatically with backend integration
+5. **Ready to Use** - Complete application is deployed and accessible
+
+**✅ Zero Manual Intervention**: Pushing to main branch triggers complete deployment automatically
 
 ### Bicep Infrastructure Validation
 
@@ -63,14 +75,14 @@ The CI pipeline includes comprehensive Bicep template validation:
 
 ### Azure Deployment Environment (ADE) Testing
 
-**Automated ADE integration testing** runs on every push to `main` branch:
+**ADE integration testing** ensures deployment environment compatibility:
 
-- ✅ **Real Infrastructure**: Creates actual ADE environment for testing
-- ✅ **Frontend Deployment**: Deploys and validates frontend code automatically  
-- ✅ **Self-Cleaning**: Automatically cleans up test environments
-- ✅ **Continuous Validation**: Catches ADE configuration issues early
+- ✅ **Schema Validation**: Validates ADE catalog definitions and environment schema
+- ✅ **Parameter Compliance**: Ensures parameter compatibility with ADE requirements  
+- ✅ **Template Testing**: Available via workflow configuration for ADE deployment testing
+- ✅ **Enterprise Ready**: Supports DevCenter and project-based deployments
 
-**Configuration**: Uses `infra/environments/frontend/ade.parameters.json` with enterprise DevCenter setup.
+**Configuration**: Uses `infra/environments/frontend/ade.parameters.json` and `infra/environments/backend/ade.parameters.json` for enterprise DevCenter setup.
 
 **Setup Requirements**: Configure `AZURE_CREDENTIALS` secret for Azure authentication. See [Bicep Validation Guide](.github/BICEP_VALIDATION.md) for details.
 
