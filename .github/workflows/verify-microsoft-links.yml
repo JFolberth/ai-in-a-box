@@ -1,0 +1,253 @@
+name: Verify Microsoft Documentation Links
+
+# Run weekly on Mondays at 9 AM UTC
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly on Monday at 9 AM UTC
+  workflow_dispatch:  # Allow manual triggering for testing
+
+# Cancel previous runs when manually triggering
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-links:
+    name: Verify Microsoft Learn Links
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Extract Microsoft Learn Links
+      id: extract-links
+      run: |
+        echo "🔍 Extracting Microsoft Learn documentation links..."
+        
+        # Create output directory
+        mkdir -p /tmp/link-check
+        
+        # Define files to scan for Microsoft Learn links
+        FILES=(
+          "README.md"
+          "documentation/SETUP.md"
+          "documentation/DEPLOYMENT_GUIDE.md"
+          "documentation/DEVELOPMENT.md"
+          "documentation/INFRASTRUCTURE.md"
+          "documentation/CONFIGURATION.md"
+          "documentation/AZURE_DEPLOYMENT_ENVIRONMENTS.md"
+          "infra/main-orchestrator.bicep"
+          "src/backend/AIFoundryProxyFunction.cs"
+        )
+        
+        # Extract all Microsoft Learn links using grep
+        ALL_LINKS_FILE="/tmp/link-check/all_links.txt"
+        UNIQUE_LINKS_FILE="/tmp/link-check/unique_links.txt"
+        
+        # Clear output files
+        > "$ALL_LINKS_FILE"
+        > "$UNIQUE_LINKS_FILE"
+        
+        echo "📋 Scanning files for Microsoft Learn links..."
+        for file in "${FILES[@]}"; do
+          if [ -f "$file" ]; then
+            echo "  📄 Scanning: $file"
+            # Extract Microsoft Learn links using regex pattern
+            grep -oE 'https://learn\.microsoft\.com/[^)[:space:]]*' "$file" >> "$ALL_LINKS_FILE" 2>/dev/null || true
+          else
+            echo "  ⚠️  File not found: $file"
+          fi
+        done
+        
+        # Remove duplicates and sort
+        sort "$ALL_LINKS_FILE" | uniq > "$UNIQUE_LINKS_FILE"
+        
+        TOTAL_LINKS=$(wc -l < "$UNIQUE_LINKS_FILE")
+        echo "📊 Found $TOTAL_LINKS unique Microsoft Learn links"
+        
+        # Show first few links for verification
+        echo "🔗 Sample links found:"
+        head -5 "$UNIQUE_LINKS_FILE" || echo "No links found"
+        
+        echo "total_links=$TOTAL_LINKS" >> $GITHUB_OUTPUT
+        
+    - name: Verify Links
+      id: verify-links
+      run: |
+        echo "🧪 Verifying Microsoft Learn links..."
+        
+        UNIQUE_LINKS_FILE="/tmp/link-check/unique_links.txt"
+        BROKEN_LINKS_FILE="/tmp/link-check/broken_links.txt"
+        WORKING_LINKS_FILE="/tmp/link-check/working_links.txt"
+        
+        # Clear output files
+        > "$BROKEN_LINKS_FILE"
+        > "$WORKING_LINKS_FILE"
+        
+        if [ ! -f "$UNIQUE_LINKS_FILE" ] || [ ! -s "$UNIQUE_LINKS_FILE" ]; then
+          echo "❌ No links file found or file is empty"
+          echo "broken_count=0" >> $GITHUB_OUTPUT
+          echo "working_count=0" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        TOTAL_LINKS=$(wc -l < "$UNIQUE_LINKS_FILE")
+        BROKEN_COUNT=0
+        WORKING_COUNT=0
+        
+        echo "🔍 Testing $TOTAL_LINKS links..."
+        
+        # Test each link with timeout and proper error handling
+        while IFS= read -r link; do
+          if [ -z "$link" ]; then
+            continue
+          fi
+          
+          echo -n "  Testing: $link ... "
+          
+          # Use curl with appropriate flags:
+          # -f: fail on HTTP error codes
+          # -s: silent (no progress bar)
+          # -S: show errors
+          # -L: follow redirects
+          # --max-time: timeout after 15 seconds
+          # --max-redirs: limit redirects to 5
+          # -o /dev/null: discard output
+          if curl -f -s -S -L --max-time 15 --max-redirs 5 -o /dev/null "$link" 2>/dev/null; then
+            echo "✅ OK"
+            echo "$link" >> "$WORKING_LINKS_FILE"
+            WORKING_COUNT=$((WORKING_COUNT + 1))
+          else
+            echo "❌ BROKEN"
+            echo "$link" >> "$BROKEN_LINKS_FILE"
+            BROKEN_COUNT=$((BROKEN_COUNT + 1))
+          fi
+          
+          # Small delay to be respectful to Microsoft's servers
+          sleep 0.5
+          
+        done < "$UNIQUE_LINKS_FILE"
+        
+        echo ""
+        echo "📊 Link verification results:"
+        echo "  ✅ Working links: $WORKING_COUNT"
+        echo "  ❌ Broken links: $BROKEN_COUNT"
+        echo "  📋 Total tested: $TOTAL_LINKS"
+        
+        echo "broken_count=$BROKEN_COUNT" >> $GITHUB_OUTPUT
+        echo "working_count=$WORKING_COUNT" >> $GITHUB_OUTPUT
+        echo "total_count=$TOTAL_LINKS" >> $GITHUB_OUTPUT
+        
+    - name: Create Issue for Broken Links
+      if: steps.verify-links.outputs.broken_count > 0
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const brokenLinksFile = '/tmp/link-check/broken_links.txt';
+          
+          // Read broken links
+          let brokenLinks = [];
+          if (fs.existsSync(brokenLinksFile)) {
+            const content = fs.readFileSync(brokenLinksFile, 'utf8');
+            brokenLinks = content.trim().split('\n').filter(link => link.trim());
+          }
+          
+          const brokenCount = '${{ steps.verify-links.outputs.broken_count }}';
+          const workingCount = '${{ steps.verify-links.outputs.working_count }}';
+          const totalCount = '${{ steps.verify-links.outputs.total_count }}';
+          
+          // Create issue title and body
+          const title = `🔗 Broken Microsoft Documentation Links Detected (${brokenCount} broken)`;
+          
+          let body = `## 🚨 Broken Microsoft Learn Links Report\n\n`;
+          body += `**Summary**: ${brokenCount} broken links detected out of ${totalCount} total Microsoft Learn links.\n\n`;
+          body += `### 📊 Results\n`;
+          body += `- ✅ **Working links**: ${workingCount}\n`;
+          body += `- ❌ **Broken links**: ${brokenCount}\n`;
+          body += `- 📋 **Total tested**: ${totalCount}\n\n`;
+          
+          body += `### 🔗 Broken Links\n\n`;
+          if (brokenLinks.length > 0) {
+            brokenLinks.forEach((link, index) => {
+              body += `${index + 1}. ${link}\n`;
+            });
+          } else {
+            body += `No broken links content found in report file.\n`;
+          }
+          
+          body += `\n### 🔧 Action Required\n\n`;
+          body += `Please review and fix the broken links above. These links are referenced in:\n\n`;
+          body += `- \`README.md\`\n`;
+          body += `- \`documentation/SETUP.md\`\n`;
+          body += `- \`documentation/DEPLOYMENT_GUIDE.md\`\n`;
+          body += `- \`documentation/DEVELOPMENT.md\`\n`;
+          body += `- \`documentation/INFRASTRUCTURE.md\`\n`;
+          body += `- \`documentation/CONFIGURATION.md\`\n`;
+          body += `- \`documentation/AZURE_DEPLOYMENT_ENVIRONMENTS.md\`\n`;
+          body += `- \`infra/main-orchestrator.bicep\`\n`;
+          body += `- \`src/backend/AIFoundryProxyFunction.cs\`\n\n`;
+          
+          body += `### 📅 Report Details\n\n`;
+          body += `- **Generated**: ${new Date().toISOString()}\n`;
+          body += `- **Workflow**: [Link Verification](${context.payload.repository.html_url}/actions/workflows/verify-microsoft-links.yml)\n`;
+          body += `- **Run**: [#${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n`;
+          
+          body += `---\n`;
+          body += `*This issue was automatically created by the weekly link verification workflow.*`;
+          
+          // Create the issue
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            assignees: ['JFolberth'],
+            labels: ['bug', 'documentation', 'automated']
+          });
+          
+          console.log(`✅ Created issue #${issue.data.number}: ${title}`);
+          console.log(`🔗 Issue URL: ${issue.data.html_url}`);
+          
+    - name: Link Verification Summary
+      if: always()
+      run: |
+        echo "## 🔗 Microsoft Learn Link Verification Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        BROKEN_COUNT="${{ steps.verify-links.outputs.broken_count }}"
+        WORKING_COUNT="${{ steps.verify-links.outputs.working_count }}"
+        TOTAL_COUNT="${{ steps.verify-links.outputs.total_count }}"
+        
+        if [ "$BROKEN_COUNT" = "0" ]; then
+          echo "### ✅ All Links Working" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: All Microsoft Learn links are accessible" >> $GITHUB_STEP_SUMMARY
+          echo "- **Working links**: $WORKING_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total tested**: $TOTAL_COUNT" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ❌ Broken Links Detected" >> $GITHUB_STEP_SUMMARY
+          echo "- **Broken links**: $BROKEN_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Working links**: $WORKING_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total tested**: $TOTAL_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action**: GitHub issue created and assigned to @JFolberth" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Verification Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Verified**: Microsoft Learn documentation links" >> $GITHUB_STEP_SUMMARY
+        echo "- **Scope**: README, documentation files, infrastructure code, and source code" >> $GITHUB_STEP_SUMMARY
+        echo "- **Schedule**: Weekly on Mondays at 9 AM UTC" >> $GITHUB_STEP_SUMMARY
+        echo "- **Method**: HTTP request verification with 15-second timeout" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "$BROKEN_COUNT" != "0" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the created GitHub issue for broken link details" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update documentation files with corrected Microsoft Learn URLs" >> $GITHUB_STEP_SUMMARY
+          echo "3. Test links manually before committing changes" >> $GITHUB_STEP_SUMMARY
+          echo "4. Close the issue once all links are fixed" >> $GITHUB_STEP_SUMMARY
+        fi

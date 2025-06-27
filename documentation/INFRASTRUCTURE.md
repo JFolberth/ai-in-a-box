@@ -1,10 +1,10 @@
 # Infrastructure Guide
 
-This guide provides detailed information about the AI Foundry SPA infrastructure, architecture decisions, and deployment patterns.
+This guide provides detailed information about the [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) SPA infrastructure, architecture decisions, and deployment patterns.
 
 ## 🏗️ Architecture Overview
 
-The AI Foundry SPA uses a **modular, multi-resource group architecture** designed for separation of concerns, security, and scalability.
+The Azure AI Foundry SPA uses a **modular, multi-resource group architecture** designed for separation of concerns, security, and scalability.
 
 ### High-Level Architecture
 
@@ -18,28 +18,28 @@ The AI Foundry SPA uses a **modular, multi-resource group architecture** designe
 │  │       Group             │  │                                │ │
 │  │                         │  │                                │ │
 │  │  ┌─────────────────┐    │  │  ┌─────────────────────────┐  │ │
-│  │  │ Static Web App  │    │  │  │    Function App         │  │ │
+│  │  │ [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)  │    │  │  │    [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/)         │  │ │
 │  │  │ (SPA Hosting)   │    │  │  │  (AI Foundry Proxy)     │  │ │
 │  │  └─────────────────┘    │  │  └─────────────────────────┘  │ │
 │  │                         │  │                                │ │
 │  │  ┌─────────────────┐    │  │  ┌─────────────────────────┐  │ │
-│  │  │ App Insights    │    │  │  │   Storage Account       │  │ │
+│  │  │ [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview)    │    │  │  │   [Azure Storage](https://learn.microsoft.com/en-us/azure/storage/)       │  │ │
 │  │  │  (Frontend)     │    │  │  │  (Function Storage)     │  │ │
 │  │  └─────────────────┘    │  │  └─────────────────────────┘  │ │
 │  └─────────────────────────┘  │                                │ │
 │                               │  ┌─────────────────────────┐  │ │
-│                               │  │    App Insights         │  │ │
+│                               │  │    Application Insights         │  │ │
 │                               │  │     (Backend)           │  │ │
 │                               │  └─────────────────────────┘  │ │
 │                               │                                │ │
 │                               │  ┌─────────────────────────┐  │ │
-│                               │  │   App Service Plan      │  │ │
+│                               │  │   [App Service Plan](https://learn.microsoft.com/en-us/azure/app-service/overview-hosting-plans)      │  │ │
 │                               │  │    (Consumption)        │  │ │
 │                               │  └─────────────────────────┘  │ │
 │                               └─────────────────────────────────┘ │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────────┐ │
-│  │            Shared Log Analytics Workspace                   │ │
+│  │            Shared [Log Analytics Workspace](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)                   │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────────┐ │
@@ -57,14 +57,14 @@ The AI Foundry SPA uses a **modular, multi-resource group architecture** designe
 - **Clear boundaries** between presentation and business logic
 
 ### 2. **Security by Design**
-- **System-assigned managed identity** for service authentication
-- **Least privilege access** with Azure AI Developer role
+- **System-assigned [managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/)** for service authentication
+- **Least privilege access** with [Azure AI Developer role](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#azure-ai-developer)
 - **No secrets in configuration** - managed identity only
-- **CORS policies** restrict cross-origin access
+- **[CORS policies](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings#cors)** restrict cross-origin access
 
 ### 3. **Scalability and Performance**
-- **Consumption-based Function App** scales automatically
-- **Static website hosting** with global CDN capability
+- **Consumption-based Azure Functions** scales automatically
+- **Static website hosting** with global [Azure CDN](https://learn.microsoft.com/en-us/azure/cdn/) capability
 - **Separate monitoring** allows independent scaling insights
 
 ### 4. **Cost Optimization**
@@ -79,13 +79,13 @@ The AI Foundry SPA uses a **modular, multi-resource group architecture** designe
 
 | Resource | Type | Purpose |
 |----------|------|---------|
-| Static Web App | `Microsoft.Web/staticSites` | Modern SPA hosting with built-in CI/CD |
+| [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/) | `Microsoft.Web/staticSites` | Modern SPA hosting with built-in CI/CD |
 | Application Insights | `Microsoft.Insights/components` | Frontend monitoring and analytics |
 
 **Key Features**:
 - Native SPA routing and fallback handling
 - HTTPS-only access with automatic SSL certificates
-- Built-in global CDN for optimal performance
+- Built-in global [Azure CDN](https://learn.microsoft.com/en-us/azure/cdn/) for optimal performance
 - Integrated CI/CD with preview environments
 
 ### Backend Resource Group  
@@ -93,13 +93,13 @@ The AI Foundry SPA uses a **modular, multi-resource group architecture** designe
 
 | Resource | Type | Purpose |
 |----------|------|---------|
-| Function App | `Microsoft.Web/sites` | AI Foundry proxy and API |
-| Storage Account | `Microsoft.Storage/storageAccounts` | Function App runtime storage |
-| App Service Plan | `Microsoft.Web/serverfarms` | Function App hosting plan |
+| [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) | `Microsoft.Web/sites` | Azure AI Foundry proxy and API |
+| [Azure Storage](https://learn.microsoft.com/en-us/azure/storage/) Account | `Microsoft.Storage/storageAccounts` | Azure Functions runtime storage |
+| [App Service Plan](https://learn.microsoft.com/en-us/azure/app-service/overview-hosting-plans) | `Microsoft.Web/serverfarms` | Azure Functions hosting plan |
 | Application Insights | `Microsoft.Insights/components` | Backend monitoring and telemetry |
 
 **Key Features**:
-- .NET 8 Isolated runtime for performance
+- [.NET 8](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8) Isolated runtime for performance
 - System-assigned managed identity for security
 - CORS configuration for frontend integration
 - Consumption plan for cost efficiency
@@ -118,8 +118,8 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
 ```
 
 #### Role Assignments
-- **Azure AI Developer** role on AI Foundry resource
-  - Scope: Specific AI Foundry resource
+- **[Azure AI Developer](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#azure-ai-developer)** role on Azure AI Foundry resource
+  - Scope: Specific Azure AI Foundry resource
   - Permissions: Create agents, send messages, manage conversations
   - Principle: Least privilege access
 
@@ -142,15 +142,15 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 - **No credentials**: Maintains stateless authentication
 
 #### HTTPS Enforcement
-- Static website: HTTPS-only configuration
-- Function App: HTTPS redirect enabled
+- Azure Static Web Apps: HTTPS-only configuration
+- Azure Functions: HTTPS redirect enabled
 - No HTTP traffic allowed in production
 
 ## 🏗️ Infrastructure as Code
 
 ### Azure Verified Modules (AVM)
 
-The project uses [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) for:
+The project uses [Azure Verified Modules (AVM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/avm/) for:
 - **Consistent resource provisioning**
 - **Best practice configurations**
 - **Reduced boilerplate code**
@@ -164,11 +164,11 @@ The following table lists all Azure Verified Modules implemented in this project
 |--------|---------|---------|------------------------|
 | **Resource Groups** | 0.4.0 | Create and manage resource groups for multi-RG architecture | [avm/res/resources/resource-group](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/resources/resource-group) |
 | **Application Insights** | 0.6.0 | Monitoring and telemetry for frontend and backend components | [avm/res/insights/component](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/insights/component) |
-| **Function Apps** | 0.16.0 | Serverless compute for AI Foundry proxy backend | [avm/res/web/site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/site) |
-| **Storage Accounts** | 0.20.0 | Function App runtime storage with secure configuration | [avm/res/storage/storage-account](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account) |
+| **Azure Functions** | 0.16.0 | Serverless compute for Azure AI Foundry proxy backend | [avm/res/web/site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/site) |
+| **Storage Accounts** | 0.20.0 | Azure Functions runtime storage with secure configuration | [avm/res/storage/storage-account](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account) |
 | **Log Analytics Workspace** | 0.9.0 | Centralized logging and monitoring workspace | [avm/res/operational-insights/workspace](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/operational-insights/workspace) |
-| **Static Web Apps** | 0.5.0 | Modern SPA hosting for the frontend application | [avm/res/web/static-site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/static-site) |
-| **App Service Plans** | 0.4.1 | Compute hosting plans for Function Apps | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
+| **Azure Static Web Apps** | 0.5.0 | Modern SPA hosting for the frontend application | [avm/res/web/static-site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/static-site) |
+| **App Service Plans** | 0.4.1 | Compute hosting plans for Azure Functions | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
 
 #### AVM Benefits for This Project
 
@@ -176,7 +176,7 @@ The following table lists all Azure Verified Modules implemented in this project
 - **Standardized Configuration**: Consistent parameter names and resource configurations across environments
 - **Version Control**: Pinned module versions ensure deployment reproducibility
 - **Community Support**: Modules are maintained by Microsoft and the Azure community
-- **Compliance**: Built-in configurations meet Azure Well-Architected Framework principles
+- **Compliance**: Built-in configurations meet [Azure Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/) principles
 
 #### Usage Examples
 
