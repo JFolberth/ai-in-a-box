@@ -71,9 +71,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
       with:
@@ -106,22 +103,11 @@ jobs:
         echo "  - Function App: $FUNCTION_APP_NAME"
         echo "  - Resource Group: $RESOURCE_GROUP_NAME"
         
-    - name: Deploy Backend Code
-      run: |
-        echo "🚀 Deploying backend code to Function App..."
-        
-        # Use the existing deployment script with infrastructure outputs
-        pwsh -File "./deploy-scripts/deploy-backend-func-code.ps1" \
-          -FunctionAppName "${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}" \
-          -ResourceGroupName "${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}" \
-          -SkipBuild
-        
-        if [ $? -ne 0 ]; then
-          echo "❌ Backend code deployment failed!"
-          exit 1
-        fi
-        
-        echo "✅ Backend code deployed successfully!"
+    - name: Deploy Backend Code to Function App
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
+        package: './backend-artifacts'
         
     - name: Backend Deployment Summary
       run: |
@@ -133,9 +119,9 @@ jobs:
         echo "- **Function App URL**: [${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }})" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Script Used**: deploy-backend-func-code.ps1" >> $GITHUB_STEP_SUMMARY
+        echo "- **Action Used**: Azure/functions-action@v1" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deploy Method**: Azure CLI deployment" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deploy Method**: Native GitHub Action" >> $GITHUB_STEP_SUMMARY
 
   deploy-frontend-code:
     name: Deploy Frontend Code
@@ -144,9 +130,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded' && needs.deploy-backend-code.result == 'success'
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
     - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
@@ -181,21 +164,37 @@ jobs:
         echo "  - Resource Group: $RESOURCE_GROUP_NAME"
         echo "  - Backend URL: $BACKEND_URL"
         
-    - name: Deploy Frontend Code
+    - name: Deploy Frontend Code to Static Web App  
       run: |
         echo "🚀 Deploying frontend code to Static Web App..."
         
-        # Use the existing deployment script with infrastructure outputs
-        pwsh -File "./deploy-scripts/deploy-frontend-spa-code.ps1" \
-          -StaticWebAppName "${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}" \
-          -ResourceGroupName "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" \
-          -BackendUrl "${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api" \
-          -SkipBuild
+        # Deploy using Azure CLI directly (native Azure command)
+        az staticwebapp create \
+          --name "${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}" \
+          --resource-group "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" \
+          --source "./src/frontend/dist" \
+          --location "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" \
+          --branch "main" \
+          --token "${{ secrets.GITHUB_TOKEN }}" || true
         
-        if [ $? -ne 0 ]; then
-          echo "❌ Frontend code deployment failed!"
-          exit 1
-        fi
+        # If create fails because it exists, deploy to existing
+        echo "📦 Deploying to existing Static Web App..."
+        
+        # Get deployment token for the Static Web App
+        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+          --name "${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}" \
+          --resource-group "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" \
+          --query "properties.apiKey" \
+          --output tsv)
+        
+        # Install SWA CLI
+        npm install -g @azure/static-web-apps-cli
+        
+        # Deploy using SWA CLI
+        swa deploy \
+          --app-location "./src/frontend/dist" \
+          --deployment-token "$DEPLOYMENT_TOKEN" \
+          --env "default"
         
         echo "✅ Frontend code deployed successfully!"
         
@@ -210,9 +209,9 @@ jobs:
         echo "- **Backend Integration**: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Script Used**: deploy-frontend-spa-code.ps1" >> $GITHUB_STEP_SUMMARY
+        echo "- **Action Used**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deploy Method**: SWA CLI deployment" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deploy Method**: Native Azure CLI Commands" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================================
   # ADE DEPLOYMENT JOBS - DISABLED (PRESERVED FOR FUTURE USE)
