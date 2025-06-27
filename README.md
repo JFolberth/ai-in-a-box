@@ -1,16 +1,16 @@
 # AI Foundry SPA
 
-A modern single-page application (SPA) that provides an interactive chat interface with AI Foundry endpoints. Built with JavaScript and deployed on Azure using infrastructure as code.
+A modern single-page application (SPA) that provides an interactive chat interface with [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) endpoints. Built with JavaScript and deployed on [Azure](https://learn.microsoft.com/en-us/azure/) using infrastructure as code.
 
 
 ## 🚀 Quick Start
 
 ### Infrastructure Deployment
-1. **Deploy infrastructure** using Azure Deployment Environments (ADE) or Bicep directly
+1. **Deploy infrastructure** using [Azure Deployment Environments (ADE)](https://learn.microsoft.com/en-us/azure/deployment-environments/) or [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/) directly
 2. **Deploy application code** using the specialized code-only deployment scripts
 
 ### Local Development
-1. **Prerequisites**: Node.js 20+, .NET 8 SDK, Azure CLI, Azure Functions Core Tools
+1. **Prerequisites**: [Node.js](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-overview) 20+, [.NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8), [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/), [Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local)
 2. **Setup**: Follow the [Setup Guide](documentation/SETUP.md) for detailed instructions
 3. **Develop**: See [Development Guide](documentation/DEVELOPMENT.md) for local development
 
@@ -34,11 +34,11 @@ cd ../backend && func start
 
 **Multi-resource group architecture** with security and scalability in mind:
 
-- **Frontend**: Vanilla JavaScript SPA hosted on Azure Static Web Apps
-- **Backend**: C# Azure Function App with system-assigned managed identity  
+- **Frontend**: Vanilla JavaScript SPA hosted on [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
+- **Backend**: C# [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) with system-assigned [managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/)  
 - **AI Integration**: AI in A Box agent through AI Foundry with least-privilege access
-- **Infrastructure**: Azure Verified Modules (AVM) Bicep templates
-- **Monitoring**: Application Insights with consolidated Log Analytics
+- **Infrastructure**: [Azure Verified Modules (AVM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/avm/) Azure Bicep templates
+- **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
 
 ## 🔄 CI/CD Pipeline
 
@@ -46,25 +46,25 @@ cd ../backend && func start
 
 - **Frontend Build**: Node.js build, testing, and artifact generation
 - **Backend Build**: .NET build, testing, and publish artifacts  
-- **Bicep Validation**: Infrastructure what-if validation using Azure CLI
+- **Azure Bicep Validation**: Infrastructure what-if validation using Azure CLI
 - **Infrastructure Deployment**: Automated deployment to dev environment on main branch
-- **Backend Code Deployment**: Automatic deployment of Function App code after infrastructure
+- **Backend Code Deployment**: Automatic deployment of Azure Functions code after infrastructure
 - **Frontend Code Deployment**: Automatic deployment of Static Web App code after backend
 - **Parallel Execution**: Build and validation jobs run simultaneously for fast feedback
 
 ### 🚀 Automated Deployment Flow (Main Branch)
 
 1. **Build & Validate** - Frontend, backend, and infrastructure validation run in parallel
-2. **Deploy Infrastructure** - Bicep templates deploy Azure resources to dev environment  
-3. **Deploy Backend Code** - Function App code deployed automatically using infrastructure outputs
+2. **Deploy Infrastructure** - Azure Bicep templates deploy Azure resources to dev environment  
+3. **Deploy Backend Code** - Azure Functions code deployed automatically using infrastructure outputs
 4. **Deploy Frontend Code** - Static Web App code deployed automatically with backend integration
 5. **Ready to Use** - Complete application is deployed and accessible
 
 **✅ Zero Manual Intervention**: Pushing to main branch triggers complete deployment automatically
 
-### Bicep Infrastructure Validation
+### Azure Bicep Infrastructure Validation
 
-The CI pipeline includes comprehensive Bicep template validation:
+The CI pipeline includes comprehensive Azure Bicep template validation:
 
 ```bash
 # Validates all infrastructure templates using what-if commands
@@ -105,8 +105,8 @@ The CI pipeline includes comprehensive Bicep template validation:
 
 ## 🛠 Development Environments
 
-- **DevContainer**: VS Code development containers with pre-configured tools
-- **DevBox**: Microsoft DevBox configuration for team development
+- **[DevContainers](https://learn.microsoft.com/en-us/devcontainers/)**: VS Code development containers with pre-configured tools
+- **[Azure DevBox](https://learn.microsoft.com/en-us/azure/dev-box/)**: Microsoft DevBox configuration for team development
 - **Local**: Manual setup with Node.js, .NET 8, and Azure CLI
 
 See [Development Guide](documentation/DEVELOPMENT.md) for detailed setup instructions.
@@ -117,13 +117,13 @@ The project includes comprehensive unit tests for both frontend and backend comp
 
 ### Frontend Testing
 - **72 unit tests** covering core functionality, UI interactions, and data management
-- **Jest + jsdom** testing environment with comprehensive mocking
+- **[Jest](https://learn.microsoft.com/en-us/shows/beginners-series-to-node-js/testing-with-jest) + jsdom** testing environment with comprehensive mocking
 - **CI integration** with automated test execution
 - See [Frontend Testing Guide](src/frontend/TESTING.md) for details
 
 ### Backend Testing  
-- **C# unit tests** for Function App endpoints and business logic
-- **xUnit framework** with mock testing patterns
+- **C# unit tests** for Azure Functions endpoints and business logic
+- **[xUnit framework](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)** with mock testing patterns
 - Coverage of AI Foundry integration and error handling
 
 ### Running Tests

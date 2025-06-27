@@ -5,14 +5,14 @@
 ### 1. Prerequisites Setup
 
 #### Azure Setup
-1. **Azure Subscription**: Ensure you have an active Azure subscription
-2. **Azure CLI**: Install from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
-3. **AI Foundry Resource**: Ensure you have access to an AI Foundry resource with an AI in A Box agent
+1. **[Azure Subscription](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-setup-guide/organize-resources)**: Ensure you have an active Azure subscription
+2. **[Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)**: Install from official Microsoft documentation
+3. **[Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) Resource**: Ensure you have access to an AI Foundry resource with an AI in A Box agent
 
 #### Development Tools
-1. **Node.js 20+**: For frontend development
-2. **.NET 8 SDK**: For backend Function App development
-3. **Azure Functions Core Tools v4**: For local Function App development
+1. **[Node.js](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-overview) 20+**: For frontend development
+2. **[.NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8)**: For backend [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) development
+3. **[Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) v4**: For local Azure Functions development
 
 ### 2. Environment Configuration
 
@@ -24,12 +24,12 @@
 
 2. **Update `src/frontend/.env` with your values:**
    ```env
-   # Backend Function App Configuration
+   # Backend Azure Functions Configuration
    VITE_BACKEND_URL=http://localhost:7071/api
    VITE_USE_BACKEND=true
    VITE_PUBLIC_MODE=true
 
-   # AI Foundry Configuration (Single Instance)
+   # Azure AI Foundry Configuration (Single Instance)
    VITE_AI_FOUNDRY_AGENT_NAME=AI in A Box
    VITE_AI_FOUNDRY_ENDPOINT=https://your-ai-foundry-endpoint.azureml.net
    VITE_AI_FOUNDRY_DEPLOYMENT=gpt-4
@@ -41,10 +41,10 @@
    # Edit local.settings.json with your AI Foundry configuration
    ```
 
-4. **Update Bicep parameters:**
+4. **Update [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/) parameters:**
    ```bash
    # Edit infra/dev-orchestrator.parameters.bicepparam
-   # Update AI Foundry endpoint and deployment information
+   # Update Azure AI Foundry endpoint and deployment information
    ```
 
 ### 3. Development Environment
@@ -55,10 +55,10 @@
 cd src/frontend
 npm install
 
-# Start Azurite emulator (in a separate terminal)
+# Start [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite) emulator (in a separate terminal)
 azurite --silent --location .azurite
 
-# Start Function App (in a separate terminal)
+# Start Azure Functions (in a separate terminal)
 cd src/backend
 dotnet build
 func start
@@ -69,19 +69,19 @@ npm run dev
 ```
 
 #### Option B: VS Code Tasks (Recommended)
-Use the built-in VS Code tasks for automated setup:
+Use the built-in [VS Code](https://learn.microsoft.com/en-us/azure/developer/javascript/how-to/with-visual-studio-code/clone-github-repository) tasks for automated setup:
 1. **Start Azurite**: Run task "Start Azurite"
-2. **Start Function App**: Run task "🔧 Manual Start Function App"
+2. **Start Azure Functions**: Run task "🔧 Manual Start Function App"
 3. **Start Frontend**: Run task "AI Foundry SPA: Build and Run"
 
-#### Option C: DevContainer (Recommended for consistent environment)
-1. Install Docker Desktop
+#### Option C: [DevContainers](https://learn.microsoft.com/en-us/devcontainers/) (Recommended for consistent environment)
+1. Install [Docker Desktop](https://learn.microsoft.com/en-us/dotnet/core/docker/introduction)
 2. Install VS Code Dev Containers extension  
 3. Open project in VS Code
 4. Click "Reopen in Container" when prompted
 5. Use VS Code tasks to start services
 
-#### Option D: DevBox
+#### Option D: [Azure DevBox](https://learn.microsoft.com/en-us/azure/dev-box/)
 1. Create a DevBox in Azure
 2. Use the provided `imageDefinition.yaml`
 3. Clone this repository in the DevBox
@@ -100,24 +100,24 @@ az deployment sub create \
   --template-file infra/main-orchestrator.bicep \
   --parameters infra/dev-orchestrator.parameters.bicepparam
 
-# Deploy Function App
+# Deploy Azure Functions
 cd src/backend
 func azure functionapp publish func-ai-foundry-spa-backend-dev-001
 
 # Deploy Frontend
 cd ../frontend
 npm run build:dev
-# Use deployment script for Static Web App
+# Use deployment script for [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
 ../deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-001"
 ```
 
-#### Using PowerShell Deployment Script
+#### Using [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview) Deployment Script
 ```powershell
 # Login to Azure CLI
 az login
 
 # Run deployment script
-../deploy-scripts/deploy.ps1
+./deploy-scripts/deploy.ps1
 ```
 
 ### 5. Post-Deployment Configuration
@@ -126,13 +126,13 @@ az login
    - Create `src/frontend/.env.production` with production backend URL
    - Rebuild and redeploy frontend with production configuration
 
-2. **Configure AI Foundry Access:**
-   - Verify Function App has Azure AI Developer role on AI Foundry resource
-   - Confirm AI Foundry endpoint configuration in Function App settings
+2. **Configure Azure AI Foundry Access:**
+   - Verify Azure Functions has [Azure AI Developer role](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#azure-ai-developer) on Azure AI Foundry resource
+   - Confirm Azure AI Foundry endpoint configuration in Azure Functions settings
 
-3. **Verify Static Web App Deployment:**
+3. **Verify Azure Static Web Apps Deployment:**
    ```bash
-   # Static Web App should be automatically configured
+   # Azure Static Web Apps should be automatically configured
    # No manual configuration needed - handled by deployment script
    ```
 
@@ -143,14 +143,14 @@ az login
    # Frontend should be available at:
    http://localhost:5173 (or 5174 if 5173 is in use)
    
-   # Function App should be available at:
+   # Azure Functions should be available at:
    http://localhost:7071
    ```
 
 2. **Test production deployment:**
-   - Visit your Azure Static Website URL
+   - Visit your Azure Static Web Apps URL
    - Test AI conversation functionality
-   - Verify Function App endpoints respond correctly
+   - Verify Azure Functions endpoints respond correctly
 
 3. **Run endpoint tests:**
    ```bash
@@ -174,15 +174,15 @@ az login
 
 #### Common Issues
 
-**Function App Connection Failed:**
-- Verify Function App is running locally or deployed to Azure
-- Check CORS configuration allows frontend domain
-- Ensure AI Foundry configuration is correct in Function App settings
+**Azure Functions Connection Failed:**
+- Verify Azure Functions is running locally or deployed to Azure
+- Check [CORS configuration](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings#cors) allows frontend domain
+- Ensure Azure AI Foundry configuration is correct in Azure Functions settings
 
-**AI Foundry Connection Failed:**
-- Verify AI Foundry endpoint URLs and deployment names
-- Check Function App has Azure AI Developer role on AI Foundry resource
-- Ensure network connectivity from Function App to AI Foundry
+**Azure AI Foundry Connection Failed:**
+- Verify Azure AI Foundry endpoint URLs and deployment names
+- Check Azure Functions has Azure AI Developer role on Azure AI Foundry resource
+- Ensure network connectivity from Azure Functions to Azure AI Foundry
 
 **Build Failed:**
 - Verify Node.js version (20+ required)
@@ -193,9 +193,9 @@ az login
 - Check Azure CLI authentication: `az account show`
 - Verify subscription permissions
 - Check resource naming conflicts
-- Ensure Bicep file is valid: `az bicep build --file infra/main-orchestrator.bicep`
+- Ensure Azure Bicep file is valid: `az bicep build --file infra/main-orchestrator.bicep`
 
-**Azurite Issues:**
+**[Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite) Issues:**
 - Check ports 10000, 10001, 10002 are not in use
 - Delete `.azurite` folder and restart
 - Install Azurite globally: `npm install -g azurite`
@@ -204,21 +204,21 @@ az login
 
 **Local Development:**
 - Frontend: http://localhost:5173
-- Function App: http://localhost:7071
-- Function Admin: http://localhost:7071/admin/functions
+- Azure Functions: http://localhost:7071
+- Azure Functions Admin: http://localhost:7071/admin/functions
 - Azurite Blob: http://127.0.0.1:10000
 - Azurite Queue: http://127.0.0.1:10001
 - Azurite Table: http://127.0.0.1:10002
 
 **Production URLs:**
 - Frontend: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
-- Function App: https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net
+- Azure Functions: https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net
 
 ### 9. Next Steps
 
-- **Configure monitoring**: Application Insights is pre-configured
-- **Security**: Review CORS settings and Function App access controls
-- **Scaling**: Consider Azure CDN for global distribution
+- **Configure monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) is pre-configured
+- **Security**: Review CORS settings and Azure Functions access controls
+- **Scaling**: Consider [Azure CDN](https://learn.microsoft.com/en-us/azure/cdn/) for global distribution
 - **Testing**: Use the PowerShell test scripts to validate functionality
 
 ## Support
@@ -227,4 +227,4 @@ For issues and questions:
 1. Check the troubleshooting section above
 2. Review Azure documentation links in ../README.md
 3. Use the provided test scripts to diagnose issues
-4. Check Function App logs in Azure Portal
+4. Check Azure Functions logs in [Azure Portal](https://learn.microsoft.com/en-us/azure/azure-portal/)
