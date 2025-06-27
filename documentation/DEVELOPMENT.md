@@ -1,16 +1,16 @@
 # Development Guide
 
-This guide covers local development setup, workflows, and best practices for the AI Foundry SPA project.
+This guide covers local development setup, workflows, and best practices for the [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) SPA project.
 
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- **Node.js 20+** and npm (for frontend development)
-- **.NET 8 SDK** (for backend Function App development)
-- **Azure CLI** with Bicep and DevCenter extensions
-- **Azure Functions Core Tools v4** (for local Function App development)
-- **Python 3.12+** (for development tooling and scripting, optional)
-- **Azure subscription** with appropriate permissions
+- **[Node.js](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-overview) 20+** and npm (for frontend development)
+- **[.NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8)** (for backend [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) development)
+- **[Azure CLI](https://learn.microsoft.com/en-us/cli/azure/)** with [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/) and DevCenter extensions
+- **[Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) v4** (for local Azure Functions development)
+- **[Python](https://learn.microsoft.com/en-us/azure/developer/python/) 3.12+** (for development tooling and scripting, optional)
+- **[Azure subscription](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-setup-guide/organize-resources)** with appropriate permissions
 
 ### Installation Commands
 
@@ -33,7 +33,7 @@ npm install -g azure-functions-core-tools@4 --unsafe-perm true
 # Python (optional, for development tooling)
 winget install Python.Python.3.12
 
-# Install Bicep
+# Install Azure Bicep
 az bicep install
 az extension add --name bicep
 ```
@@ -56,7 +56,7 @@ brew install azure-functions-core-tools@4
 # Python (optional, for development tooling)
 brew install python@3.12
 
-# Install Bicep
+# Install Azure Bicep
 az bicep install
 az extension add --name bicep
 ```
@@ -84,7 +84,7 @@ sudo apt-get update && sudo apt-get install azure-functions-core-tools-4
 # Python (optional, for development tooling)
 sudo apt-get update && sudo apt-get install -y python3.12 python3.12-pip python3.12-venv
 
-# Install Bicep
+# Install Azure Bicep
 az bicep install
 az extension add --name bicep
 ```
@@ -112,7 +112,7 @@ npm run clean
 ```bash
 cd src/backend
 
-# Build the Function App
+# Build the Azure Functions
 dotnet build
 
 # Run locally with hot reload
@@ -127,7 +127,7 @@ dotnet clean
 # Deploy complete infrastructure (if needed)
 az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location eastus2
 
-# For Azure Deployment Environments (ADE), use the ADE portal or CLI
+# For [Azure Deployment Environments (ADE)](https://learn.microsoft.com/en-us/azure/deployment-environments/), use the ADE portal or CLI
 ```
 
 ### Code-Only Deployment Scripts (Post-Infrastructure)
@@ -154,7 +154,7 @@ Two specialized scripts handle application code deployment to **existing** Azure
 
 ### 🎯 Code-Only Deployment (Recommended for ADE)
 
-When infrastructure is already deployed (via ADE or Bicep), use these simplified scripts to deploy application code:
+When infrastructure is already deployed (via ADE or Azure Bicep), use these simplified scripts to deploy application code:
 
 #### Backend Code Deployment
 ```powershell
@@ -173,8 +173,8 @@ When infrastructure is already deployed (via ADE or Bicep), use these simplified
 
 **What it does:**
 - ✅ Validates Azure CLI authentication
-- ✅ Verifies Function App exists in specified resource group
-- ✅ Builds .NET Function App (unless `-SkipBuild`)
+- ✅ Verifies Azure Functions exists in specified resource group
+- ✅ Builds .NET Azure Functions (unless `-SkipBuild`)
 - ✅ Creates deployment package and deploys to Azure
 - ✅ Tests health endpoint (unless `-SkipTest`)
 - ✅ Provides deployment summary with URLs
@@ -201,10 +201,10 @@ When infrastructure is already deployed (via ADE or Bicep), use these simplified
 
 **What it does:**
 - ✅ Validates Azure CLI authentication
-- ✅ Verifies Static Web App exists in specified resource group
-- ✅ Creates DEV environment configuration with hardcoded AI Foundry settings
+- ✅ Verifies Azure Static Web Apps exists in specified resource group
+- ✅ Creates DEV environment configuration with hardcoded Azure AI Foundry settings
 - ✅ Builds frontend application (unless `-SkipBuild`)
-- ✅ Installs SWA CLI if needed and deploys to Azure Static Web Apps
+- ✅ Installs [SWA CLI](https://learn.microsoft.com/en-us/azure/static-web-apps/static-web-apps-cli-overview) if needed and deploys to Azure Static Web Apps
 - ✅ Provides deployment summary with URLs
 
 ### 🏗️ Complete Infrastructure + Code Deployment
@@ -218,12 +218,12 @@ For greenfield deployments or when infrastructure changes are needed:
 
 ### 🔍 Finding Resource Names for ADE Environments
 
-When working with Azure Deployment Environments, you'll need to discover the resource names:
+When working with [Azure Deployment Environments](https://learn.microsoft.com/en-us/azure/deployment-environments/), you'll need to discover the resource names:
 
-#### Method 1: Azure Portal
+#### Method 1: [Azure Portal](https://learn.microsoft.com/en-us/azure/azure-portal/)
 1. Navigate to your ADE environment
 2. Go to "Resources" tab
-3. Note the Function App and Static Web App names
+3. Note the Azure Functions and Azure Static Web Apps names
 
 #### Method 2: Azure CLI
 ```bash
