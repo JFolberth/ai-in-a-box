@@ -150,11 +150,85 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 ### Azure Verified Modules (AVM)
 
-The project uses AVM modules for:
+The project uses [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) for:
 - **Consistent resource provisioning**
 - **Best practice configurations**
 - **Reduced boilerplate code**
 - **Community-maintained standards**
+
+#### AVM Modules Used
+
+The following table lists all Azure Verified Modules implemented in this project:
+
+| Module | Version | Purpose | Official Documentation |
+|--------|---------|---------|------------------------|
+| **Resource Groups** | 0.4.0 | Create and manage resource groups for multi-RG architecture | [avm/res/resources/resource-group](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/resources/resource-group) |
+| **Application Insights** | 0.6.0 | Monitoring and telemetry for frontend and backend components | [avm/res/insights/component](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/insights/component) |
+| **Function Apps** | 0.16.0 | Serverless compute for AI Foundry proxy backend | [avm/res/web/site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/site) |
+| **Storage Accounts** | 0.20.0 | Function App runtime storage with secure configuration | [avm/res/storage/storage-account](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account) |
+| **Log Analytics Workspace** | 0.9.0 | Centralized logging and monitoring workspace | [avm/res/operational-insights/workspace](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/operational-insights/workspace) |
+| **Static Web Apps** | 0.5.0 | Modern SPA hosting for the frontend application | [avm/res/web/static-site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/static-site) |
+| **App Service Plans** | 0.4.1 | Compute hosting plans for Function Apps | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
+
+#### AVM Benefits for This Project
+
+- **Security by Default**: All modules include security best practices and managed identity support
+- **Standardized Configuration**: Consistent parameter names and resource configurations across environments
+- **Version Control**: Pinned module versions ensure deployment reproducibility
+- **Community Support**: Modules are maintained by Microsoft and the Azure community
+- **Compliance**: Built-in configurations meet Azure Well-Architected Framework principles
+
+#### Usage Examples
+
+**Resource Group Creation (Orchestrator)**
+```bicep
+module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = {
+  name: 'frontend-rg-deployment'
+  params: {
+    name: frontendResourceGroupName
+    location: location
+    tags: union(tags, {
+      Component: 'Frontend'
+      ResourceType: 'Storage-StaticWebsite'
+    })
+  }
+}
+```
+
+**Application Insights with Log Analytics Integration**
+```bicep
+module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
+  name: 'backend-applicationInsights'
+  params: {
+    name: resourceNames.applicationInsights
+    location: location
+    kind: 'web'
+    applicationType: 'web'
+    workspaceResourceId: logAnalyticsWorkspace.id
+    tags: union(tags, {
+      Component: 'Backend-ApplicationInsights'
+    })
+  }
+}
+```
+
+**Function App with Managed Identity**
+```bicep
+module functionApp 'br/public:avm/res/web/site:0.16.0' = {
+  name: 'backend-functionApp'
+  params: {
+    name: resourceNames.functionApp
+    location: location
+    kind: 'functionapp'
+    managedIdentities: {
+      systemAssigned: true
+    }
+    tags: union(tags, {
+      Component: 'Backend-FunctionApp'
+    })
+  }
+}
+```
 
 #### Module Structure
 ```
