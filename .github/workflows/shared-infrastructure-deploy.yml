@@ -1,0 +1,227 @@
+name: Shared Infrastructure Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment (dev, staging, prod)'
+        required: true
+        type: string
+      bicep-template:
+        description: 'Path to main Bicep template'
+        required: true
+        type: string
+      parameters-file:
+        description: 'Path to Bicep parameters file'
+        required: true
+        type: string
+      location:
+        description: 'Azure region for deployment'
+        required: true
+        type: string
+      validate-only:
+        description: 'Run validation only without deployment'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      frontend-resource-group-name:
+        description: 'Frontend Resource Group Name'
+        value: ${{ jobs.deploy-infrastructure.outputs.frontend-resource-group-name }}
+      backend-resource-group-name:
+        description: 'Backend Resource Group Name'
+        value: ${{ jobs.deploy-infrastructure.outputs.backend-resource-group-name }}
+      frontend-static-web-app-url:
+        description: 'Frontend Static Web App URL'
+        value: ${{ jobs.deploy-infrastructure.outputs.frontend-static-web-app-url }}
+      backend-function-app-url:
+        description: 'Backend Function App URL'
+        value: ${{ jobs.deploy-infrastructure.outputs.backend-function-app-url }}
+      deployment-status:
+        description: 'Deployment Status'
+        value: ${{ jobs.deploy-infrastructure.outputs.deployment-status }}
+
+jobs:
+  deploy-infrastructure:
+    name: Deploy Infrastructure to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    
+    outputs:
+      frontend-resource-group-name: ${{ steps.extract-outputs.outputs.frontend-resource-group-name }}
+      backend-resource-group-name: ${{ steps.extract-outputs.outputs.backend-resource-group-name }}
+      frontend-static-web-app-url: ${{ steps.extract-outputs.outputs.frontend-static-web-app-url }}
+      backend-function-app-url: ${{ steps.extract-outputs.outputs.backend-function-app-url }}
+      deployment-status: ${{ steps.deploy.outputs.deployment-status }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Validate Bicep Template
+      id: validate
+      run: |
+        echo "🔍 Validating Bicep template..."
+        
+        # Validate the main orchestrator template at subscription scope
+        echo "📋 Validating template: ${{ inputs.bicep-template }}"
+        echo "📋 Using parameters: ${{ inputs.parameters-file }}"
+        echo "📋 Target location: ${{ inputs.location }}"
+        
+        # Run what-if validation to check deployment changes
+        echo "⏳ Running deployment what-if analysis..."
+        az deployment sub what-if \
+          --template-file "${{ inputs.bicep-template }}" \
+          --parameters "${{ inputs.parameters-file }}" \
+          --location "${{ inputs.location }}" \
+          --verbose
+        
+        # Validate deployment without creating resources
+        echo "✅ Running deployment validation..."
+        VALIDATION_RESULT=$(az deployment sub validate \
+          --template-file "${{ inputs.bicep-template }}" \
+          --parameters "${{ inputs.parameters-file }}" \
+          --location "${{ inputs.location }}" \
+          --output json)
+        
+        # Check validation result
+        VALIDATION_STATUS=$(echo "$VALIDATION_RESULT" | jq -r '.properties.provisioningState // "Unknown"')
+        
+        if [ "$VALIDATION_STATUS" != "Succeeded" ]; then
+          echo "❌ Bicep template validation failed!"
+          echo "Validation status: $VALIDATION_STATUS"
+          echo "Validation result: $VALIDATION_RESULT"
+          exit 1
+        fi
+        
+        echo "✅ Bicep template validation passed!"
+        echo "validation-status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+    
+    - name: Deploy Infrastructure
+      id: deploy
+      if: ${{ inputs.validate-only == false }}
+      run: |
+        echo "🚀 Deploying infrastructure to ${{ inputs.environment }} environment..."
+        
+        # Generate unique deployment name
+        DEPLOYMENT_NAME="infrastructure-deploy-${{ github.run_number }}-$(date +%s)"
+        echo "📦 Deployment name: $DEPLOYMENT_NAME"
+        
+        # Deploy using Azure CLI with Bicep
+        echo "⏳ Starting deployment..."
+        DEPLOYMENT_RESULT=$(az deployment sub create \
+          --name "$DEPLOYMENT_NAME" \
+          --template-file "${{ inputs.bicep-template }}" \
+          --parameters "${{ inputs.parameters-file }}" \
+          --location "${{ inputs.location }}" \
+          --output json)
+        
+        # Check deployment result
+        DEPLOYMENT_STATUS=$(echo "$DEPLOYMENT_RESULT" | jq -r '.properties.provisioningState // "Unknown"')
+        
+        if [ "$DEPLOYMENT_STATUS" != "Succeeded" ]; then
+          echo "❌ Infrastructure deployment failed!"
+          echo "Deployment status: $DEPLOYMENT_STATUS"
+          echo "Deployment result: $DEPLOYMENT_RESULT"
+          echo "deployment-status=Failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        
+        echo "✅ Infrastructure deployment completed successfully!"
+        echo "deployment-name=$DEPLOYMENT_NAME" >> $GITHUB_ENV
+        echo "deployment-status=Succeeded" >> $GITHUB_OUTPUT
+        
+        # Store deployment outputs for extraction
+        echo "$DEPLOYMENT_RESULT" > deployment-result.json
+    
+    - name: Extract Deployment Outputs
+      id: extract-outputs
+      if: ${{ inputs.validate-only == false && steps.deploy.outputs.deployment-status == 'Succeeded' }}
+      run: |
+        echo "📋 Extracting deployment outputs..."
+        
+        if [ ! -f "deployment-result.json" ]; then
+          echo "❌ Deployment result file not found!"
+          exit 1
+        fi
+        
+        # Extract outputs from deployment result
+        DEPLOYMENT_OUTPUTS=$(cat deployment-result.json | jq -r '.properties.outputs // {}')
+        
+        if [ "$DEPLOYMENT_OUTPUTS" = "{}" ] || [ "$DEPLOYMENT_OUTPUTS" = "null" ]; then
+          echo "⚠️ No deployment outputs found"
+        else
+          echo "📊 Deployment outputs found"
+        fi
+        
+        # Extract specific output values (handle missing outputs gracefully)
+        FRONTEND_RG=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.frontendResourceGroupName.value // "not-found"')
+        BACKEND_RG=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendResourceGroupName.value // "not-found"')
+        FRONTEND_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.frontendStaticWebAppUrl.value // "not-found"')
+        BACKEND_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendFunctionAppUrl.value // "not-found"')
+        
+        # Set outputs
+        echo "frontend-resource-group-name=$FRONTEND_RG" >> $GITHUB_OUTPUT
+        echo "backend-resource-group-name=$BACKEND_RG" >> $GITHUB_OUTPUT
+        echo "frontend-static-web-app-url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+        echo "backend-function-app-url=$BACKEND_URL" >> $GITHUB_OUTPUT
+        
+        echo "✅ Successfully extracted deployment outputs:"
+        echo "  - Frontend Resource Group: $FRONTEND_RG"
+        echo "  - Backend Resource Group: $BACKEND_RG"
+        echo "  - Frontend URL: $FRONTEND_URL"
+        echo "  - Backend URL: $BACKEND_URL"
+    
+    - name: Deployment Summary
+      if: always()
+      run: |
+        echo "## 🏗️ Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ inputs.validate-only }}" = "true" ]; then
+          echo "### ✅ Validation Only Mode" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation Status**: ${{ steps.validate.outputs.validation-status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Template**: \`${{ inputs.bicep-template }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Parameters**: \`${{ inputs.parameters-file }}\`" >> $GITHUB_STEP_SUMMARY
+        else
+          if [ "${{ steps.deploy.outputs.deployment-status }}" = "Succeeded" ]; then
+            echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Location**: ${{ inputs.location }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Template**: \`${{ inputs.bicep-template }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Parameters**: \`${{ inputs.parameters-file }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Deployed Resources" >> $GITHUB_STEP_SUMMARY
+            echo "- **Frontend Resource Group**: \`${{ steps.extract-outputs.outputs.frontend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Backend Resource Group**: \`${{ steps.extract-outputs.outputs.backend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.extract-outputs.outputs.frontend-static-web-app-url }}" != "not-found" ]; then
+              echo "- **Frontend URL**: [${{ steps.extract-outputs.outputs.frontend-static-web-app-url }}](${{ steps.extract-outputs.outputs.frontend-static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ "${{ steps.extract-outputs.outputs.backend-function-app-url }}" != "not-found" ]; then
+              echo "- **Backend URL**: [${{ steps.extract-outputs.outputs.backend-function-app-url }}](${{ steps.extract-outputs.outputs.backend-function-app-url }})" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "### ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: ${{ steps.deploy.outputs.deployment-status }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Template**: \`${{ inputs.bicep-template }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Deployment Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **Azure CLI + Bicep**: Pure Azure CLI deployment (no azd dependencies)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Subscription Scope**: Uses \`az deployment sub create\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Multi-Resource Group**: Frontend and backend deployed to separate resource groups" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Upload Deployment Artifacts
+      if: ${{ inputs.validate-only == false && steps.deploy.outputs.deployment-status == 'Succeeded' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: infrastructure-deployment-result-${{ inputs.environment }}
+        path: deployment-result.json
+        retention-days: 30
