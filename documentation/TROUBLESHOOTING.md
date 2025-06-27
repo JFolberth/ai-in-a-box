@@ -36,6 +36,9 @@ unzip -l deployment-package.zip | grep -E "\.azurefunctions|azurefunctions/"
 #    777696  DATE TIME   .azurefunctions/Microsoft.WindowsAzure.Storage.dll
 #     24064  DATE TIME   .azurefunctions/Microsoft.Azure.WebJobs.Extensions.FunctionMetadataLoader.dll
 #     83832  DATE TIME   .azurefunctions/Microsoft.Azure.WebJobs.Host.Storage.dll
+
+# Or use the validation script
+./tests/validate-backend-package.sh path/to/backend-deployment.zip
 ```
 
 **Manual Fix (if needed):**
@@ -44,10 +47,30 @@ If you encounter this issue with manual deployments:
 2. Use `Compress-Archive` (PowerShell) or `zip -r` (Linux/Mac) to create the zip file
 3. Verify the `.azurefunctions` directory is included before deployment
 
+### ZIP Deploy Package Path Error
+
+**Error Message:**
+```
+Error: Failed to deploy web package to Function App.
+Error: Execution Exception (state: PublishContent) (step: Invocation)
+Error: When request Azure resource at PublishContent, oneDeploy : Failed to use /path/to/temp_web_package.zip as OneDeploy content
+Error: Package deployment using ZIP Deploy failed.
+```
+
+**Root Cause:**
+The Azure Functions action was receiving a directory path instead of a zip file path, or the zip file was corrupted/malformed.
+
+**Solution:**
+Fixed in CI/CD pipeline by:
+1. Ensuring the Functions action receives the correct zip file path
+2. Adding validation of the deployment package before deployment
+3. Verifying package contents include all required components
+
 **Related Files:**
-- `.github/workflows/shared-backend-build.yml`
-- `.github/workflows/ci.yml`
-- `deploy-scripts/deploy-backend-func-code.ps1`
+- `.github/workflows/shared-backend-build.yml` - Package creation and validation
+- `.github/workflows/ci.yml` - Deployment process
+- `tests/validate-backend-package.sh` - Package validation script
+- `deploy-scripts/deploy-backend-func-code.ps1` - Manual deployment script
 
 ## 🌐 Static Web App Deployment Issues
 
