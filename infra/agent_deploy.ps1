@@ -3,7 +3,8 @@
 Infrastructure-driven Azure AI Foundry agent creation script.
 
 .DESCRIPTION
-This script creates an Azure AI Foundry agent using the Azure REST API after infrastruc    # =========== GET ACCESS TOKEN ===========
+This script creates an Azure AI Foundry agent using the Azure REST API after infrastructure.
+# =========== GET ACCESS TOKEN ===========
 It reads agent instructions from a file and uses the deployed AI Foundry resources to create the agent.
 This script is designed to be called from Azure Deployment Scripts within Bicep templates.
 
