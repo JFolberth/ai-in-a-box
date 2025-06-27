@@ -69,6 +69,20 @@ jobs:
         echo "Created backend deployment package: backend-deployment.zip"
         echo "Package contents:"
         unzip -l backend-deployment.zip | head -10
+        
+        # Verify .azurefunctions directory is included (critical for Function App deployment)
+        echo "Verifying .azurefunctions directory presence..."
+        if unzip -l backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/" > /dev/null; then
+          echo "✅ .azurefunctions directory found in deployment package"
+          echo "📋 .azurefunctions contents:"
+          unzip -l backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/"
+        else
+          echo "❌ .azurefunctions directory NOT found in deployment package!"
+          echo "This will cause Function App deployment to fail."
+          echo "Full package contents:"
+          unzip -l backend-deployment.zip
+          exit 1
+        fi
       
     - name: Upload backend build artifacts
       if: ${{ inputs.upload-artifacts }}

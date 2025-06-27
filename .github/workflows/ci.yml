@@ -106,11 +106,34 @@ jobs:
         echo "  - Function App: $FUNCTION_APP_NAME"
         echo "  - Resource Group: $RESOURCE_GROUP_NAME"
         
+    - name: Prepare deployment package
+      run: |
+        echo "📦 Preparing backend deployment package..."
+        
+        # Verify the deployment zip exists
+        if [ ! -f "./backend-artifacts/backend-deployment.zip" ]; then
+          echo "❌ Backend deployment zip not found!"
+          echo "Contents of backend-artifacts directory:"
+          ls -la ./backend-artifacts/
+          exit 1
+        fi
+        
+        # Verify the zip contains the required .azurefunctions directory
+        echo "🔍 Verifying deployment package contents..."
+        unzip -l ./backend-artifacts/backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/" || {
+          echo "❌ .azurefunctions directory not found in deployment package!"
+          exit 1
+        }
+        
+        echo "✅ Deployment package validated successfully"
+        echo "📋 Package contents summary:"
+        unzip -l ./backend-artifacts/backend-deployment.zip | head -10
+        
     - name: Deploy Backend Code to Function App
       uses: Azure/functions-action@v1
       with:
         app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
-        package: './backend-artifacts'
+        package: './backend-artifacts/backend-deployment.zip'
         
     - name: Backend Deployment Summary
       run: |
@@ -129,8 +152,8 @@ jobs:
   deploy-frontend-code:
     name: Deploy Frontend Code
     runs-on: ubuntu-latest
-    needs: [frontend-build, deploy-dev-infrastructure, deploy-backend-code]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded' && needs.deploy-backend-code.result == 'success'
+    needs: [frontend-build, deploy-dev-infrastructure]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     
     steps:
     - name: Download frontend artifacts
@@ -836,7 +859,7 @@ jobs:
           # Backend code deployment summary
           if [ "${{ needs.deploy-backend-code.result }}" = "success" ]; then
             echo "### ✅ Backend Code Deployment Successful" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: Backend Function App code deployed automatically" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Backend Function App code deployed in parallel with frontend" >> $GITHUB_STEP_SUMMARY
             echo "- **Method**: Azure/functions-action@v1 (Native GitHub Action)" >> $GITHUB_STEP_SUMMARY
             echo "- **Dependency**: Triggered after successful infrastructure deployment" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-backend-code.result }}" = "failure" ]; then
@@ -852,16 +875,16 @@ jobs:
           # Frontend code deployment summary  
           if [ "${{ needs.deploy-frontend-code.result }}" = "success" ]; then
             echo "### ✅ Frontend Code Deployment Successful" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: Frontend Static Web App code deployed automatically" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Frontend Static Web App code deployed in parallel with backend" >> $GITHUB_STEP_SUMMARY
             echo "- **Method**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Dependency**: Triggered after successful backend deployment" >> $GITHUB_STEP_SUMMARY
+            echo "- **Dependency**: Triggered after successful infrastructure deployment" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-frontend-code.result }}" = "failure" ]; then
             echo "### ❌ Frontend Code Deployment Failed" >> $GITHUB_STEP_SUMMARY
             echo "- **Status**: ${{ needs.deploy-frontend-code.result }}" >> $GITHUB_STEP_SUMMARY
             echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-frontend-code.result }}" = "skipped" ]; then
             echo "### ⏭️ Frontend Code Deployment Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "- **Reason**: Skipped due to backend deployment failure or not on main branch" >> $GITHUB_STEP_SUMMARY
+            echo "- **Reason**: Skipped due to infrastructure deployment failure or not on main branch" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
         fi
@@ -870,11 +893,11 @@ jobs:
         echo "- Review build artifacts if needed" >> $GITHUB_STEP_SUMMARY
         echo "- Run local tests: \`npm test\` (frontend) and \`dotnet test\` (backend)" >> $GITHUB_STEP_SUMMARY
         if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          echo "- **Automated Deployment**: Infrastructure and application code deployed automatically using native GitHub Actions" >> $GITHUB_STEP_SUMMARY
+          echo "- **Automated Deployment**: Infrastructure and application code deployed automatically using native GitHub Actions (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
           echo "- **Local Development**: Use deployment scripts in \`deploy-scripts/\` for local testing only" >> $GITHUB_STEP_SUMMARY
         else
           echo "- **Local Development**: Use deployment scripts in \`deploy-scripts/\` for local testing only" >> $GITHUB_STEP_SUMMARY
-          echo "- **Note**: Automated deployment using native GitHub Actions only runs on main branch pushes" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Automated deployment using native GitHub Actions only runs on main branch pushes (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
         fi
         
     - name: Check build status
