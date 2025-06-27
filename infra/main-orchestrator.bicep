@@ -285,6 +285,46 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
   }
 }
 
+// =========== AI FOUNDRY AGENT DEPLOYMENT ===========
+
+// Deploy AI Foundry agent using deployment script (runs after infrastructure is deployed)
+// This runs regardless of whether AI Foundry resource group is new or existing
+// to ensure agent exists and instructions are up to date
+module agentDeployment 'modules/agent-deployment.bicep' = {
+  name: 'agent-deployment'
+  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
+  dependsOn: [
+    backendInfrastructure
+    // Add conditional dependency on AI Foundry infrastructure if we created it
+    createAiFoundryResourceGroup ? aiFoundryInfrastructure : null
+  ]
+  params: {
+    location: location
+    aiFoundryEndpoint: aiFoundryEndpoint
+    agentName: aiFoundryAgentName
+    tags: union(tags, {
+      Component: 'AI-Foundry-Agent'
+      Purpose: 'AgentDeployment'
+    })
+  }
+}
+
+// Grant the deployment script's managed identity Azure AI Developer role on the AI Foundry resource
+// This RBAC assignment will complete before the script execution starts due to forceUpdateTag dependency
+module agentDeploymentRbac 'modules/rbac-assignment.bicep' = {
+  name: 'agent-deployment-rbac'
+  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
+  params: {
+    principalId: agentDeployment.outputs.deploymentScriptIdentity.principalId
+    roleDefinitionId: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
+    principalType: 'ServicePrincipal'
+    targetResourceId: createAiFoundryResourceGroup 
+      ? aiFoundryInfrastructure.outputs.cognitiveServicesId
+      : resourceId(aiFoundrySubscriptionId, aiFoundryResourceGroupName, 'Microsoft.CognitiveServices/accounts', aiFoundryResourceName)
+    roleDescription: 'Allow agent deployment script to create/update AI Foundry agents'
+  }
+}
+
 // =========== VALIDATION ===========
 
 // Validate AI Foundry resource group naming standard
@@ -377,3 +417,20 @@ output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace
 
 @description('Log Analytics Resource Group Location')
 output logAnalyticsResourceGroupLocation string = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroup.outputs.location : logAnalyticsResourceGroup.location
+
+@description('Agent Deployment Status')
+output agentDeploymentStatus object = agentDeployment.outputs.deploymentStatus
+
+@description('Agent Deployment Script Name')
+output agentDeploymentScriptName string = agentDeployment.outputs.deploymentScriptName
+
+@description('Agent Deployment RBAC Assignment Status')
+output agentDeploymentRbacStatus object = {
+  roleAssignmentId: agentDeploymentRbac.outputs.roleAssignmentId
+  principalId: agentDeploymentRbac.outputs.principalId
+  roleDefinitionId: agentDeploymentRbac.outputs.roleDefinitionId
+  targetResourceId: createAiFoundryResourceGroup 
+    ? aiFoundryInfrastructure.outputs.cognitiveServicesId
+    : resourceId(aiFoundrySubscriptionId, aiFoundryResourceGroupName, 'Microsoft.CognitiveServices/accounts', aiFoundryResourceName)
+  description: 'Azure AI Developer role granted to deployment script managed identity'
+}
