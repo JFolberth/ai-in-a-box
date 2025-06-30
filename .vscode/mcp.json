@@ -9,11 +9,6 @@
             "url": "https://learn.microsoft.com/api/mcp",
             "name": "Microsoft Learn",
             "description": "Access to Microsoft documentation and learning resources for Azure, Bicep, .NET, and AI services"
-        },
-        "github.mcp": {
-            "url": "https://api.githubcopilot.com/mcp/",
-            "name": "GitHub Integration",
-            "description": "Enhanced GitHub repository management, issue tracking, and CI/CD workflow assistance"
         }
     }
 }
