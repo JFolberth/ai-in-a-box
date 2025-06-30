@@ -74,7 +74,7 @@ Use the built-in [VS Code](https://learn.microsoft.com/en-us/azure/developer/jav
 2. **Start Azure Functions**: Run task "🔧 Manual Start Function App"
 3. **Start Frontend**: Run task "AI Foundry SPA: Build and Run"
 
-#### Option C: [DevContainers](https://learn.microsoft.com/en-us/devcontainers/) (Recommended for consistent environment)
+#### Option C: [DevContainers](https://code.visualstudio.com/docs/devcontainers/containers) (Recommended for consistent environment)
 1. Install [Docker Desktop](https://learn.microsoft.com/en-us/dotnet/core/docker/introduction)
 2. Install VS Code Dev Containers extension  
 3. Open project in VS Code
