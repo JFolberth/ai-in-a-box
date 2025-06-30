@@ -150,7 +150,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 ### Azure Verified Modules (AVM)
 
-The project uses [Azure Verified Modules (AVM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/avm/) for:
+The project uses [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) for:
 - **Consistent resource provisioning**
 - **Best practice configurations**
 - **Reduced boilerplate code**

@@ -37,7 +37,7 @@ cd ../backend && func start
 - **Frontend**: Vanilla JavaScript SPA hosted on [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
 - **Backend**: C# [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) with system-assigned [managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/)  
 - **AI Integration**: AI in A Box agent through AI Foundry with least-privilege access
-- **Infrastructure**: [Azure Verified Modules (AVM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/avm/) Azure Bicep templates
+- **Infrastructure**: [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) Azure Bicep templates
 - **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
 
 ## 🔄 CI/CD Pipeline
@@ -105,7 +105,7 @@ The CI pipeline includes comprehensive Azure Bicep template validation:
 
 ## 🛠 Development Environments
 
-- **[DevContainers](https://learn.microsoft.com/en-us/devcontainers/)**: VS Code development containers with pre-configured tools
+- **[DevContainers](https://code.visualstudio.com/docs/devcontainers/containers)**: VS Code development containers with pre-configured tools
 - **[Azure DevBox](https://learn.microsoft.com/en-us/azure/dev-box/)**: Microsoft DevBox configuration for team development
 - **Local**: Manual setup with Node.js, .NET 8, and Azure CLI
 
@@ -117,7 +117,7 @@ The project includes comprehensive unit tests for both frontend and backend comp
 
 ### Frontend Testing
 - **72 unit tests** covering core functionality, UI interactions, and data management
-- **[Jest](https://learn.microsoft.com/en-us/shows/beginners-series-to-node-js/testing-with-jest) + jsdom** testing environment with comprehensive mocking
+- **[Jest](https://jestjs.io/) + jsdom** testing environment with comprehensive mocking
 - **CI integration** with automated test execution
 - See [Frontend Testing Guide](src/frontend/TESTING.md) for details
 
