@@ -54,14 +54,16 @@ param logAnalyticsWorkspaceRetentionInDays int = 90
 
 // =========== AI FOUNDRY PARAMETERS ===========
 
-@description('AI Foundry agent ID for endpoint interaction')
-param aiFoundryAgentId string = 'asst_dH7M0nbmdRblhSQO8nIGIYF4'
-
-@description('AI Foundry agent name for endpoint interaction')
-param aiFoundryAgentName string = 'AI in A Box'
+// Note: AI Foundry agent deployment moved to GitHub Actions workflow step
 
 @description('AI Foundry endpoint URL for API calls')
 param aiFoundryEndpoint string = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
+
+@description('AI Foundry agent ID (will be set by GitHub Actions after agent deployment)')
+param aiFoundryAgentId string = 'placeholder-agent-id'
+
+@description('AI Foundry agent name')
+param aiFoundryAgentName string = 'AI in A Box'
 
 @description('AI Foundry resource group name for RBAC assignment')
 param aiFoundryResourceGroupName string = 'rg-foundry-dev-eus'
@@ -114,13 +116,21 @@ var newLogAnalyticsResourceGroupName = 'rg-${logAnalyticsNameSuffix}'
 var newLogAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
 
 // AI Foundry resource group - either create new or use existing
-var effectiveAiFoundryResourceGroupName = createAiFoundryResourceGroup ? newAiFoundryResourceGroupName : aiFoundryResourceGroupName
+var effectiveAiFoundryResourceGroupName = createAiFoundryResourceGroup
+  ? newAiFoundryResourceGroupName
+  : aiFoundryResourceGroupName
 
 // Log Analytics resource group - either create new or use existing
-var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroupName : logAnalyticsResourceGroupName
+var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace
+  ? newLogAnalyticsResourceGroupName
+  : logAnalyticsResourceGroupName
 
 // Log Analytics workspace name - either create new or use existing
-var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace ? newLogAnalyticsWorkspaceName : logAnalyticsWorkspaceName
+var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace
+  ? newLogAnalyticsWorkspaceName
+  : logAnalyticsWorkspaceName
+
+
 
 // =========== RESOURCE GROUPS ===========
 
@@ -212,12 +222,14 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
   // EXPLICIT DEPENDENCY REQUIRED: Conditional dependencies cannot be automatically inferred by Bicep
   // when the dependency itself is conditionally deployed. We need explicit dependsOn to ensure
   // Log Analytics workspace is fully created before Application Insights tries to reference it.
-  dependsOn: createLogAnalyticsWorkspace ? [
-    frontendResourceGroup
-    logAnalyticsWorkspace  // Only depend on Log Analytics workspace if we're creating it
-  ] : [
-    frontendResourceGroup
-  ]
+  dependsOn: createLogAnalyticsWorkspace
+    ? [
+        frontendResourceGroup
+        logAnalyticsWorkspace // Only depend on Log Analytics workspace if we're creating it
+      ]
+    : [
+        frontendResourceGroup
+      ]
   params: {
     environmentName: environmentName
     applicationName: applicationName
@@ -238,12 +250,14 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
   scope: resourceGroup(backendResourceGroupName)
   // EXPLICIT DEPENDENCY REQUIRED: Same as frontend - conditional dependencies for Log Analytics
   // workspace cannot be automatically inferred when the workspace itself is conditionally deployed.
-  dependsOn: createLogAnalyticsWorkspace ? [
-    backendResourceGroup
-    logAnalyticsWorkspace  // Only depend on Log Analytics workspace if we're creating it
-  ] : [
-    backendResourceGroup
-  ]
+  dependsOn: createLogAnalyticsWorkspace
+    ? [
+        backendResourceGroup
+        logAnalyticsWorkspace // Only depend on Log Analytics workspace if we're creating it
+      ]
+    : [
+        backendResourceGroup
+      ]
   params: {
     environmentName: environmentName
     applicationName: applicationName
@@ -252,9 +266,10 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
     logAnalyticsResourceGroupName: effectiveLogAnalyticsResourceGroupName
     aiFoundryInstanceName: aiFoundryResourceName
     aiFoundryResourceGroupName: aiFoundryResourceGroupName
-    aiFoundryAgentId: aiFoundryAgentId
     aiFoundryEndpoint: aiFoundryEndpoint
+    aiFoundryAgentId: aiFoundryAgentId
     aiFoundryAgentName: aiFoundryAgentName
+    // Agent ID and Name will be set by GitHub Actions deployment step
     tags: union(tags, {
       Component: 'Backend'
     })
@@ -285,57 +300,27 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
   }
 }
 
-// =========== AI FOUNDRY AGENT DEPLOYMENT ===========
-
-// Deploy AI Foundry agent using deployment script (runs after infrastructure is deployed)
-// This runs regardless of whether AI Foundry resource group is new or existing
-// to ensure agent exists and instructions are up to date
-module agentDeployment 'modules/agent-deployment.bicep' = {
-  name: 'agent-deployment'
-  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
-  dependsOn: [
-    backendInfrastructure
-    // Add conditional dependency on AI Foundry infrastructure if we created it
-    createAiFoundryResourceGroup ? aiFoundryInfrastructure : null
-  ]
-  params: {
-    location: location
-    aiFoundryEndpoint: aiFoundryEndpoint
-    agentName: aiFoundryAgentName
-    tags: union(tags, {
-      Component: 'AI-Foundry-Agent'
-      Purpose: 'AgentDeployment'
-    })
-  }
-}
-
-// Grant the deployment script's managed identity Azure AI Developer role on the AI Foundry resource
-// This RBAC assignment will complete before the script execution starts due to forceUpdateTag dependency
-module agentDeploymentRbac 'modules/rbac-assignment.bicep' = {
-  name: 'agent-deployment-rbac'
-  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
-  params: {
-    principalId: agentDeployment.outputs.deploymentScriptIdentity.principalId
-    roleDefinitionId: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
-    principalType: 'ServicePrincipal'
-    targetResourceId: createAiFoundryResourceGroup 
-      ? aiFoundryInfrastructure.outputs.cognitiveServicesId
-      : resourceId(aiFoundrySubscriptionId, aiFoundryResourceGroupName, 'Microsoft.CognitiveServices/accounts', aiFoundryResourceName)
-    roleDescription: 'Allow agent deployment script to create/update AI Foundry agents'
-  }
-}
-
 // =========== VALIDATION ===========
 
 // Validate AI Foundry resource group naming standard
-var aiFoundryRgNameValid = startsWith(aiFoundryResourceGroupName, 'rg-') && contains(aiFoundryResourceGroupName, '-ai') || contains(aiFoundryResourceGroupName, '-foundry') || contains(aiFoundryResourceGroupName, '-aifoundry')
+var aiFoundryRgNameValid = startsWith(aiFoundryResourceGroupName, 'rg-') && contains(aiFoundryResourceGroupName, '-ai') || contains(
+  aiFoundryResourceGroupName,
+  '-foundry'
+) || contains(aiFoundryResourceGroupName, '-aifoundry')
 
 // Validate Log Analytics resource group naming standard  
-var logAnalyticsRgNameValid = startsWith(logAnalyticsResourceGroupName, 'rg-') && contains(logAnalyticsResourceGroupName, '-log')
+var logAnalyticsRgNameValid = startsWith(logAnalyticsResourceGroupName, 'rg-') && contains(
+  logAnalyticsResourceGroupName,
+  '-log'
+)
 
 // Display warnings for non-standard naming (these will show as outputs)
-var aiFoundryNamingWarning = aiFoundryRgNameValid ? '' : 'WARNING: AI Foundry resource group name does not follow standard: rg-*-ai*|foundry*|aifoundry*'
-var logAnalyticsNamingWarning = logAnalyticsRgNameValid ? '' : 'WARNING: Log Analytics resource group name does not follow standard: rg-*-log*'
+var aiFoundryNamingWarning = aiFoundryRgNameValid
+  ? ''
+  : 'WARNING: AI Foundry resource group name does not follow standard: rg-*-ai*|foundry*|aifoundry*'
+var logAnalyticsNamingWarning = logAnalyticsRgNameValid
+  ? ''
+  : 'WARNING: Log Analytics resource group name does not follow standard: rg-*-log*'
 
 // =========== VALIDATION OUTPUTS ===========
 
@@ -396,41 +381,33 @@ output frontendStaticWebsiteUrl string = frontendInfrastructure.outputs.staticWe
 @description('Frontend Static Web App Name')
 output frontendStaticWebAppName string = frontendInfrastructure.outputs.staticWebAppName
 
+@description('AI Foundry Endpoint URL')
+output aiFoundryEndpoint string = aiFoundryEndpoint
+
 @description('AI Foundry Resource Group Name')
-output aiFoundryResourceGroupName string = createAiFoundryResourceGroup ? newAiFoundryResourceGroup.outputs.name : aiFoundryResourceGroupName
+output aiFoundryResourceGroupName string = createAiFoundryResourceGroup
+  ? newAiFoundryResourceGroup.outputs.name
+  : aiFoundryResourceGroupName
 
 @description('AI Foundry Resource Group Location')
-output aiFoundryResourceGroupLocation string = createAiFoundryResourceGroup ? newAiFoundryResourceGroup.outputs.location : location
+output aiFoundryResourceGroupLocation string = createAiFoundryResourceGroup
+  ? newAiFoundryResourceGroup.outputs.location
+  : location
 
 @description('Log Analytics Resource Group Name')
-output logAnalyticsResourceGroupName string = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroup.outputs.name : logAnalyticsResourceGroup.name
+output logAnalyticsResourceGroupName string = createLogAnalyticsWorkspace
+  ? newLogAnalyticsResourceGroup.outputs.name
+  : logAnalyticsResourceGroup.name
 
 @description('Log Analytics Workspace Name (when created)')
-output logAnalyticsWorkspaceName string = createLogAnalyticsWorkspace 
-  ? logAnalyticsWorkspace.outputs.workspaceName 
+output logAnalyticsWorkspaceName string = createLogAnalyticsWorkspace
+  ? logAnalyticsWorkspace.outputs.workspaceName
   : effectiveLogAnalyticsWorkspaceName
 
 @description('Log Analytics Workspace ID (when created)')
-output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace 
-  ? logAnalyticsWorkspace.outputs.workspaceId 
-  : ''
+output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace ? logAnalyticsWorkspace.outputs.workspaceId : ''
 
 @description('Log Analytics Resource Group Location')
-output logAnalyticsResourceGroupLocation string = createLogAnalyticsWorkspace ? newLogAnalyticsResourceGroup.outputs.location : logAnalyticsResourceGroup.location
-
-@description('Agent Deployment Status')
-output agentDeploymentStatus object = agentDeployment.outputs.deploymentStatus
-
-@description('Agent Deployment Script Name')
-output agentDeploymentScriptName string = agentDeployment.outputs.deploymentScriptName
-
-@description('Agent Deployment RBAC Assignment Status')
-output agentDeploymentRbacStatus object = {
-  roleAssignmentId: agentDeploymentRbac.outputs.roleAssignmentId
-  principalId: agentDeploymentRbac.outputs.principalId
-  roleDefinitionId: agentDeploymentRbac.outputs.roleDefinitionId
-  targetResourceId: createAiFoundryResourceGroup 
-    ? aiFoundryInfrastructure.outputs.cognitiveServicesId
-    : resourceId(aiFoundrySubscriptionId, aiFoundryResourceGroupName, 'Microsoft.CognitiveServices/accounts', aiFoundryResourceName)
-  description: 'Azure AI Developer role granted to deployment script managed identity'
-}
+output logAnalyticsResourceGroupLocation string = createLogAnalyticsWorkspace
+  ? newLogAnalyticsResourceGroup.outputs.location
+  : logAnalyticsResourceGroup.location

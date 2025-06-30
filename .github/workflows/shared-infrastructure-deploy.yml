@@ -43,6 +43,9 @@ on:
       backend-function-app-name:
         description: 'Backend Function App Name'
         value: ${{ jobs.deploy-infrastructure.outputs.backend-function-app-name }}
+      ai-foundry-endpoint:
+        description: 'AI Foundry Endpoint URL'
+        value: ${{ jobs.deploy-infrastructure.outputs.ai-foundry-endpoint }}
       deployment-status:
         description: 'Deployment Status'
         value: ${{ jobs.deploy-infrastructure.outputs.deployment-status }}
@@ -59,6 +62,7 @@ jobs:
       backend-function-app-url: ${{ steps.extract-outputs.outputs.backend-function-app-url }}
       frontend-static-web-app-name: ${{ steps.extract-outputs.outputs.frontend-static-web-app-name }}
       backend-function-app-name: ${{ steps.extract-outputs.outputs.backend-function-app-name }}
+      ai-foundry-endpoint: ${{ steps.extract-outputs.outputs.ai-foundry-endpoint }}
       deployment-status: ${{ steps.deploy.outputs.deployment-status }}
     
     steps:
@@ -173,6 +177,7 @@ jobs:
         BACKEND_URL=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendFunctionAppUrl.value // "not-found"')
         FRONTEND_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.frontendStaticWebAppName.value // "not-found"')
         BACKEND_APP_NAME=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.backendFunctionAppName.value // "not-found"')
+        AI_FOUNDRY_ENDPOINT=$(echo "$DEPLOYMENT_OUTPUTS" | jq -r '.aiFoundryEndpoint.value // "not-found"')
         
         # Set outputs
         echo "frontend-resource-group-name=$FRONTEND_RG" >> $GITHUB_OUTPUT
@@ -181,6 +186,7 @@ jobs:
         echo "backend-function-app-url=$BACKEND_URL" >> $GITHUB_OUTPUT
         echo "frontend-static-web-app-name=$FRONTEND_APP_NAME" >> $GITHUB_OUTPUT
         echo "backend-function-app-name=$BACKEND_APP_NAME" >> $GITHUB_OUTPUT
+        echo "ai-foundry-endpoint=$AI_FOUNDRY_ENDPOINT" >> $GITHUB_OUTPUT
         
         echo "✅ Successfully extracted deployment outputs:"
         echo "  - Frontend Resource Group: $FRONTEND_RG"
@@ -189,6 +195,7 @@ jobs:
         echo "  - Backend URL: $BACKEND_URL"
         echo "  - Frontend Static Web App Name: $FRONTEND_APP_NAME"
         echo "  - Backend Function App Name: $BACKEND_APP_NAME"
+        echo "  - AI Foundry Endpoint: $AI_FOUNDRY_ENDPOINT"
         echo "  - Frontend URL: $FRONTEND_URL"
         echo "  - Backend URL: $BACKEND_URL"
     
