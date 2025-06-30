@@ -427,7 +427,7 @@ try {
     
     $agentPayload = $agentPayload | ConvertTo-Json -Depth 10
     
-    Write-Log "✅ Agent payload prepared from YAML ($(($agentPayload).name))" -Level "Information"
+    Write-Log "✅ Agent payload prepared from YAML ($AgentName)" -Level "Information"
     Write-Log "🔧 Tools count: $($agentConfig.tools.Count)" -Level "Verbose"
     Write-Log "📋 Metadata entries: $($enhancedMetadata.Count)" -Level "Verbose"
     
