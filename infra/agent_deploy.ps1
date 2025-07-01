@@ -579,8 +579,6 @@ try {
             
             # Output results for consumption by Bicep deployment script
             Write-Host "AGENT_DEPLOYMENT_RESULT: $($result | ConvertTo-Json -Compress)" -ForegroundColor Green
-            
-            return $result
         }
         else {
             throw "Agent operation succeeded but no agent ID returned in response"
