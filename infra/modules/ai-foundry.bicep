@@ -38,7 +38,10 @@ param projectName string = 'AI in A Box Project'
 param projectDescription string = 'AI in A Box foundry project with GPT-4o-mini model deployment'
 
 @description('Function App system-assigned managed identity principal ID for RBAC')
-param functionAppPrincipalId string
+param functionAppPrincipalId string = ''
+
+@description('Deploy RBAC assignment for Function App access')
+param deployRbac bool = false
 
 @description('Principal type for RBAC assignment')
 @allowed(['User', 'Group', 'ServicePrincipal'])
@@ -130,7 +133,7 @@ resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-pre
 }
 
 // RBAC Assignment: Grant Function App "Azure AI Developer" role on Cognitive Services
-module functionAppRbac 'rbac-assignment.bicep' = {
+module functionAppRbac 'rbac-assignment.bicep' = if (deployRbac && !empty(functionAppPrincipalId)) {
   name: 'function-app-ai-foundry-rbac'
   params: {
     principalId: functionAppPrincipalId
@@ -160,6 +163,9 @@ output modelEndpoint string = '${cognitiveServices.properties.endpoint}openai/de
 
 @description('AI Foundry Studio URL for project management')
 output aiFoundryStudioUrl string = 'https://ai.azure.com/projects/${aiProject.name}/overview'
+
+@description('AI Foundry endpoint URL for API calls')
+output aiFoundryEndpoint string = '${cognitiveServices.properties.endpoint}api/projects/${aiProject.name}'
 
 @description('Cognitive Services resource ID')
 output cognitiveServicesId string = cognitiveServices.id

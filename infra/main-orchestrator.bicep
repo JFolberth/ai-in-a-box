@@ -56,9 +56,6 @@ param logAnalyticsWorkspaceRetentionInDays int = 90
 
 // Note: AI Foundry agent deployment moved to GitHub Actions workflow step
 
-@description('AI Foundry endpoint URL for API calls')
-param aiFoundryEndpoint string = 'https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject'
-
 @description('AI Foundry agent ID (will be set by GitHub Actions after agent deployment)')
 param aiFoundryAgentId string = 'placeholder-agent-id'
 
@@ -70,6 +67,9 @@ param aiFoundryResourceGroupName string = 'rg-foundry-dev-eus'
 
 @description('AI Foundry resource name for RBAC assignment')
 param aiFoundryResourceName string = 'ai-foundry-dev-eus'
+
+@description('AI Foundry project name (for existing resources)')
+param aiFoundryProjectName string = 'firstProject'
 
 @description('AI Foundry subscription ID - defaults to current deployment subscription')
 param aiFoundrySubscriptionId string = subscription().subscriptionId
@@ -129,6 +129,11 @@ var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace
 var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace
   ? newLogAnalyticsWorkspaceName
   : logAnalyticsWorkspaceName
+
+// AI Foundry endpoint - either from deployed infrastructure or existing resource
+var effectiveAiFoundryEndpoint = createAiFoundryResourceGroup
+  ? aiFoundryInfrastructure.outputs.aiFoundryEndpoint
+  : '${existingCognitiveServices.properties.endpoint}api/projects/${aiFoundryProjectName}'
 
 
 
@@ -194,6 +199,14 @@ resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-0
   scope: subscription()
 }
 
+// =========== AI FOUNDRY REFERENCES (OPTIONAL) ===========
+
+// Reference to existing Cognitive Services resource (when not creating new)
+resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = if (!createAiFoundryResourceGroup) {
+  name: aiFoundryResourceName
+  scope: resourceGroup(aiFoundryResourceGroupName)
+}
+
 // Create Log Analytics workspace (conditionally creates both resource group and workspace)
 module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyticsWorkspace) {
   name: 'shared-log-analytics'
@@ -242,40 +255,6 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
   }
 }
 
-// =========== BACKEND DEPLOYMENT ===========
-
-// Deploy backend infrastructure (Function App + Application Insights)
-module backendInfrastructure 'environments/backend/main.bicep' = {
-  name: 'backend-deployment'
-  scope: resourceGroup(backendResourceGroupName)
-  // EXPLICIT DEPENDENCY REQUIRED: Same as frontend - conditional dependencies for Log Analytics
-  // workspace cannot be automatically inferred when the workspace itself is conditionally deployed.
-  dependsOn: createLogAnalyticsWorkspace
-    ? [
-        backendResourceGroup
-        logAnalyticsWorkspace // Only depend on Log Analytics workspace if we're creating it
-      ]
-    : [
-        backendResourceGroup
-      ]
-  params: {
-    environmentName: environmentName
-    applicationName: applicationName
-    location: location
-    logAnalyticsWorkspaceName: effectiveLogAnalyticsWorkspaceName
-    logAnalyticsResourceGroupName: effectiveLogAnalyticsResourceGroupName
-    aiFoundryInstanceName: aiFoundryResourceName
-    aiFoundryResourceGroupName: aiFoundryResourceGroupName
-    aiFoundryEndpoint: aiFoundryEndpoint
-    aiFoundryAgentId: aiFoundryAgentId
-    aiFoundryAgentName: aiFoundryAgentName
-    // Agent ID and Name will be set by GitHub Actions deployment step
-    tags: union(tags, {
-      Component: 'Backend'
-    })
-  }
-}
-
 // =========== AI FOUNDRY DEPLOYMENT ===========
 
 // Deploy AI Foundry infrastructure (Cognitive Services + AI Project + Model)
@@ -291,12 +270,72 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
     tags: union(tags, {
       Component: 'AI-Foundry'
     })
-    functionAppPrincipalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
+    // RBAC will be assigned separately after backend deployment
+    deployRbac: false
     modelDeploymentName: aiFoundryModelDeploymentName
     modelVersion: aiFoundryModelVersion
     deploymentCapacity: aiFoundryDeploymentCapacity
     projectName: aiFoundryProjectDisplayName
     projectDescription: aiFoundryProjectDescription
+  }
+}
+
+// =========== BACKEND DEPLOYMENT ===========
+
+// Deploy backend infrastructure (Function App + Application Insights)
+module backendInfrastructure 'environments/backend/main.bicep' = {
+  name: 'backend-deployment'
+  scope: resourceGroup(backendResourceGroupName)
+  // EXPLICIT DEPENDENCY REQUIRED: Backend needs AI Foundry endpoint when creating new AI Foundry resources
+  dependsOn: createLogAnalyticsWorkspace && createAiFoundryResourceGroup
+    ? [
+        backendResourceGroup
+        logAnalyticsWorkspace
+        aiFoundryInfrastructure
+      ]
+    : createLogAnalyticsWorkspace && !createAiFoundryResourceGroup
+    ? [
+        backendResourceGroup
+        logAnalyticsWorkspace
+      ]
+    : !createLogAnalyticsWorkspace && createAiFoundryResourceGroup
+    ? [
+        backendResourceGroup
+        aiFoundryInfrastructure
+      ]
+    : [
+        backendResourceGroup
+      ]
+  params: {
+    environmentName: environmentName
+    applicationName: applicationName
+    location: location
+    logAnalyticsWorkspaceName: effectiveLogAnalyticsWorkspaceName
+    logAnalyticsResourceGroupName: effectiveLogAnalyticsResourceGroupName
+    aiFoundryInstanceName: aiFoundryResourceName
+    aiFoundryResourceGroupName: aiFoundryResourceGroupName
+    aiFoundryEndpoint: effectiveAiFoundryEndpoint
+    aiFoundryAgentId: aiFoundryAgentId
+    aiFoundryAgentName: aiFoundryAgentName
+    // Agent ID and Name will be set by GitHub Actions deployment step
+    tags: union(tags, {
+      Component: 'Backend'
+    })
+  }
+}
+
+// =========== RBAC ASSIGNMENT ===========
+
+// Deploy RBAC assignment for Function App to access AI Foundry (after both are deployed)
+module aiFoundryRbac 'modules/rbac-assignment.bicep' = if (createAiFoundryResourceGroup) {
+  name: 'aifoundry-rbac-assignment'
+  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
+  params: {
+    principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
+    roleDefinitionId: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer role
+    principalType: 'ServicePrincipal'
+    targetResourceId: aiFoundryInfrastructure.outputs.cognitiveServicesId
+    roleDescription: 'Grants Function App least-privilege access to AI Foundry Cognitive Services'
   }
 }
 
@@ -335,10 +374,9 @@ output logAnalyticsNamingValidation string = logAnalyticsNamingWarning
 @description('AI Foundry Configuration')
 output aiFoundryConfig object = {
   agentName: aiFoundryAgentName
-  endpoint: aiFoundryEndpoint
+  endpoint: effectiveAiFoundryEndpoint
   subscriptionId: aiFoundrySubscriptionId
   resourceGroup: effectiveAiFoundryResourceGroupName
-
   projectName: aiFoundryProjectDisplayName
 }
 
@@ -364,7 +402,7 @@ output frontendApplicationInsightsConnectionString string = frontendInfrastructu
 output frontendEnvironmentVariables object = {
   VITE_AI_FOUNDRY_AGENT_NAME: aiFoundryAgentName
   VITE_AI_FOUNDRY_AGENT_ID: aiFoundryAgentId
-  VITE_AI_FOUNDRY_ENDPOINT: aiFoundryEndpoint
+  VITE_AI_FOUNDRY_ENDPOINT: effectiveAiFoundryEndpoint
   VITE_BACKEND_URL: backendInfrastructure.outputs.backendApiUrl
   VITE_USE_BACKEND: 'true'
   VITE_PUBLIC_MODE: 'false'
@@ -382,7 +420,7 @@ output frontendStaticWebsiteUrl string = frontendInfrastructure.outputs.staticWe
 output frontendStaticWebAppName string = frontendInfrastructure.outputs.staticWebAppName
 
 @description('AI Foundry Endpoint URL')
-output aiFoundryEndpoint string = aiFoundryEndpoint
+output aiFoundryEndpoint string = effectiveAiFoundryEndpoint
 
 @description('AI Foundry Resource Group Name')
 output aiFoundryResourceGroupName string = createAiFoundryResourceGroup
