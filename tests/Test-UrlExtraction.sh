@@ -8,11 +8,11 @@ echo "🧪 Testing URL extraction logic..."
 MOCK_DEPLOYMENT_OUTPUTS='{
   "functionAppUrl": {
     "type": "String",
-    "value": "https://func-ai-foundry-spa-backend-test-001.azurewebsites.net"
+    "value": "https://func-ai-foundry-spa-backend-test-eus2.azurewebsites.net"
   },
   "functionAppName": {
     "type": "String", 
-    "value": "func-ai-foundry-spa-backend-test-001"
+    "value": "func-ai-foundry-spa-backend-test-eus2"
   },
   "staticWebsiteUrl": {
     "type": "String",

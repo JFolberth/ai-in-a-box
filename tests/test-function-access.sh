@@ -19,11 +19,11 @@
 #   -h, --help                 Show help message
 #
 # EXAMPLES:
-#   ./test-function-access.sh -g "rg-ai-foundry-spa-backend-dev-001" -f "func-ai-foundry-spa-backend-dev-001" -s "staifondryspabackdev001"
+#   ./test-function-access.sh -g "rg-ai-foundry-spa-backend-dev-eus2" -f "func-ai-foundry-spa-backend-dev-eus2" -s "staifoundryspabackdeveus2"
 #
 #   ./test-function-access.sh -g "my-rg" -f "my-func-app" -s "mystorageaccount" -a "/subscriptions/12345/resourceGroups/ai-rg/providers/Microsoft.CognitiveServices/accounts/my-ai-foundry"
 #
-#   /home/runner/work/ai-in-a-box/ai-in-a-box/tests/test-function-access.sh -g "rg-backend" -f "func-app-001" -s "storage001"
+#   /home/runner/work/ai-in-a-box/ai-in-a-box/tests/test-function-access.sh -g "rg-backend" -f "func-app-eus2" -s "storageeus2"
 #
 #   bash test-function-access.sh -g "rg-prod" -f "func-prod-app" -s "prodstorageacct" -a "/subscriptions/abcd/resourceGroups/ai-prod/providers/Microsoft.CognitiveServices/accounts/ai-prod-foundry"
 #

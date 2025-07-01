@@ -27,7 +27,7 @@ The full resource ID of the AI Foundry resource (optional). If provided, tests A
 ./Test-FunctionAppAccess.ps1 -ResourceGroupName "my-rg" -FunctionAppName "my-func-app" -StorageAccountName "mystorageaccount" -AIFoundryResourceId "/subscriptions/12345/resourceGroups/ai-rg/providers/Microsoft.CognitiveServices/accounts/my-ai-foundry"
 
 .EXAMPLE
-& "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionAppAccess.ps1" -ResourceGroupName "rg-backend" -FunctionAppName "func-app-eus2" -StorageAccountName "storage001"
+& "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionAppAccess.ps1" -ResourceGroupName "rg-backend" -FunctionAppName "func-app-eus2" -StorageAccountName "storageeus2"
 
 .EXAMPLE
 ./Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-prod" -FunctionAppName "func-prod-app" -StorageAccountName "prodstorageacct" -AIFoundryResourceId "/subscriptions/abcd/resourceGroups/ai-prod/providers/Microsoft.CognitiveServices/accounts/ai-prod-foundry"
