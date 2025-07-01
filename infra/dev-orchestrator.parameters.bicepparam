@@ -4,7 +4,7 @@ using 'main-orchestrator.bicep'
 param aiFoundryProjectDisplayName = 'AI in A Box Project (s)'
 param aiFoundryResourceName = 'cs-ai-foundry-dev-eus2'
 param aiFoundryResourceGroupName = 'rg-ai-foundry-spa-aifoundry-dev-eus2'
-param aiFoundryProjectName = 'exampleProject'
+//param aiFoundryProjectName = 'exampleProject'
 param aiFoundryAgentId = 'asst_r1FkmYZ9CPLMRDsJYhzzoVGa'
 param aiFoundryAgentName = 'AI In A Box'
 // aiFoundrySubscriptionId will use subscription() function default - no need to specify
