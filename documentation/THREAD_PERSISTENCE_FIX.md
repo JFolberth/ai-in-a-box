@@ -58,7 +58,7 @@ POST /api/sendMessage { message: "What about side effects?", threadId: "thread_x
 6. **Check Function App logs**: Real AI Foundry polling and response retrieval
 
 ### **Production Testing**
-1. **Open**: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
+1. **Open**: https://stapp-ai-foundry-spa-frontend-dev-eus2.azurestaticapps.net/
 2. **Test conversation flow**: Multiple messages with context retention
 3. **Verify responses**: Real AI responses with conversation memory
 
@@ -68,7 +68,7 @@ POST /api/sendMessage { message: "What about side effects?", threadId: "thread_x
 ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 # Test production endpoints  
-../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 ```
 
 ## 🔍 **Console Output Example**

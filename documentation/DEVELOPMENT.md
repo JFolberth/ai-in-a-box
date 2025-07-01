@@ -160,13 +160,13 @@ When infrastructure is already deployed (via ADE or Azure Bicep), use these simp
 ```powershell
 # Required parameters (no defaults or auto-detection)
 ./deploy-scripts/deploy-backend-func-code.ps1 `
-    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
-    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2"
 
 # Optional parameters
 ./deploy-scripts/deploy-backend-func-code.ps1 `
-    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
-    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001" `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2" `
     -SkipBuild `
     -SkipTest
 ```
@@ -184,18 +184,18 @@ When infrastructure is already deployed (via ADE or Azure Bicep), use these simp
 # Required parameters (no defaults or auto-detection)
 ./deploy-scripts/deploy-frontend-spa-code.ps1 `
     -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2"
 
 # With backend URL configuration
 ./deploy-scripts/deploy-frontend-spa-code.ps1 `
     -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
-    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
 
 # Skip build if already built
 ./deploy-scripts/deploy-frontend-spa-code.ps1 `
     -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
     -SkipBuild
 ```
 
