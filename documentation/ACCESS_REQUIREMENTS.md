@@ -12,7 +12,7 @@ This document provides comprehensive guidance on the RBAC (Role-Based Access Con
 ### Runtime Identities
 - **Function App → AI Foundry**: `Azure AI Developer` (64702f94-c441-49e6-a78b-ef80e0188fee)
 - **Function App → Storage**: `Storage Blob Data Contributor` (ba92f5b4-2d11-453d-a403-e96b0029c9fe)
-- **Deployment Script → AI Foundry**: `Azure AI Developer` (64702f94-c441-49e6-a78b-ef80e0188fee)
+- **GitHub Actions Service Principal → AI Foundry**: `Azure AI Developer` (64702f94-c441-49e6-a78b-ef80e0188fee)
 
 ## 🎯 Deployment User/Service Principal Requirements
 
@@ -73,6 +73,18 @@ When the AI Foundry resources exist in a different subscription from the deploym
 | **Reader** | AI Foundry Subscription | Access existing AI Foundry resource metadata |
 | **Azure AI Developer** | AI Foundry Resource Group | Enable deployment script to create agents |
 
+### GitHub Actions Service Principal Requirements
+
+For CI/CD pipelines using GitHub Actions, the service principal stored in `AZURE_CREDENTIALS` secret requires:
+
+| Role | Scope | Purpose |
+|------|-------|---------|
+| **Contributor** | Target Subscription | Deploy infrastructure resources |
+| **User Access Administrator** | Target Subscription | Assign RBAC roles during deployment |
+| **Azure AI Developer** | AI Foundry Resource | Deploy and manage AI Foundry agents |
+
+**Note**: The same service principal handles both infrastructure deployment and agent management in GitHub Actions workflows.
+
 ## 🔧 Runtime Identity Requirements
 
 ### Function App Managed Identity Permissions
@@ -102,17 +114,17 @@ The Function App uses a **system-assigned managed identity** to access Azure ser
   - `Microsoft.Storage/storageAccounts/blobServices/containers/write`
   - `Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action`
 
-### Deployment Script Managed Identity Permissions
+### GitHub Actions Service Principal Permissions
 
-The agent deployment script uses a **system-assigned managed identity** created automatically by Azure Resource Manager:
+AI Foundry agent deployment is handled by GitHub Actions workflow using the `infra/agent_deploy.ps1` PowerShell script:
 
 #### AI Foundry Agent Management
 - **Role**: `Azure AI Developer`
 - **Role ID**: `64702f94-c441-49e6-a78b-ef80e0188fee`
 - **Scope**: Specific AI Foundry Cognitive Services account
-- **Assigned By**: `modules/rbac-assignment.bicep`
-- **Purpose**: Create and update AI Foundry agents via REST API
-- **Lifecycle**: Identity and role assignment are automatically cleaned up when deployment script completes
+- **Assigned By**: Manual assignment or infrastructure deployment
+- **Purpose**: Create and update AI Foundry agents via REST API in GitHub Actions
+- **Authentication**: Uses service principal credentials from `AZURE_CREDENTIALS` secret
 
 ## 📊 Component Access Matrix
 
@@ -144,12 +156,13 @@ The agent deployment script uses a **system-assigned managed identity** created 
 | AI Project | AI Foundry RG | Contributor* | Resource Group | Deployment User |
 | Model Deployment | AI Foundry RG | Contributor* | Resource Group | Deployment User |
 
-### Agent Deployment (`modules/agent-deployment.bicep`)
+### GitHub Actions Agent Deployment
 
 | Azure Resource | Target Resource | Required Role | Scope | Assigned To |
 |----------------|-----------------|---------------|-------|-------------|
-| Deployment Script | AI Foundry RG | Contributor* | Resource Group | Deployment User |
-| **Script Identity** | **AI Foundry Resource** | **Azure AI Developer** | **Cognitive Services Account** | **Deployment Script Identity** |
+| **GitHub Actions** | **AI Foundry Resource** | **Azure AI Developer** | **Cognitive Services Account** | **Service Principal (AZURE_CREDENTIALS)** |
+
+*Note: Agent deployment is now handled by GitHub Actions workflow using `infra/agent_deploy.ps1` PowerShell script*
 
 ## 🔒 Security Best Practices
 
@@ -180,11 +193,13 @@ graph LR
     E --> B
     E --> C
     E --> D
+    F[GitHub Actions SP] --> C
 ```
 
 **Security Considerations**:
 - Function App in Backend RG needs access to AI Foundry in separate RG
 - Cross-RG RBAC assignments require `User Access Administrator` role
+- GitHub Actions service principal needs `Azure AI Developer` access to AI Foundry for agent deployment
 - Each component maintains isolation while enabling necessary integration
 
 ### Role Assignment Naming
@@ -241,14 +256,15 @@ The deployment uses multiple AVM modules from the public registry:
 - [ ] **Monitoring setup**: Log Analytics workspace exists or will be created
 - [ ] **Backup strategy**: Backup policies for critical resources defined
 
-### For CI/CD Pipelines
+### For CI/CD Pipelines (GitHub Actions)
 
-- [ ] **Service Principal authentication**: Pipeline service principal properly configured
-- [ ] **Secret management**: Sensitive parameters stored in Azure Key Vault or secure variables
+- [ ] **Service Principal authentication**: GitHub Actions service principal properly configured
+- [ ] **AZURE_CREDENTIALS secret**: GitHub secret contains valid service principal credentials
+- [ ] **AI Foundry permissions**: Service principal has `Azure AI Developer` role on AI Foundry resource
+- [ ] **Secret management**: Sensitive parameters stored in GitHub secrets or Azure Key Vault
 - [ ] **Environment isolation**: Separate service principals for dev/staging/prod
-- [ ] **RBAC assignment automation**: Pipeline can assign roles automatically
-- [ ] **Deployment validation**: Testing procedures for RBAC assignments
-- [ ] **Rollback capability**: Can revert role assignments if deployment fails
+- [ ] **Agent deployment permissions**: Service principal can create/update AI Foundry agents
+- [ ] **Workflow validation**: Test GitHub Actions workflow with agent deployment
 
 ## 🔍 Troubleshooting Common Permission Issues
 
@@ -314,23 +330,25 @@ Error: The template reference 'br/public:avm/res/web/site:0.16.0' is not valid
 2. Test registry access: `az acr repository list --name mcr.microsoft.com`
 3. Verify module version: Check [AVM documentation](https://azure.github.io/Azure-Verified-Modules/)
 
-### Issue: "Deployment script execution failed"
+### Issue: "GitHub Actions agent deployment failed"
 
 **Symptoms**:
 ```
-Error: Deployment script 'agent-deployment-script' failed with exit code 1
+Error: Agent deployment script failed in GitHub Actions workflow
 ```
 
 **Cause**: 
-- Deployment script managed identity lacks AI Foundry permissions
-- AI Foundry endpoint URL incorrect
-- Agent creation API call failed
+- GitHub Actions service principal lacks AI Foundry permissions
+- AI Foundry endpoint URL incorrect in workflow
+- AZURE_CREDENTIALS secret invalid or expired
+- Agent configuration YAML invalid
 
 **Solution**:
-1. Check deployment script logs in Azure Portal
-2. Verify AI Foundry endpoint URL format
-3. Confirm deployment script identity has `Azure AI Developer` role
-4. Test API endpoint manually: `curl -H "Authorization: Bearer <token>" <ai-foundry-endpoint>`
+1. Check GitHub Actions logs for detailed error messages
+2. Verify AZURE_CREDENTIALS secret is valid: Test with `az login --service-principal`
+3. Confirm service principal has `Azure AI Developer` role on AI Foundry resource
+4. Validate AI Foundry endpoint URL format in workflow outputs
+5. Test agent configuration YAML syntax and content
 
 ## 📚 Microsoft Documentation References
 
