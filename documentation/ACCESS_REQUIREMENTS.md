@@ -32,37 +32,24 @@ The deployment user (human user or service principal running the deployment) req
 | **Contributor** | `b24988ac-6180-42a0-ab88-20f7382dd24c` | Target Subscription | Create and manage all Azure resources |
 | **User Access Administrator** | `18d7d88d-d35e-4fb5-a5c3-7773c20a72d9` | Target Subscription | Assign RBAC roles across resource groups |
 
-#### Alternative: Custom Role with Minimal Permissions
+#### Alternative: Combination of Built-in Roles for Enterprise Environments
 
-For enterprise environments requiring least privilege, create a custom role with these specific permissions:
+For enterprise environments requiring more granular control, use this combination of built-in roles instead of creating custom roles:
 
-```json
-{
-  "roleName": "AI Foundry SPA Deployer",
-  "description": "Custom role for AI Foundry SPA infrastructure deployment",
-  "assignableScopes": ["/subscriptions/{subscription-id}"],
-  "permissions": [
-    {
-      "actions": [
-        "Microsoft.Resources/subscriptions/resourceGroups/*",
-        "Microsoft.Web/sites/*",
-        "Microsoft.Web/serverfarms/*",
-        "Microsoft.Storage/storageAccounts/*",
-        "Microsoft.Insights/components/*",
-        "Microsoft.OperationalInsights/workspaces/read",
-        "Microsoft.CognitiveServices/accounts/*",
-        "Microsoft.MachineLearningServices/workspaces/*",
-        "Microsoft.Authorization/roleAssignments/*",
-        "Microsoft.Resources/deployments/*",
-        "Microsoft.Resources/deploymentScripts/*"
-      ],
-      "notActions": [],
-      "dataActions": [],
-      "notDataActions": []
-    }
-  ]
-}
-```
+| Role | Role ID | Scope | Justification |
+|------|---------|-------|---------------|
+| **Contributor** | `b24988ac-6180-42a0-ab88-20f7382dd24c` | Target Subscription | Manage all Azure resources except access management |
+| **User Access Administrator** | `18d7d88d-d35e-4fb5-a5c3-7773c20a72d9` | Target Subscription | Assign RBAC roles across resource groups |
+| **Log Analytics Reader** | `73c42c96-874c-492b-b04d-ab87d138a893` | Log Analytics Subscription/RG | Read access to existing Log Analytics workspaces |
+
+**Benefits of using built-in roles**:
+- ✅ Microsoft maintains and updates role definitions
+- ✅ No custom role management overhead
+- ✅ Consistent across Azure environments
+- ✅ Automatic updates when new Azure services are added
+- ✅ Better compliance and audit trail
+
+**Note**: The `Contributor` role provides comprehensive resource management permissions equivalent to the custom role permissions listed above, while `User Access Administrator` handles RBAC assignments, and `Log Analytics Reader` provides necessary read access to existing Log Analytics workspaces.
 
 ### Cross-Subscription Access (AI Foundry in Different Subscription)
 
@@ -249,7 +236,7 @@ The deployment uses multiple AVM modules from the public registry:
 ### For Production/Enterprise Environments
 
 - [ ] **Service Principal configured**: Deployment service principal has required roles
-- [ ] **Custom roles defined**: Enterprise-specific minimal permission roles created
+- [ ] **Built-in roles assigned**: Required built-in roles (Contributor, User Access Administrator, Log Analytics Reader) assigned appropriately
 - [ ] **Cross-subscription access**: AI Foundry subscription permissions configured
 - [ ] **Network policies**: NSG and firewall rules accommodate Azure service communication
 - [ ] **Compliance approval**: Security team approved cross-resource group RBAC assignments
