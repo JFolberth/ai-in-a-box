@@ -578,7 +578,7 @@ try {
             }
             
             # Output results for consumption by Bicep deployment script
-            Write-Host "AGENT_DEPLOYMENT_RESULT: $($result | ConvertTo-Json -Compress)" -ForegroundColor Green
+            Write-Output "AGENT_DEPLOYMENT_RESULT: $($result | ConvertTo-Json -Compress)"
         }
         else {
             throw "Agent operation succeeded but no agent ID returned in response"
@@ -612,7 +612,7 @@ catch {
         timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
     }
     
-    Write-Host "AGENT_DEPLOYMENT_RESULT: $($failureResult | ConvertTo-Json -Compress)" -ForegroundColor Red
+    Write-Output "AGENT_DEPLOYMENT_RESULT: $($failureResult | ConvertTo-Json -Compress)"
     
     # Exit with error code for Bicep deployment script
     exit 1
