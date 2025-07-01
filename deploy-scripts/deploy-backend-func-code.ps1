@@ -22,10 +22,10 @@ Skip the dotnet build step if the application is already built
 Skip the endpoint testing after deployment
 
 .EXAMPLE
-./deploy-backend-func-code.ps1 -FunctionAppName "func-ai-foundry-spa-backend-dev-001" -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+./deploy-backend-func-code.ps1 -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2"
 
 .EXAMPLE
-./deploy-backend-func-code.ps1 -FunctionAppName "func-ai-foundry-spa-backend-dev-001" -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001" -SkipBuild
+./deploy-backend-func-code.ps1 -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2" -SkipBuild
 
 .EXAMPLE
 ./deploy-backend-func-code.ps1 -FunctionAppName "my-custom-function-app" -ResourceGroupName "my-rg" -SkipBuild -SkipTest

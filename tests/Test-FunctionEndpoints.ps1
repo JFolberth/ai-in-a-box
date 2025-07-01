@@ -20,7 +20,7 @@ Default: http://localhost:7071
 ./Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 .EXAMPLE
-./Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+./Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 .EXAMPLE
 & "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionEndpoints.ps1" -BaseUrl "https://my-function-app.azurewebsites.net"

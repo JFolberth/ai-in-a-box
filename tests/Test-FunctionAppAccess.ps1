@@ -21,13 +21,13 @@ The name of the Storage Account that the Function App should have access to. Req
 The full resource ID of the AI Foundry resource (optional). If provided, tests AI Foundry access permissions.
 
 .EXAMPLE
-./Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001" -FunctionAppName "func-ai-foundry-spa-backend-dev-001" -StorageAccountName "staifondryspabackdev001"
+./Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2" -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" -StorageAccountName "staifoundryspabackdeveus2"
 
 .EXAMPLE
 ./Test-FunctionAppAccess.ps1 -ResourceGroupName "my-rg" -FunctionAppName "my-func-app" -StorageAccountName "mystorageaccount" -AIFoundryResourceId "/subscriptions/12345/resourceGroups/ai-rg/providers/Microsoft.CognitiveServices/accounts/my-ai-foundry"
 
 .EXAMPLE
-& "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionAppAccess.ps1" -ResourceGroupName "rg-backend" -FunctionAppName "func-app-001" -StorageAccountName "storage001"
+& "/home/runner/work/ai-in-a-box/ai-in-a-box/tests/Test-FunctionAppAccess.ps1" -ResourceGroupName "rg-backend" -FunctionAppName "func-app-eus2" -StorageAccountName "storage001"
 
 .EXAMPLE
 ./Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-prod" -FunctionAppName "func-prod-app" -StorageAccountName "prodstorageacct" -AIFoundryResourceId "/subscriptions/abcd/resourceGroups/ai-prod/providers/Microsoft.CognitiveServices/accounts/ai-prod-foundry"
