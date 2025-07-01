@@ -517,6 +517,44 @@ _logger.LogInformation($"Run completed in {elapsed:F1}s");
 - **⚠️ Check for duplicates**: Before creating files or folders, verify no duplicates exist with the same name in the project. If duplicates are detected, prompt for confirmation before proceeding
 - **🚫 Remove unnecessary project files**: Delete .sln files, unnecessary .csproj files, or other IDE-generated files that don't serve the simple SPA + Function App architecture
 
+### 📄 Documentation and Error Handling Guidelines
+
+#### When to Create New Documentation Files
+**✅ CREATE new markdown files for:**
+- **Complex architectural solutions** (e.g., multi-resource group designs, major infrastructure changes)
+- **Significant troubleshooting procedures** that will be reused (e.g., deployment environment setup)
+- **Major feature implementations** with multiple components and considerations
+- **Breaking changes** that affect deployment or development workflows
+- **Cross-cutting concerns** that affect multiple parts of the system
+- **Permanent reference guides** for specific technologies or patterns
+
+**❌ DO NOT create new markdown files for:**
+- **Simple bug fixes** or code corrections
+- **Single-line changes** or minor adjustments
+- **Temporary issues** that are immediately resolved
+- **Environment-specific problems** that don't apply broadly
+- **Individual parameter updates** or configuration tweaks
+- **Standard development tasks** covered by existing documentation
+
+#### Error Resolution Approach
+1. **First**: Fix the actual issue in code
+2. **Then**: Determine if documentation is needed:
+   - **Minor fixes**: Add comments in code, update existing docs if relevant
+   - **Major solutions**: Create comprehensive documentation with context, solution, and prevention
+3. **Update existing files** when possible rather than creating new ones
+4. **Reference solutions** in commit messages and pull requests
+
+#### Examples of Appropriate Documentation
+- ✅ **Complex Infrastructure Changes**: Multi-resource group architecture decisions
+- ✅ **Integration Solutions**: AI Foundry endpoint configuration with security considerations  
+- ✅ **Deployment Patterns**: Environment-specific deployment procedures
+- ✅ **Troubleshooting Guides**: Common deployment failures with step-by-step resolution
+- ❌ **Simple Parameter Fix**: Changing a single Bicep parameter value
+- ❌ **Typo Corrections**: Fixed variable names or function calls
+- ❌ **Version Updates**: Package version bumps or minor dependency changes
+
+**Principle**: Documentation should provide lasting value and reusable knowledge, not track every small change or temporary issue.
+
 ### 📝 GitHub Issue Creation Guidelines
 
 When creating GitHub issues, consider who will be working on them:

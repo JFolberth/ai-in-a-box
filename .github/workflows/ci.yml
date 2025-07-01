@@ -64,10 +64,104 @@ jobs:
       validate-only: false
     secrets: inherit
 
+  deploy-agent:
+    name: Deploy AI Foundry Agent
+    runs-on: ubuntu-latest
+    needs: [deploy-dev-infrastructure]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      agent-id: ${{ steps.deploy-agent.outputs.agent-id }}
+      agent-name: ${{ steps.deploy-agent.outputs.agent-name }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Validate AI Foundry Infrastructure
+      run: |
+        echo "🔍 Validating AI Foundry infrastructure outputs..."
+        
+        AI_FOUNDRY_ENDPOINT="${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}"
+        
+        if [ "$AI_FOUNDRY_ENDPOINT" = "not-found" ] || [ -z "$AI_FOUNDRY_ENDPOINT" ]; then
+          echo "❌ AI Foundry endpoint not found in infrastructure outputs"
+          exit 1
+        fi
+        
+        echo "✅ AI Foundry infrastructure validated:"
+        echo "  - Endpoint: $AI_FOUNDRY_ENDPOINT"
+        
+    - name: Deploy AI Foundry Agent
+      id: deploy-agent
+      shell: pwsh
+      run: |
+        Write-Host "🤖 Deploying AI Foundry agent..."
+        
+        # Set environment variables for the script
+        $env:AI_FOUNDRY_ENDPOINT = "${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}"
+        $env:AGENT_NAME = "AI in A Box"
+        $env:AGENT_YAML_CONTENT = Get-Content -Path "src/agent/ai_in_a_box.yaml" -Raw
+        
+        # Execute the agent deployment script
+        $output = & "./infra/agent_deploy.ps1" 2>&1
+        
+        # Capture the script output
+        Write-Host "Script output:"
+        Write-Host $output
+        
+        # Look for the AGENT_DEPLOYMENT_RESULT line in the output
+        $resultLine = $output | Where-Object { $_ -match "AGENT_DEPLOYMENT_RESULT:" }
+        
+        if ($resultLine) {
+          $jsonPart = $resultLine -replace ".*AGENT_DEPLOYMENT_RESULT:\s*", ""
+          Write-Host "Found result: $jsonPart"
+          
+          # Parse the JSON result
+          $result = $jsonPart | ConvertFrom-Json
+          
+          if ($result.success) {
+            Write-Host "✅ Agent deployment successful!"
+            Write-Host "Agent ID: $($result.agentId)"
+            Write-Host "Agent Name: $($result.agentName)"
+            
+            # Set outputs for next job
+            echo "agent-id=$($result.agentId)" >> $env:GITHUB_OUTPUT
+            echo "agent-name=$($result.agentName)" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "❌ Agent deployment failed: $($result.error)"
+            exit 1
+          }
+        } else {
+          Write-Host "❌ Could not find agent deployment result in output"
+          exit 1
+        }
+        
+    - name: Agent Deployment Summary
+      run: |
+        echo "## 🤖 AI Foundry Agent Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Agent Deployment Successful" >> $GITHUB_STEP_SUMMARY
+        echo "- **Agent Name**: \`${{ steps.deploy-agent.outputs.agent-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Agent ID**: \`${{ steps.deploy-agent.outputs.agent-id }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **AI Foundry Endpoint**: \`${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deployment Method**: PowerShell Script via GitHub Actions" >> $GITHUB_STEP_SUMMARY
+        echo "- **Configuration Source**: YAML file (src/agent/ai_in_a_box.yaml)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Authentication**: Azure CLI with Service Principal" >> $GITHUB_STEP_SUMMARY
+
   deploy-backend-code:
     name: Deploy Backend Code
     runs-on: ubuntu-latest
-    needs: [backend-build, deploy-dev-infrastructure]
+    needs: [backend-build, deploy-dev-infrastructure, deploy-agent]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read

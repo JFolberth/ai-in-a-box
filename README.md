@@ -1,33 +1,34 @@
 # AI Foundry SPA
 
-A modern single-page application (SPA) that provides an interactive chat interface with [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/) endpoints. Built with JavaScript and deployed on [Azure](https://learn.microsoft.com/en-us/azure/) using infrastructure as code.
+A beginner-friendly, production-ready single-page application (SPA) that demonstrates how to build AI-powered chat interfaces using [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/). Perfect for developers new to AI Foundry who want to see it in action and use it as a foundation for their own AI applications.
 
 
 ## 🚀 Quick Start
 
-### Infrastructure Deployment
-1. **Deploy infrastructure** using [Azure Deployment Environments (ADE)](https://learn.microsoft.com/en-us/azure/deployment-environments/) or [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/) directly
-2. **Deploy application code** using the specialized code-only deployment scripts
+**New to Azure AI Foundry?** Start with our beginner-friendly guide:
 
-### Local Development
-1. **Prerequisites**: [Node.js](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-overview) 20+, [.NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8), [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/), [Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local)
-2. **Setup**: Follow the [Setup Guide](documentation/SETUP.md) for detailed instructions
-3. **Develop**: See [Development Guide](documentation/DEVELOPMENT.md) for local development
+### 15-Minute Getting Started Journey
+1. **[What is AI Foundry?](docs/getting-started/00-what-is-ai-foundry.md)** - Understanding Azure AI Foundry (5 min read)
+2. **[Project Overview](docs/getting-started/01-project-overview.md)** - What this app does (3 min read)
+3. **[Prerequisites](docs/getting-started/02-prerequisites.md)** - What you need (2 min setup)
+4. **[Quick Start](docs/getting-started/03-quick-start.md)** - Deploy in 15 minutes
+5. **[First Steps](docs/getting-started/04-first-steps.md)** - Verify and test (5 min)
 
+### Already Familiar with AI Foundry?
+
+**Local Development:**
 ```bash
-# Quick local development
-npm install -g azure-functions-core-tools@4
-cd src/frontend && npm install && npm run dev
-cd ../backend && func start
+git clone https://github.com/JFolberth/ai-in-a-box.git
+cd ai-in-a-box
+# See docs/development/local-development.md for complete setup
 ```
 
-### Code Deployment to Existing Infrastructure
-```powershell
-# Deploy backend code to existing Function App
-./deploy-scripts/deploy-backend-func-code.ps1 -FunctionAppName "func-name" -ResourceGroupName "rg-name"
-
-# Deploy frontend code to existing Static Web App  
-./deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName "swa-name" -ResourceGroupName "rg-name"
+**Quick Deploy to Azure:**
+```bash
+az deployment sub create \
+  --template-file "infra/main-orchestrator.bicep" \
+  --parameters "infra/dev-orchestrator.parameters.bicepparam" \
+  --location "eastus2"
 ```
 
 ## 🏗 Architecture
@@ -37,7 +38,7 @@ cd ../backend && func start
 - **Frontend**: Vanilla JavaScript SPA hosted on [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
 - **Backend**: C# [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) with system-assigned [managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/)  
 - **AI Integration**: AI in A Box agent through AI Foundry with least-privilege access
-- **Infrastructure**: [Azure Verified Modules (AVM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/avm/) Azure Bicep templates
+- **Infrastructure**: [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) Azure Bicep templates
 - **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
 
 ## 🔄 CI/CD Pipeline
@@ -88,28 +89,32 @@ The CI pipeline includes comprehensive Azure Bicep template validation:
 
 ## 📚 Documentation
 
-| Guide | Description |
-|-------|-------------|
-| [Setup Guide](documentation/SETUP.md) | Initial deployment and configuration |
-| [Deployment Guide](documentation/DEPLOYMENT_GUIDE.md) | Comprehensive deployment scenarios and script usage |
-| [Development Guide](documentation/DEVELOPMENT.md) | Local development workflow and tools |
-| [Configuration Guide](documentation/CONFIGURATION.md) | Environment variables and service configuration |
-| [Infrastructure Guide](documentation/INFRASTRUCTURE.md) | Architecture details and deployment patterns |
-| [Multi-RG Architecture](documentation/MULTI_RG_ARCHITECTURE.md) | Resource group design decisions |
-| [Azure Deployment Environments](documentation/AZURE_DEPLOYMENT_ENVIRONMENTS.md) | ADE catalog definitions and schema compliance |
-| [Public Mode Setup](documentation/PUBLIC_MODE_SETUP.md) | Authentication and security configuration |
-| [Thread Persistence](documentation/THREAD_PERSISTENCE_FIX.md) | Conversation state management |
-| [Browser Limitations](documentation/AI_FOUNDRY_BROWSER_LIMITATIONS.md) | Browser compatibility notes |
-| [Testing Guide](tests/TEST.md) | Test scripts and validation procedures |
-| [Frontend Testing](src/frontend/TESTING.md) | Frontend unit tests and CI integration |
+**New to AI Foundry?** → Start with **[Getting Started Guide](docs/getting-started/00-what-is-ai-foundry.md)**
+
+### Quick Navigation by Task:
+| What do you want to do? | Guide |
+|-------------------------|-------|
+| **First time using AI Foundry** | [Getting Started](docs/getting-started/) |
+| **Deploy the app quickly** | [Quick Start](docs/getting-started/03-quick-start.md) |
+| **Set up local development** | [Local Development](docs/development/local-development.md) |
+| **Customize the AI or UI** | [Customization Guide](docs/configuration/customization.md) |
+| **Deploy to production** | [Deployment Guide](docs/deployment/deployment-guide.md) |
+| **Fix issues** | [Troubleshooting](docs/operations/troubleshooting.md) |
+| **Understand the architecture** | [Infrastructure Guide](docs/deployment/infrastructure.md) |
+
+### Complete Documentation
+📖 **[Full Documentation Hub](docs/README.md)** - Browse all guides organized by topic
+
+### Legacy Documentation
+The original documentation in the `documentation/` folder is still available but is being phased out in favor of the new organized structure in `docs/`.
 
 ## 🛠 Development Environments
 
-- **[DevContainers](https://learn.microsoft.com/en-us/devcontainers/)**: VS Code development containers with pre-configured tools
+- **[DevContainers](https://code.visualstudio.com/docs/devcontainers/containers)**: VS Code development containers with pre-configured tools
 - **[Azure DevBox](https://learn.microsoft.com/en-us/azure/dev-box/)**: Microsoft DevBox configuration for team development
 - **Local**: Manual setup with Node.js, .NET 8, and Azure CLI
 
-See [Development Guide](documentation/DEVELOPMENT.md) for detailed setup instructions.
+See **[Local Development Guide](docs/development/local-development.md)** for detailed setup instructions.
 
 ## 🧪 Testing
 
@@ -117,7 +122,7 @@ The project includes comprehensive unit tests for both frontend and backend comp
 
 ### Frontend Testing
 - **72 unit tests** covering core functionality, UI interactions, and data management
-- **[Jest](https://learn.microsoft.com/en-us/shows/beginners-series-to-node-js/testing-with-jest) + jsdom** testing environment with comprehensive mocking
+- **[Jest](https://jestjs.io/) + jsdom** testing environment with comprehensive mocking
 - **CI integration** with automated test execution
 - See [Frontend Testing Guide](src/frontend/TESTING.md) for details
 
@@ -152,4 +157,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-For detailed information, start with the [Setup Guide](documentation/SETUP.md) or explore the [Documentation](documentation/) folder.
+## 🚦 Next Steps
+
+**First time here?** → **[What is AI Foundry?](docs/getting-started/00-what-is-ai-foundry.md)**
+
+**Ready to deploy?** → **[Quick Start Guide](docs/getting-started/03-quick-start.md)**
+
+**Need help?** → **[Troubleshooting Guide](docs/operations/troubleshooting.md)**
+
+For detailed information, explore the **[Complete Documentation Hub](docs/README.md)**.
