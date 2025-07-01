@@ -135,6 +135,11 @@ var effectiveAiFoundryEndpoint = createAiFoundryResourceGroup
   ? aiFoundryInfrastructure.outputs.aiFoundryEndpoint
   : '${existingCognitiveServices.properties.endpoint}api/projects/${aiFoundryProjectName}'
 
+// AI Foundry project name - either from deployed infrastructure or existing parameter
+var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
+  ? aiFoundryInfrastructure.outputs.aiProjectName
+  : aiFoundryProjectName
+
 
 
 // =========== RESOURCE GROUPS ===========
@@ -377,7 +382,8 @@ output aiFoundryConfig object = {
   endpoint: effectiveAiFoundryEndpoint
   subscriptionId: aiFoundrySubscriptionId
   resourceGroup: effectiveAiFoundryResourceGroupName
-  projectName: aiFoundryProjectDisplayName
+  projectName: effectiveAiFoundryProjectName
+  projectDisplayName: aiFoundryProjectDisplayName
 }
 
 @description('Backend API URL for frontend configuration')
