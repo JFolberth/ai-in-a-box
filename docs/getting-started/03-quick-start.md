@@ -4,9 +4,11 @@
 
 ## 🎯 What You'll Accomplish
 
+⚠️ **PREREQUISITE**: This guide assumes you have an existing Azure AI Foundry resource with an "AI in A Box" agent. If you don't have one, complete the [Prerequisites](02-prerequisites.md) first.
+
 By the end of this guide, you'll have:
 - ✅ A working AI chat application deployed to Azure
-- ✅ A secure backend powered by Azure AI Foundry
+- ✅ A secure backend powered by your existing Azure AI Foundry
 - ✅ A modern web interface accessible from anywhere
 - ✅ Real AI conversations with persistent memory
 - ✅ Complete monitoring and logging setup
@@ -52,9 +54,12 @@ code infra/dev-orchestrator.parameters.bicepparam
 **Update these key values:**
 
 ```bicep
-// Required: Your AI Foundry configuration
+// Required: Your existing AI Foundry configuration (must exist before deployment)
+param aiFoundryResourceGroupName = 'rg-your-ai-foundry-rg'
+param aiFoundryResourceName = 'your-ai-foundry-resource'
+param aiFoundryProjectName = 'firstProject'
 param aiFoundryEndpoint = 'https://your-ai-foundry.cognitiveservices.azure.com/'
-param aiFoundryDeployment = 'gpt-4'  // or your deployment name
+param aiFoundryModelDeploymentName = 'gpt-4o-mini'  // or your deployment name
 param aiFoundryAgentName = 'AI in A Box'
 
 // Required: Your user principal ID for RBAC

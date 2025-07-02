@@ -5,16 +5,22 @@ A beginner-friendly, production-ready single-page application (SPA) that demonst
 
 ## 🚀 Quick Start
 
+**⚠️ IMPORTANT: AI Foundry Required Dependency**
+
+This application requires an **existing Azure AI Foundry resource** with an "AI in A Box" agent before deployment. Due to circular dependencies in Azure's resource model, the orchestrator cannot create AI Foundry resources automatically.
+
 **New to Azure AI Foundry?** Start with our beginner-friendly guide:
 
 ### 15-Minute Getting Started Journey
 1. **[What is AI Foundry?](docs/getting-started/00-what-is-ai-foundry.md)** - Understanding Azure AI Foundry (5 min read)
 2. **[Project Overview](docs/getting-started/01-project-overview.md)** - What this app does (3 min read)
-3. **[Prerequisites](docs/getting-started/02-prerequisites.md)** - What you need (2 min setup)
+3. **[Prerequisites](docs/getting-started/02-prerequisites.md)** - What you need including AI Foundry setup (2 min setup)
 4. **[Quick Start](docs/getting-started/03-quick-start.md)** - Deploy in 15 minutes
 5. **[First Steps](docs/getting-started/04-first-steps.md)** - Verify and test (5 min)
 
 ### Already Familiar with AI Foundry?
+
+**⚠️ Prerequisite**: Ensure you have an existing AI Foundry resource before deployment. See [Prerequisites](docs/getting-started/02-prerequisites.md) for setup instructions.
 
 **Local Development:**
 ```bash
@@ -25,6 +31,7 @@ cd ai-in-a-box
 
 **Quick Deploy to Azure:**
 ```bash
+# First: Update infra/dev-orchestrator.parameters.bicepparam with your AI Foundry details
 az deployment sub create \
   --template-file "infra/main-orchestrator.bicep" \
   --parameters "infra/dev-orchestrator.parameters.bicepparam" \
@@ -40,6 +47,10 @@ az deployment sub create \
 - **AI Integration**: AI in A Box agent through AI Foundry with least-privilege access
 - **Infrastructure**: [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) Azure Bicep templates
 - **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
+
+### 🔧 AI Foundry Dependency Constraint
+
+**Important Technical Note**: Due to a circular dependency in Azure's resource model, AI Foundry resources (Cognitive Services + Project) cannot be created by the orchestrator and must exist before deployment. The `createAiFoundryResourceGroup` parameter exists for potential future automation when Azure resolves this platform limitation.
 
 ## 🔄 CI/CD Pipeline
 

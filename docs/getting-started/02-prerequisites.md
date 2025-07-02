@@ -21,8 +21,12 @@ You need an active Azure subscription to deploy the application.
 - Permission to deploy Azure resources (Functions, Static Web Apps, Storage)
 - Access to create managed identities and role assignments
 
-### 2. **Azure AI Foundry Resource** (Required)
-You need access to an Azure AI Foundry service with an "AI in A Box" agent.
+### 2. **Azure AI Foundry Resource** (Required - Must Exist Before Deployment)
+
+⚠️ **CRITICAL REQUIREMENT**: You need an existing Azure AI Foundry service with an "AI in A Box" agent **before** running the orchestrator deployment.
+
+**Why AI Foundry Must Exist First:**
+Due to a circular dependency in Azure's resource model between Cognitive Services workspace and AI Foundry project resources, the orchestrator cannot create both in a single deployment. This is a known Azure platform limitation that prevents automated AI Foundry resource creation.
 
 **If you don't have one:**
 1. **Check with your organization** - Many companies already have AI Foundry set up
@@ -31,8 +35,13 @@ You need access to an Azure AI Foundry service with an "AI in A Box" agent.
 
 **What you'll need to know:**
 - **AI Foundry Endpoint URL** (e.g., `https://your-ai-foundry.cognitiveservices.azure.com/`)
-- **Deployment Name** (e.g., `gpt-4`)
+- **Resource Group Name** containing the AI Foundry resource
+- **Resource Name** of the Cognitive Services account
+- **Project Name** (e.g., `firstProject`)
+- **Deployment Name** (e.g., `gpt-4o-mini`)
 - **Agent Name** (should be `AI in A Box`)
+
+**Future Improvement Note**: The infrastructure includes a `createAiFoundryResourceGroup` parameter (currently defaulted to `false`) that could enable automated AI Foundry creation if/when Azure resolves this circular dependency limitation.
 
 ### 3. **Resource Permissions** (Important)
 Make sure you have these permissions in your Azure subscription:
@@ -94,8 +103,9 @@ Before starting the deployment, verify you have:
 
 ### Azure Setup:
 - [ ] Active Azure subscription with sufficient permissions
-- [ ] Access to Azure AI Foundry resource
-- [ ] AI Foundry endpoint URL, deployment name, and agent name
+- [ ] **EXISTING Azure AI Foundry resource with "AI in A Box" agent** (REQUIRED - must exist before deployment)
+- [ ] AI Foundry endpoint URL, resource group, resource name, and project name
+- [ ] AI Foundry deployment name and agent name
 - [ ] Azure CLI installed and working (`az --version`)
 
 ### Development Environment:
