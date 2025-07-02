@@ -14,7 +14,7 @@ The CI pipeline needs to extract AI Foundry-specific settings from `ade.paramete
 
 ### Reusable Helper Script
 
-The solution provides a reusable helper script `tests/extract-ade-parameters.sh` that:
+The solution provides a reusable helper script `tests/utilities/extract-ade-parameters.sh` that:
 
 - Extracts AI Foundry parameters from ADE parameter files
 - Validates required parameters are present
@@ -26,28 +26,28 @@ The solution provides a reusable helper script `tests/extract-ade-parameters.sh`
 
 #### Validation Only
 ```bash
-./tests/extract-ade-parameters.sh --validate-only
+./tests/utilities/extract-ade-parameters.sh --validate-only
 ```
 
 #### Extract as Environment Variables
 ```bash
-./tests/extract-ade-parameters.sh --output env
+./tests/utilities/extract-ade-parameters.sh --output env
 ```
 
 #### Extract as JSON
 ```bash
-./tests/extract-ade-parameters.sh --output json
+./tests/utilities/extract-ade-parameters.sh --output json
 ```
 
 #### Source into Current Shell
 ```bash
-source <(./tests/extract-ade-parameters.sh --output export --quiet)
+source <(./tests/utilities/extract-ade-parameters.sh --output export --quiet)
 echo $AI_FOUNDRY_ENDPOINT
 ```
 
 #### Custom Parameter File
 ```bash
-./tests/extract-ade-parameters.sh --file custom-params.json --output json
+./tests/utilities/extract-ade-parameters.sh --file custom-params.json --output json
 ```
 
 ### Parameters Extracted
@@ -77,7 +77,7 @@ AI_FOUNDRY_AGENT_ID=$(jq -r '.aiFoundryAgentId' infra/environments/backend/ade.p
 #### After (Helper Script)
 ```bash
 # Use the reusable helper script to extract AI Foundry parameters
-if ! PARAMETER_OUTPUT=$(./tests/extract-ade-parameters.sh -o export -q); then
+if ! PARAMETER_OUTPUT=$(./tests/utilities/extract-ade-parameters.sh -o export -q); then
     echo "❌ Failed to extract AI Foundry parameters"
     exit 1
 fi
@@ -126,20 +126,20 @@ The helper script provides comprehensive error handling:
 
 ### Invalid JSON Syntax
 ```bash
-$ ./tests/extract-ade-parameters.sh -f invalid.json
+$ ./tests/utilities/extract-ade-parameters.sh -f invalid.json
 ❌ Invalid JSON syntax in parameters file: invalid.json
 ```
 
 ### Missing Required Parameters
 ```bash
-$ ./tests/extract-ade-parameters.sh -f missing-params.json
+$ ./tests/utilities/extract-ade-parameters.sh -f missing-params.json
 ❌ Missing or invalid required parameter: aiFoundryEndpoint
 ❌ Parameter validation failed. Required AI Foundry parameters are missing.
 ```
 
 ### Non-existent File
 ```bash
-$ ./tests/extract-ade-parameters.sh -f nonexistent.json
+$ ./tests/utilities/extract-ade-parameters.sh -f nonexistent.json
 ❌ ADE parameters file not found: nonexistent.json
 ```
 
@@ -147,7 +147,7 @@ $ ./tests/extract-ade-parameters.sh -f nonexistent.json
 
 ### File Locations
 
-- **Helper script**: `tests/extract-ade-parameters.sh`
+- **Helper script**: `tests/utilities/extract-ade-parameters.sh`
 - **Backend parameters**: `infra/environments/backend/ade.parameters.json`
 - **Frontend parameters**: `infra/environments/frontend/ade.parameters.json`
 - **Enhanced tests**: `tests/test-ade-parameter-extraction-enhanced.sh`
@@ -183,7 +183,7 @@ export AI_FOUNDRY_AGENT_NAME="AI in A Box"
 - `infra/environments/backend/ade.parameters.json` - Source of AI Foundry parameters
 - `tests/test-ade-parameter-extraction.sh` - Original test script
 - `tests/test-ade-parameter-extraction-enhanced.sh` - Enhanced test suite
-- `tests/extract-ade-parameters.sh` - Main helper script
+- `tests/utilities/extract-ade-parameters.sh` - Main helper script
 
 ## Future Enhancements
 

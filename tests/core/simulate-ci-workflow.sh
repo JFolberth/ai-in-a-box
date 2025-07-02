@@ -43,7 +43,7 @@ echo ""
 
 # Get repository root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
 echo -e "${GRAY}Working directory: $(pwd)${NC}"
@@ -156,7 +156,7 @@ echo ""
 echo -e "${CYAN}3️⃣ Deployment Package Validation${NC}"
 echo -e "${GRAY}   🔍 Running comprehensive package validation...${NC}"
 
-if ! ./tests/validate-backend-package.sh src/backend/backend-deployment.zip | tail -5; then
+if ! ./tests/integration/test-backend-validation.sh --package-only src/backend/backend-deployment.zip | tail -5; then
     echo -e "${RED}❌ Package validation failed${NC}"
     exit 1
 fi

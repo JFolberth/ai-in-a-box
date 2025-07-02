@@ -378,7 +378,7 @@ az staticwebapp list --resource-group "rg-ai-foundry-spa-frontend-*" --query "[]
 
 ```powershell
 # Test the deployed Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
+./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 # Access the deployed frontend
 # URL provided in deployment script output, typically:
@@ -427,7 +427,7 @@ az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,res
     -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
 
 # 4. Test the deployment
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
+./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 ```
 
 Your AI Foundry SPA is now live! 🎉

@@ -244,7 +244,7 @@ az deployment sub create `
 
 ```powershell
 # Validate Function App configuration
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl $functionAppUrl
+./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl $functionAppUrl
 
 # Test AI Foundry connectivity
 ./tests/Test-FunctionAppAccess.ps1
