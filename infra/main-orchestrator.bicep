@@ -75,6 +75,9 @@ param aiFoundryProjectName string = 'firstProject'
 param aiFoundrySubscriptionId string = subscription().subscriptionId
 
 @description('Create new AI Foundry resource group or use existing')
+// NOTE: Defaults to false due to circular dependency limitation in Azure resource model.
+// Cognitive Services workspace and AI Foundry project cannot be created in a single deployment.
+// This parameter is reserved for future use when/if Azure resolves this limitation.
 param createAiFoundryResourceGroup bool = false
 
 @description('AI Foundry model deployment name')
@@ -204,7 +207,11 @@ resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-0
   scope: subscription()
 }
 
-// =========== AI FOUNDRY REFERENCES (OPTIONAL) ===========
+// =========== AI FOUNDRY REFERENCES (REQUIRED EXTERNAL DEPENDENCY) ===========
+
+// AI Foundry resources must exist before deployment due to circular dependency limitation.
+// Azure resource model prevents creating Cognitive Services workspace and AI Foundry project 
+// in a single deployment pass. This is a known Azure platform constraint.
 
 // Reference to existing Cognitive Services resource (when not creating new)
 resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = if (!createAiFoundryResourceGroup) {
@@ -263,6 +270,8 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
 // =========== AI FOUNDRY DEPLOYMENT ===========
 
 // Deploy AI Foundry infrastructure (Cognitive Services + AI Project + Model)
+// NOTE: Currently disabled by default due to circular dependency limitation.
+// This module exists for future use when Azure resolves the constraint.
 module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryResourceGroup) {
   name: 'aifoundry-deployment'
   scope: resourceGroup(effectiveAiFoundryResourceGroupName)

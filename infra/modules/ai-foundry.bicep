@@ -5,6 +5,11 @@
 // - AI Project (Foundry project workspace)
 // - GPT-4o-mini Model Deployment
 // - RBAC assignment to Function App (Azure AI Developer role)
+//
+// IMPORTANT: This module is currently disabled by default due to a circular dependency
+// limitation in Azure's resource model. Cognitive Services workspace and AI Project
+// resources cannot be created in a single deployment pass. This module exists for
+// future use when/if Azure resolves this platform constraint.
 
 targetScope = 'resourceGroup'
 

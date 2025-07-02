@@ -33,7 +33,8 @@ This guide covers production deployment scenarios, from single environment deplo
 ### Prerequisites
 - Azure CLI installed and logged in
 - Azure subscription with Contributor permissions
-- AI Foundry resource accessible
+- **EXISTING Azure AI Foundry resource** (cannot be created by orchestrator due to circular dependencies)
+- AI Foundry resource details: endpoint URL, resource group, resource name, project name
 - Git repository cloned locally
 
 ### Step 1: Prepare Configuration
@@ -50,9 +51,12 @@ cp infra/dev-orchestrator.parameters.bicepparam infra/prod-orchestrator.paramete
 ```bicep
 using 'main-orchestrator.bicep'
 
-// Required: Your AI Foundry configuration
+// Required: Your existing AI Foundry configuration (must exist before deployment)
+param aiFoundryResourceGroupName = 'rg-your-ai-foundry'
+param aiFoundryResourceName = 'your-ai-foundry-resource'
+param aiFoundryProjectName = 'firstProject'
 param aiFoundryEndpoint = 'https://your-production-ai-foundry.cognitiveservices.azure.com/'
-param aiFoundryDeployment = 'gpt-4'
+param aiFoundryModelDeploymentName = 'gpt-4o-mini'
 param aiFoundryAgentName = 'AI in A Box'
 
 // Required: Your user principal ID
