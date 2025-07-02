@@ -479,7 +479,7 @@ jobs:
   #       echo "🔧 Using extract-ade-parameters.sh helper script..."
   #       
   #       # Extract parameters using the helper script
-  #       if ! PARAMETER_OUTPUT=$(./tests/extract-ade-parameters.sh -o export -q); then
+  #       if ! PARAMETER_OUTPUT=$(./tests/utilities/extract-ade-parameters.sh -o export -q); then
   #           echo "❌ Failed to extract AI Foundry parameters from backend ade.parameters.json"
   #           echo "Please check that all required parameters are present and valid."
   #           exit 1
@@ -800,7 +800,7 @@ jobs:
   #       
   #       # Test comprehensive endpoints using PowerShell script
   #       echo "🧪 Running comprehensive endpoint tests..."
-  #       pwsh -File tests/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -HealthOnly
+  #       pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -HealthOnly
   #       
   #       if [ $? -eq 0 ]; then
   #         echo "✅ Health endpoint tests passed!"
@@ -811,7 +811,7 @@ jobs:
   #       
   #       # Test AI Foundry integration (if health passes)
   #       echo "🤖 Testing AI Foundry integration..."
-  #       pwsh -File tests/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -AiFoundryOnly
+  #       pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -AiFoundryOnly
   #       
   #       ai_result=$?
   #       if [ $ai_result -eq 0 ]; then
