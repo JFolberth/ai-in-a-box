@@ -33,8 +33,8 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 - **Function Admin**: http://localhost:7071/admin/functions
 
 ### **Production Deployment**
-- **Frontend**: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
-- **Backend**: https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net
+- **Frontend**: https://stapp-ai-foundry-spa-frontend-dev-eus2.azurestaticapps.net/
+- **Backend**: https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net
 
 ## 🔧 **Key Features**
 
@@ -87,7 +87,7 @@ Your AI Foundry SPA is **production-ready with real AI Foundry integration** in 
 ### **Production Testing**
 ```bash
 # Test deployed Function App endpoints
-../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 ```
 
 ### **Conversation Testing**

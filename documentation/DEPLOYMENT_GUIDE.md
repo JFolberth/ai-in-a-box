@@ -68,8 +68,8 @@ The Azure AI Foundry SPA includes **two focused deployment scripts** for code-on
 **Example**:
 ```powershell
 ./deploy-scripts/deploy-backend-func-code.ps1 `
-    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
-    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2"
 ```
 
 **What it does**:
@@ -107,8 +107,8 @@ The Azure AI Foundry SPA includes **two focused deployment scripts** for code-on
 ```powershell
 ./deploy-scripts/deploy-frontend-spa-code.ps1 `
     -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
-    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
 ```
 
 **What it does**:
@@ -174,20 +174,20 @@ az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,res
 ```powershell
 # Deploy backend code
 ./deploy-scripts/deploy-backend-func-code.ps1 `
-    -FunctionAppName "func-ai-foundry-spa-backend-dev-001" `
-    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001"
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2"
 
 # Deploy frontend code
 ./deploy-scripts/deploy-frontend-spa-code.ps1 `
     -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" `
-    -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
 ```
 
 #### Step 4: Verify Deployment
 ```powershell
 # Test Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 # Access frontend application (URL provided in deployment output)
 ```

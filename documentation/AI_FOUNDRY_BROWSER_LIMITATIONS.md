@@ -103,7 +103,7 @@ return assistantMessages.FirstOrDefault()?.Content?.FirstOrDefault()?.Text ?? "N
 ```bash
 # Test conversation threading and unique responses
 ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
-../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 ```
 
 ### **Manual Testing**

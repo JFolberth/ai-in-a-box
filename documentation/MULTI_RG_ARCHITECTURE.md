@@ -51,13 +51,13 @@ az deployment sub create \
 
 # Deploy Function App
 cd src/backend
-func azure functionapp publish func-ai-foundry-spa-backend-dev-001
+func azure functionapp publish func-ai-foundry-spa-backend-dev-eus2
 
 # Deploy Frontend
 cd ../frontend
 npm run build:dev
 # Use deployment script for Static Web App
-../deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-001"
+../deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-eus2"
 ```
 
 ### Using PowerShell Script

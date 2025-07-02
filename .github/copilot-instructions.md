@@ -83,7 +83,7 @@ cd src/backend
 4. **Test Script Execution**:
    - **ALWAYS pass the function URL** when running test scripts
    - For local testing: `.\Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"`
-   - For Azure testing: `.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"`
+   - For Azure testing: `.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"`
    - **Never assume default URLs** - always provide the specific endpoint being tested
    - Test scripts should validate the exact environment being tested (local vs Azure)
 
@@ -321,7 +321,7 @@ var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace ? newLogAna
 .\Test-FunctionEndpoints.ps1
 
 # Example 2: With parameters
-.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 # Example 3: Full absolute path (recommended)
 & "C:\Users\BicepDeveloper\repo\ai-in-a-box\tests\Test-FunctionEndpoints.ps1" -BaseUrl "http://localhost:7071"

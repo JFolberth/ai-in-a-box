@@ -22,10 +22,10 @@ The backend Function App URL to configure (optional - will update .env for dev e
 Skip the npm build step if the application is already built
 
 .EXAMPLE
-./deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001"
+./deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2"
 
 .EXAMPLE
-./deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-001" -BackendUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net/api"
+./deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-aibox-fd-dev-eus2" -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
 
 .EXAMPLE
 ./deploy-frontend-spa-code.ps1 -StaticWebAppName "my-custom-static-web-app" -ResourceGroupName "my-rg" -SkipBuild

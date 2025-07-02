@@ -13,7 +13,7 @@ This directory contains comprehensive test scripts to verify Azure Function App 
 .\Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 # Test deployed Azure Function App
-.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 # Health endpoint only (fast check for CI/CD)
 .\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -HealthOnly
@@ -167,7 +167,7 @@ The script returns specific exit codes for automated CI/CD integration:
 
 #### Usage  
 ```powershell
-.\Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-ai-foundry-spa-backend-dev-001" -FunctionAppName "func-ai-foundry-spa-backend-dev-001" -StorageAccountName "stfnbackspa001"
+.\Test-FunctionAppAccess.ps1 -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2" -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" -StorageAccountName "stfnbackspadeveus2"
 ```
 
 ## What These Scripts Test

@@ -102,13 +102,13 @@ az deployment sub create \
 
 # Deploy Azure Functions
 cd src/backend
-func azure functionapp publish func-ai-foundry-spa-backend-dev-001
+func azure functionapp publish func-ai-foundry-spa-backend-dev-eus2
 
 # Deploy Frontend
 cd ../frontend
 npm run build:dev
 # Use deployment script for [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
-../deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-001"
+../deploy-scripts/deploy-frontend-spa-code.ps1 -StaticWebAppName "stapp-ai-foundry-spa-frontend-dev-eus2"
 ```
 
 #### Using [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview) Deployment Script
@@ -158,7 +158,7 @@ az login
    ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
    
    # Test Azure endpoints
-   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
    ```
 
 4. **Verify Docker installation (DevContainer/DevBox):**
@@ -211,8 +211,8 @@ az login
 - Azurite Table: http://127.0.0.1:10002
 
 **Production URLs:**
-- Frontend: https://stapp-ai-foundry-spa-frontend-dev-001.azurestaticapps.net/
-- Azure Functions: https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net
+- Frontend: https://stapp-ai-foundry-spa-frontend-dev-eus2.azurestaticapps.net/
+- Azure Functions: https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net
 
 ### 9. Next Steps
 
