@@ -20,22 +20,22 @@
 #### Usage
 ```powershell
 # Test local development endpoints (standard mode)
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 # Test deployed Azure Function App
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 # Health endpoint only (fast check for CI/CD)
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -HealthOnly
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -HealthOnly
 
 # AI Foundry integration validation only
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -AiFoundryOnly
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -AiFoundryOnly
 
 # Skip chat endpoint tests (useful for basic connectivity)
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -SkipChat
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -SkipChat
 
 # Comprehensive testing (includes threading tests)
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -Comprehensive
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-app.azurewebsites.net" -Comprehensive
 ```
 
 #### Test Modes
