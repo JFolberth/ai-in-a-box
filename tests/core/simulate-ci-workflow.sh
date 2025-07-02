@@ -156,7 +156,7 @@ echo ""
 echo -e "${CYAN}3️⃣ Deployment Package Validation${NC}"
 echo -e "${GRAY}   🔍 Running comprehensive package validation...${NC}"
 
-if ! ./tests/validate-backend-package.sh src/backend/backend-deployment.zip | tail -5; then
+if ! ./tests/integration/validate-backend-package.sh src/backend/backend-deployment.zip | tail -5; then
     echo -e "${RED}❌ Package validation failed${NC}"
     exit 1
 fi
