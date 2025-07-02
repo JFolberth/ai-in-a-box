@@ -419,10 +419,10 @@ npm run test:watch
 ### Manual Testing
 ```bash
 # Test Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 # Test Azure deployment
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://your-function-app.azurewebsites.net"
+./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://your-function-app.azurewebsites.net"
 ```
 
 ### Test Scripts

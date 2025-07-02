@@ -65,10 +65,10 @@ POST /api/sendMessage { message: "What about side effects?", threadId: "thread_x
 ### **Automated Testing**
 ```bash
 # Test local endpoints
-../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
 
 # Test production endpoints  
-../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
+../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 ```
 
 ## 🔍 **Console Output Example**

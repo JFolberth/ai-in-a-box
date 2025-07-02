@@ -182,4 +182,4 @@ output staticWebAppName string = staticWebApp.outputs.name
 - `infra/environments/frontend/main.bicep` - Frontend Bicep template with outputs
 - `tests/Test-UrlExtraction.sh` - Unit tests for URL extraction
 - `tests/extract-ade-outputs.sh` - Reusable helper script
-- `tests/Test-FunctionEndpoints.ps1` - Endpoint testing script
+- `tests/core/Test-FunctionEndpoints.ps1` - Endpoint testing script

@@ -76,7 +76,7 @@ Test the deployed Function App endpoints:
 
 ```powershell
 # Test Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 `
+./tests/core/Test-FunctionEndpoints.ps1 `
   -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 ```
 

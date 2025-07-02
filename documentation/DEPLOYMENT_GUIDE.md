@@ -187,7 +187,7 @@ az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,res
 #### Step 4: Verify Deployment
 ```powershell
 # Test Function App endpoints
-./tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
+./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
 
 # Access frontend application (URL provided in deployment output)
 ```
