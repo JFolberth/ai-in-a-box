@@ -155,10 +155,10 @@ az login
 3. **Run endpoint tests:**
    ```bash
    # Test local endpoints
-   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
+   ../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "http://localhost:7071"
    
    # Test Azure endpoints
-   ../tests/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
+   ../tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-001.azurewebsites.net"
    ```
 
 4. **Verify Docker installation (DevContainer/DevBox):**

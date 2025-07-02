@@ -25,7 +25,7 @@ Frontend deployment was dependent on backend deployment completion, creating unn
 
 ### 2. Enhanced Package Validation
 - **Added**: Comprehensive validation during build process to ensure `.azurefunctions` directory presence
-- **Created**: `tests/validate-backend-package.sh` script for troubleshooting deployment packages
+- **Created**: `tests/integration/validate-backend-package.sh` script for troubleshooting deployment packages
 - **Enhanced**: Build process now fails early if critical deployment components are missing
 - **Files Changed**: `.github/workflows/shared-backend-build.yml`
 
@@ -81,7 +81,7 @@ Created comprehensive test suite to validate the fix:
 - ✅ CI simulation: Complete workflow simulation passes
 
 ### Scripts Created
-1. **`tests/validate-backend-package.sh`**: Validates deployment package structure
+1. **`tests/integration/validate-backend-package.sh`**: Validates deployment package structure
 2. **`tests/simulate-ci-workflow.sh`**: Simulates complete CI workflow locally
 
 ## Benefits
@@ -99,7 +99,7 @@ The fixes are automatically applied in the GitHub Actions workflow. No manual in
 ### For Local Development
 ```bash
 # Validate a deployment package
-./tests/validate-backend-package.sh path/to/backend-deployment.zip
+./tests/integration/validate-backend-package.sh path/to/backend-deployment.zip
 
 # Simulate complete CI workflow
 ./tests/simulate-ci-workflow.sh
@@ -121,7 +121,7 @@ The fixes are automatically applied in the GitHub Actions workflow. No manual in
 - `documentation/TROUBLESHOOTING.md` - Added new error scenarios
 
 ### Created Files
-- `tests/validate-backend-package.sh` - Package validation script
+- `tests/integration/validate-backend-package.sh` - Package validation script
 - `tests/simulate-ci-workflow.sh` - CI workflow simulation script
 
 ## Future Improvements

@@ -38,7 +38,7 @@ unzip -l deployment-package.zip | grep -E "\.azurefunctions|azurefunctions/"
 #     83832  DATE TIME   .azurefunctions/Microsoft.Azure.WebJobs.Host.Storage.dll
 
 # Or use the validation script
-./tests/validate-backend-package.sh path/to/backend-deployment.zip
+./tests/integration/validate-backend-package.sh path/to/backend-deployment.zip
 ```
 
 **Manual Fix (if needed):**
@@ -69,7 +69,7 @@ Fixed in CI/CD pipeline by:
 **Related Files:**
 - `.github/workflows/shared-backend-build.yml` - Package creation and validation
 - `.github/workflows/ci.yml` - Deployment process
-- `tests/validate-backend-package.sh` - Package validation script
+- `tests/integration/validate-backend-package.sh` - Package validation script
 - `deploy-scripts/deploy-backend-func-code.ps1` - Manual deployment script
 
 ## 🌐 Static Web App Deployment Issues
