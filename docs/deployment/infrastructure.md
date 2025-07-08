@@ -125,12 +125,11 @@ App Insights: appi-ai-foundry-spa-backend-{env}-{uniqueString}
 - **Access Control**: Shared read access across teams
 
 **AI Foundry Integration:**
-- **External Service**: REQUIRED existing AI Foundry resource (cannot be created by orchestrator)
-- **Circular Dependency Limitation**: Azure's resource model prevents creating Cognitive Services workspace and AI Foundry project in a single deployment
+- **Flexible Deployment**: Can use existing resources OR create new ones via `createAiFoundryResourceGroup` parameter
 - **Secure Access**: Via managed identity and RBAC
 - **Agent Configuration**: "AI in A Box" agent
 - **Connection Management**: Resilient connection handling
-- **Future Capability**: `createAiFoundryResourceGroup` parameter exists for potential future automation when Azure resolves the circular dependency
+- **Automated Setup**: Full AI Foundry lifecycle automation available
 
 ## 🔧 Infrastructure Deployment
 
@@ -197,19 +196,20 @@ var regionReference = {
 
 ## 🔒 Security Architecture
 
-### AI Foundry Dependency Constraints
+### AI Foundry Deployment Options
 
-**Required External Dependency:**
-AI Foundry resources must exist before deploying the orchestrator due to a circular dependency in Azure's resource model. The orchestrator cannot create both Cognitive Services workspace and AI Foundry project resources in a single deployment pass.
+**AI Foundry Deployment Options:**
+The orchestrator supports two deployment models for AI Foundry resources:
 
-**Technical Details:**
-- **Root Cause**: Circular dependency between `Microsoft.CognitiveServices/accounts` and `Microsoft.CognitiveServices/accounts/projects` resources
-- **Impact**: AI Foundry workspace and project cannot be created atomically in Bicep
-- **Workaround**: Pre-create AI Foundry resources, then reference them as external dependencies
-- **Parameter**: `createAiFoundryResourceGroup` defaults to `false` and is reserved for future use
+1. **Use Existing Resources** (`createAiFoundryResourceGroup: false`)
+   - Reference pre-existing AI Foundry workspace and project
+   - Faster deployment, leverages existing setup
+   - Ideal for shared environments
 
-**Future Resolution:**
-If/when Azure resolves this circular dependency limitation, the `createAiFoundryResourceGroup` parameter can be enabled to automate the full AI Foundry lifecycle within the orchestrator deployment.
+2. **Create New Resources** (`createAiFoundryResourceGroup: true`)
+   - Orchestrator creates complete AI Foundry environment
+   - Includes Cognitive Services, AI project, and model deployment
+   - Ideal for isolated environments and new deployments
 
 ### Identity and Access Management
 

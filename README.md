@@ -48,10 +48,6 @@ az deployment sub create \
 - **Infrastructure**: [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) Azure Bicep templates
 - **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
 
-### 🔧 AI Foundry Dependency Constraint
-
-**Important Technical Note**: Due to a circular dependency in Azure's resource model, AI Foundry resources (Cognitive Services + Project) cannot be created by the orchestrator and must exist before deployment. The `createAiFoundryResourceGroup` parameter exists for potential future automation when Azure resolves this platform limitation.
-
 ## 🔄 CI/CD Pipeline
 
 **Fully automated** build, validation, and deployment pipeline for main branch:

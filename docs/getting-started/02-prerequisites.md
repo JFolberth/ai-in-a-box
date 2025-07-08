@@ -23,15 +23,13 @@ You need an active Azure subscription to deploy the application.
 
 ### 2. **Azure AI Foundry Resource** (Required - Must Exist Before Deployment)
 
-⚠️ **CRITICAL REQUIREMENT**: You need an existing Azure AI Foundry service with an "AI in A Box" agent **before** running the orchestrator deployment.
-
-**Why AI Foundry Must Exist First:**
-Due to a circular dependency in Azure's resource model between Cognitive Services workspace and AI Foundry project resources, the orchestrator cannot create both in a single deployment. This is a known Azure platform limitation that prevents automated AI Foundry resource creation.
+⚠️ **CRITICAL REQUIREMENT**: You need an existing Azure AI Foundry service with an "AI in A Box" agent **before** running the orchestrator deployment, OR you can let the orchestrator create new AI Foundry resources by setting `createAiFoundryResourceGroup` to `true`.
 
 **If you don't have one:**
 1. **Check with your organization** - Many companies already have AI Foundry set up
-2. **Create a new one** - Follow the [AI Foundry Setup Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstart/)
-3. **Ask for access** - If your organization has AI Foundry, request access to the "AI in A Box" agent
+2. **Use the orchestrator** - Set `createAiFoundryResourceGroup: true` to create new AI Foundry resources automatically
+3. **Create manually** - Follow the [AI Foundry Setup Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstart/)
+4. **Ask for access** - If your organization has AI Foundry, request access to the "AI in A Box" agent
 
 **What you'll need to know:**
 - **AI Foundry Endpoint URL** (e.g., `https://your-ai-foundry.cognitiveservices.azure.com/`)
@@ -40,8 +38,6 @@ Due to a circular dependency in Azure's resource model between Cognitive Service
 - **Project Name** (e.g., `firstProject`)
 - **Deployment Name** (e.g., `gpt-4o-mini`)
 - **Agent Name** (should be `AI in A Box`)
-
-**Future Improvement Note**: The infrastructure includes a `createAiFoundryResourceGroup` parameter (currently defaulted to `false`) that could enable automated AI Foundry creation if/when Azure resolves this circular dependency limitation.
 
 ### 3. **Resource Permissions** (Important)
 Make sure you have these permissions in your Azure subscription:

@@ -2,23 +2,92 @@
 
 *Get your AI Foundry SPA running in Azure from zero to production in 15 minutes.*
 
+## 🚨 Important Notice: Local Development Deployment Only
+
+**This quick-start guide is for local development and getting-started```bash
+# Deploy frontend application
+.\deploy-scripts\deploy-frontend-spa-code.ps1 `
+  -StaticWebAppName "$staticWebAppName" `
+  -ResourceGroupName "$staticWebAppResourceGroup" `
+  -BackendUrl "https://$functionAppName.azurewebsites.net/api"
+```es only.**
+
+### Recommended Deployment Methods:
+- **🚀 Production**: Use [GitHub Actions CI/CD pipeline](../deployment/deployment-guide.md) (preferred)
+- **🧪 Development**: Use this quick-start for local testing and exploration
+
+### What This Guide Provides:
+- **Automated local deployment script** that orchestrates all components
+- **Step-by-step manual process** for understanding the deployment flow
+- **Optional AI Foundry and Log Analytics creation** for complete setup
+
 ## 🎯 What You'll Accomplish
 
-⚠️ **PREREQUISITE**: This guide assumes you have an existing Azure AI Foundry resource with an "AI in A Box" agent. If you don't have one, complete the [Prerequisites](02-prerequisites.md) first.
+This guide supports **flexible deployment options**:
 
-By the end of this guide, you'll have:
-- ✅ A working AI chat application deployed to Azure
-- ✅ A secure backend powered by your existing Azure AI Foundry
-- ✅ A modern web interface accessible from anywhere
-- ✅ Real AI conversations with persistent memory
-- ✅ Complete monitoring and logging setup
+### Option A: Complete New Setup
+- ✅ **New AI Foundry resources** (Cognitive Services + AI Project)
+- ✅ **New Log Analytics workspace** for centralized monitoring
+- ✅ **AI agent deployment** from YAML configuration
+- ✅ **Backend Function App** with secure AI Foundry integration
+- ✅ **Frontend Static Web App** with modern chat interface
 
-**Time commitment**: 15 minutes  
-**Cost**: $0-5/month for development usage
+### Option B: Use Existing Resources
+- ✅ **Connect to existing AI Foundry** (if you have one)
+- ✅ **Use existing Log Analytics** (if you have one)
+- ✅ **Deploy only the SPA components** (frontend + backend)
 
-## 🚀 Step 1: Get the Code (2 minutes)
+**Time commitment**: 10-20 minutes (depending on options chosen)  
+**Cost**: $0-10/month for development usage
 
-### Clone the Repository
+## 🚀 Option 1: Automated Quick Deployment (Recommended)
+
+### Use the Automated Deployment Script
+
+We've created an automated script that orchestrates the entire deployment process:
+
+```powershell
+# Navigate to the project directory
+cd ai-in-a-box
+
+# Run the automated deployment script
+.\deploy-scripts\deploy-quickstart.ps1
+```
+
+**What the automated script does:**
+1. **Validates prerequisites** (Azure CLI, .NET SDK, Node.js)
+2. **Prompts for configuration** (AI Foundry options, location, etc.)
+3. **Deploys infrastructure** using Bicep templates
+4. **Deploys AI agent** from YAML configuration
+5. **Deploys backend code** to Function App
+6. **Deploys frontend code** to Static Web App
+7. **Provides final URLs** and validation steps
+
+**Advantages of automated deployment:**
+- ✅ **Zero manual parameter passing** between steps
+- ✅ **Automatic output extraction** from each deployment phase
+- ✅ **Error handling** with clear failure points
+- ✅ **Final validation** of all endpoints
+
+**Time commitment**: 10-15 minutes with automated script
+
+---
+
+## 🔧 Option 2: Manual Step-by-Step Deployment
+
+*Choose this option if you want to understand each deployment step or customize the process.*
+
+### Prerequisites Setup
+
+### Prerequisites Setup
+
+Before starting, ensure you have:
+- **Azure CLI** installed and authenticated
+- **.NET 8 SDK** for backend development
+- **Node.js 18+** for frontend development
+- **Azure subscription** with appropriate permissions
+
+### Get the Code
 
 ```bash
 # Clone the project
@@ -39,11 +108,11 @@ az account show
 # az account set --subscription "Your Subscription Name"
 ```
 
-## ⚙️ Step 2: Configure Your Deployment (3 minutes)
+## ⚙️ Step 1: Configure Your Deployment Options
 
-### Update Configuration Parameters
+### Choose Your Deployment Configuration
 
-Edit the deployment parameters file with your AI Foundry details:
+Edit the deployment parameters file to match your preferences:
 
 ```bash
 # Edit the parameters file
@@ -51,54 +120,68 @@ code infra/dev-orchestrator.parameters.bicepparam
 # or use any text editor: nano, vim, etc.
 ```
 
-**Update these key values:**
+### Configuration Options
+
+**Option A: Create New AI Foundry Resources**
+```bicep
+// Create new AI Foundry resources
+param createAiFoundryResourceGroup = true
+param aiFoundryProjectDisplayName = 'My AI Project'
+param aiFoundryResourceName = 'cs-my-ai-foundry-dev-eus2'
+param aiFoundryResourceGroupName = 'rg-my-ai-foundry-dev-eus2'
+param aiFoundryProjectName = 'aiproj-my-ai-foundry-dev-eus2'
+
+// Agent configuration (will be deployed automatically)
+param aiFoundryAgentId = ''  // Will be set after agent deployment
+param aiFoundryAgentName = 'AI in A Box'
+```
+
+**Option B: Use Existing AI Foundry Resources**
+```bicep
+// Use existing AI Foundry resources
+param createAiFoundryResourceGroup = false
+param aiFoundryResourceName = 'your-existing-ai-foundry'
+param aiFoundryResourceGroupName = 'your-existing-rg'
+param aiFoundryProjectName = 'your-existing-project'
+param aiFoundryAgentId = 'asst_your_existing_agent_id'
+param aiFoundryAgentName = 'Your Agent Name'
+```
+
+### Log Analytics Configuration
+
+**Option A: Create New Log Analytics Workspace**
+```bicep
+// Create new centralized logging
+param createLogAnalyticsWorkspace = true
+// Uses automatic naming: rg-ai-foundry-spa-logging-dev-eus2 and la-ai-foundry-spa-logging-dev-eus2
+```
+
+**Option B: Use Existing Log Analytics Workspace**
+```bicep
+// Use existing Log Analytics workspace
+param createLogAnalyticsWorkspace = false
+param logAnalyticsResourceGroupName = 'your-existing-logging-rg'
+param logAnalyticsWorkspaceName = 'your-existing-workspace'
+```
+
+### Other Configuration Options
 
 ```bicep
-// Required: Your existing AI Foundry configuration (must exist before deployment)
-param aiFoundryResourceGroupName = 'rg-your-ai-foundry-rg'
-param aiFoundryResourceName = 'your-ai-foundry-resource'
-param aiFoundryProjectName = 'firstProject'
-param aiFoundryEndpoint = 'https://your-ai-foundry.cognitiveservices.azure.com/'
-param aiFoundryModelDeploymentName = 'gpt-4o-mini'  // or your deployment name
-param aiFoundryAgentName = 'AI in A Box'
-
-// Required: Your user principal ID for RBAC
-param userPrincipalId = 'your-user-principal-id'
-
-// Optional: Environment and location
-param environmentName = 'dev'
-param location = 'eastus2'
+// Environment and location
+param location = 'eastus2'  // Change to your preferred region
+param tags = {
+  Environment: 'dev'
+  Application: 'ai-foundry-spa'
+  Purpose: 'LocalDevelopment'
+}
 ```
 
-### Find Your User Principal ID
+## 🏗️ Step 2: Deploy Infrastructure
+
+### Deploy Everything with Bicep
 
 ```bash
-# Get your user principal ID
-az ad signed-in-user show --query id -o tsv
-```
-
-Copy this ID and paste it into the `userPrincipalId` parameter above.
-
-### Find Your AI Foundry Information
-
-**Option 1: Azure Portal**
-1. Go to [Azure Portal](https://portal.azure.com)
-2. Find your AI Foundry resource
-3. Copy the endpoint URL from the overview page
-4. Note the deployment name (usually `gpt-4` or similar)
-
-**Option 2: Azure CLI**
-```bash
-# List AI Foundry resources
-az cognitiveservices account list --query "[?kind=='AIServices'].[name,properties.endpoint]" -o table
-```
-
-## 🏗️ Step 3: Deploy Infrastructure (8 minutes)
-
-### Deploy Everything with One Command
-
-```bash
-# Deploy complete infrastructure (this takes 5-8 minutes)
+# Deploy complete infrastructure (this takes 8-12 minutes)
 az deployment sub create \
   --template-file "infra/main-orchestrator.bicep" \
   --parameters "infra/dev-orchestrator.parameters.bicepparam" \
@@ -106,95 +189,122 @@ az deployment sub create \
 ```
 
 **What's happening during deployment:**
-- ⏳ Creating resource groups (1 min)
-- ⏳ Deploying Azure Static Web Apps (2 min)
-- ⏳ Deploying Azure Functions (2 min)
-- ⏳ Setting up Application Insights (1 min)
-- ⏳ Configuring managed identity and RBAC (2 min)
+- ⏳ Creating resource groups (1-2 min)
+- ⏳ Deploying AI Foundry resources (if createAiFoundryResourceGroup=true) (3-5 min)
+- ⏳ Deploying Log Analytics workspace (if createLogAnalyticsWorkspace=true) (1-2 min)
+- ⏳ Deploying Azure Function App (2-3 min)
+- ⏳ Deploying Azure Static Web App (1-2 min)
+- ⏳ Setting up managed identity and RBAC (1-2 min)
 
 ### Monitor Deployment Progress
 
 ```bash
-# In another terminal, watch the deployment status
-watch -n 10 "az deployment sub list --query '[0].{Status:properties.provisioningState, Timestamp:properties.timestamp}' -o table"
+# Watch the deployment status
+az deployment sub list --query '[0].{Status:properties.provisioningState, Timestamp:properties.timestamp}' -o table
 ```
 
-## 📦 Step 4: Deploy Application Code (2 minutes)
+### Extract Deployment Outputs
 
-After infrastructure deployment completes, deploy the application code:
-
-### Deploy Backend Code
+After deployment completes, extract the outputs for the next steps:
 
 ```bash
-# Navigate to backend
-cd src/backend
+# Get deployment outputs
+$outputs = az deployment sub show --name "main-orchestrator" --query "properties.outputs" | ConvertFrom-Json
 
-# Build and publish
-dotnet publish -c Release -o publish
+# Extract key values
+$functionAppName = $outputs.functionAppName.value
+$functionAppResourceGroup = $outputs.backendResourceGroupName.value
+$staticWebAppName = $outputs.staticWebAppName.value
+$staticWebAppResourceGroup = $outputs.frontendResourceGroupName.value
+$aiFoundryEndpoint = $outputs.aiFoundryEndpoint.value
 
-# Create deployment package
-cd publish
-zip -r ../backend-deployment.zip .
-cd ..
-
-# Deploy to Azure Functions (replace with your actual Function App name)
-FUNCTION_APP_NAME=$(az functionapp list --query "[?contains(name, 'ai-foundry-spa-backend')].name" -o tsv | head -1)
-RESOURCE_GROUP_NAME=$(az functionapp list --query "[?contains(name, 'ai-foundry-spa-backend')].resourceGroup" -o tsv | head -1)
-
-az functionapp deployment source config-zip \
-  --resource-group "$RESOURCE_GROUP_NAME" \
-  --name "$FUNCTION_APP_NAME" \
-  --src "backend-deployment.zip"
-
-cd ../..
+echo "Function App: $functionAppName in $functionAppResourceGroup"
+echo "Static Web App: $staticWebAppName in $staticWebAppResourceGroup"
+echo "AI Foundry Endpoint: $aiFoundryEndpoint"
 ```
 
-### Deploy Frontend Code
+## 🤖 Step 3: Deploy AI Agent (Optional)
+
+*Skip this step if you're using an existing AI Foundry agent with a known agent ID.*
+
+### Deploy Agent from YAML Configuration
 
 ```bash
-# Navigate to frontend
-cd src/frontend
-
-# Install dependencies and build
-npm install
-npm run build
-
-# Deploy to Static Web Apps (replace with your actual Static Web App name)
-STATIC_APP_NAME=$(az staticwebapp list --query "[?contains(name, 'ai-foundry-spa-frontend')].name" -o tsv | head -1)
-RESOURCE_GROUP_NAME=$(az staticwebapp list --query "[?contains(name, 'ai-foundry-spa-frontend')].resourceGroup" -o tsv | head -1)
-
-# Create deployment package
-cd dist
-zip -r ../frontend-deployment.zip .
-cd ..
-
-# Deploy (Note: Static Web Apps deployment varies by setup)
-echo "Frontend built successfully. Upload 'frontend-deployment.zip' via Azure Portal if needed."
-
-cd ../..
+# Deploy the AI agent to your AI Foundry project
+.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "$aiFoundryEndpoint"
 ```
 
-## ✅ Step 5: Verify Your Deployment (2 minutes)
+**What this step does:**
+- 📄 Reads agent configuration from `src/agent/ai_in_a_box.yaml`
+- 🤖 Creates or updates the "AI in A Box" agent in AI Foundry
+- 🆔 Returns the agent ID for backend configuration
+
+### Capture Agent ID
+
+```bash
+# The Deploy-Agent script will output the agent ID
+# Copy this ID for the next step
+$agentId = "asst_generated_agent_id_here"
+```
+
+## 📦 Step 4: Deploy Application Code
+
+### Deploy Backend Function App
+
+```bash
+# Deploy backend with agent configuration
+.\deploy-scripts\deploy-backend-func-code.ps1 `
+  -FunctionAppName "$functionAppName" `
+  -ResourceGroupName "$functionAppResourceGroup" `
+  -AgentId "$agentId" `
+  -AgentName "AI in A Box" `
+  -AiFoundryEndpoint "$aiFoundryEndpoint"
+```
+
+**What this step does:**
+- 🔨 Builds the .NET Function App
+- 📦 Creates deployment package
+- 🚀 Deploys to Azure Functions
+- ⚙️ Updates Function App settings with agent configuration
+- 🏥 Tests health endpoint
+
+### Deploy Frontend Static Web App
+
+```bash
+# Deploy frontend application
+& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-frontend-spa-code.ps1" `
+  -StaticWebAppName "$staticWebAppName" `
+  -ResourceGroupName "$staticWebAppResourceGroup" `
+  -BackendApiUrl "https://$functionAppName.azurewebsites.net/api"
+```
+
+**What this step does:**
+- 📱 Builds the frontend SPA with Vite
+- 🔧 Configures backend API endpoint
+- 📤 Deploys to Azure Static Web Apps
+- 🌐 Provides the final application URL
+
+## ✅ Step 5: Verify Your Deployment
 
 ### Get Your Application URLs
 
 ```bash
 # Get the Static Web App URL
-FRONTEND_URL=$(az staticwebapp show \
-  --name "$STATIC_APP_NAME" \
-  --resource-group "$RESOURCE_GROUP_NAME" \
-  --query "defaultHostname" -o tsv)
+$frontendUrl = az staticwebapp show \
+  --name "$staticWebAppName" \
+  --resource-group "$staticWebAppResourceGroup" \
+  --query "defaultHostname" -o tsv
 
 # Get the Function App URL  
-BACKEND_URL=$(az functionapp show \
-  --name "$FUNCTION_APP_NAME" \
-  --resource-group "$RESOURCE_GROUP_NAME" \
-  --query "defaultHostName" -o tsv)
+$backendUrl = az functionapp show \
+  --name "$functionAppName" \
+  --resource-group "$functionAppResourceGroup" \
+  --query "defaultHostName" -o tsv
 
 echo "🎉 Deployment Complete!"
-echo "Frontend URL: https://$FRONTEND_URL"
-echo "Backend URL: https://$BACKEND_URL"
-echo "Health Check: https://$BACKEND_URL/api/health"
+echo "Frontend URL: https://$frontendUrl"
+echo "Backend URL: https://$backendUrl"
+echo "Health Check: https://$backendUrl/api/health"
 ```
 
 ### Test Your Application
@@ -207,10 +317,12 @@ echo "Health Check: https://$BACKEND_URL/api/health"
 
 ```bash
 # Test the backend health endpoint
-curl "https://$BACKEND_URL/api/health"
+curl "https://$backendUrl/api/health"
 
-# Expected response: {"Status":"Healthy",...}
+# Expected response: {"status":"healthy","aiFoundryConnection":{"status":"connected"}}
 ```
+
+---
 
 ## 🎉 Success! Your AI App is Live
 
@@ -220,20 +332,29 @@ If everything worked correctly, you now have:
 - **Frontend**: Modern chat interface at your Static Web App URL
 - **Backend**: Secure API proxy connecting to AI Foundry
 - **AI Integration**: Real conversations with persistent memory
+- **Monitoring**: Application Insights for telemetry and logging
 
 ### ✅ Azure Resources Created
-- **Resource Groups**: Organized infrastructure
-- **Static Web App**: Frontend hosting with CDN
+Based on your configuration choices, you now have:
+
+**Always Created:**
 - **Function App**: Backend API with managed identity
-- **Application Insights**: Monitoring and telemetry
+- **Static Web App**: Frontend hosting with CDN
 - **Storage Account**: Function App storage
 - **App Service Plan**: Consumption-based hosting
+- **Application Insights**: Backend monitoring
+
+**Conditionally Created (if opted in):**
+- **AI Foundry Resources**: Cognitive Services + AI Hub/Project
+- **Log Analytics Workspace**: Centralized logging
+- **AI Agent**: Deployed from YAML configuration
 
 ### ✅ Security Configuration
 - **Managed Identity**: Secure AI Foundry access (no stored credentials)
-- **RBAC**: Least-privilege Azure AI Developer role
+- **RBAC**: Least-privilege roles (Azure AI Developer, Cognitive Services OpenAI User)
 - **CORS**: Restricted to your frontend domain
 - **HTTPS**: End-to-end encryption
+- **Resource Isolation**: Multi-resource group architecture
 
 ## 🔧 Quick Customization
 
@@ -250,31 +371,50 @@ Extend functionality with additional API endpoints (see [Customization Guide](..
 
 ## 🚨 Troubleshooting Quick Fixes
 
-### Issue: Deployment Failed
+### Issue: Infrastructure Deployment Failed
 ```bash
-# Check deployment status
-az deployment sub list --query '[0].properties.error' -o table
+# Check deployment status and errors
+az deployment sub show --name "main-orchestrator" --query "properties.error" -o table
 
-# Common fix: Check your user permissions
+# Common fixes:
+# 1. Check user permissions for resource creation
 az role assignment list --assignee $(az ad signed-in-user show --query id -o tsv) --all
+
+# 2. Verify subscription quota for the selected region
+az vm list-usage --location "eastus2" -o table
+```
+
+### Issue: Agent Deployment Failed
+```bash
+# Verify AI Foundry endpoint accessibility
+curl "$aiFoundryEndpoint/health"
+
+# Check authentication and permissions
+az cognitiveservices account show --name "$aiFoundryResourceName" --resource-group "$aiFoundryResourceGroupName"
+```
+
+### Issue: Backend Code Deployment Failed
+```bash
+# Verify Function App is running
+az functionapp show --name "$functionAppName" --resource-group "$functionAppResourceGroup" --query "state"
+
+# Check for build errors
+dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
+
+# Verify managed identity permissions
+az role assignment list --scope "/subscriptions/$(az account show --query id -o tsv)" --query "[?principalType=='ServicePrincipal' && contains(roleDefinitionName, 'AI')]"
 ```
 
 ### Issue: Frontend Can't Connect to Backend
 ```bash
-# Verify Function App is running
-az functionapp show --name "$FUNCTION_APP_NAME" --resource-group "$RESOURCE_GROUP_NAME" --query "state"
+# Check Function App CORS settings
+az functionapp cors show --name "$functionAppName" --resource-group "$functionAppResourceGroup"
 
-# Check CORS settings
-az functionapp cors show --name "$FUNCTION_APP_NAME" --resource-group "$RESOURCE_GROUP_NAME"
-```
+# Verify backend API is responding
+curl "https://$functionAppName.azurewebsites.net/api/health"
 
-### Issue: AI Foundry Connection Failed
-```bash
-# Test health endpoint
-curl "https://$BACKEND_URL/api/health"
-
-# Check managed identity role assignment
-az role assignment list --scope "/subscriptions/$(az account show --query id -o tsv)" --query "[?principalType=='ServicePrincipal' && roleDefinitionName=='Azure AI Developer']"
+# Check Static Web App configuration
+az staticwebapp show --name "$staticWebAppName" --resource-group "$staticWebAppResourceGroup" --query "customDomains"
 ```
 
 ## 🚦 Next Steps
@@ -282,15 +422,36 @@ az role assignment list --scope "/subscriptions/$(az account show --query id -o 
 Now that your AI app is running:
 
 1. **[First Steps](04-first-steps.md)** - Test and verify all features work
-2. **[Configuration Guide](../configuration/)** - Customize your setup
-3. **[Development Guide](../development/)** - Set up local development
-4. **[Troubleshooting](../operations/troubleshooting.md)** - Fix common issues
+2. **[Development Guide](../development/local-development.md)** - Set up local development environment
+3. **[Configuration Guide](../configuration/)** - Customize your setup and add features
+4. **[Production Deployment](../deployment/deployment-guide.md)** - Set up GitHub Actions CI/CD for production
+5. **[Troubleshooting](../operations/troubleshooting.md)** - Fix common issues
+
+## 📞 Production Deployment
+
+**⚠️ Important**: This quick-start creates a development environment. For production:
+
+### Recommended Production Workflow:
+1. **Fork this repository** to your GitHub account
+2. **Set up GitHub Actions** following the [Deployment Guide](../deployment/deployment-guide.md)
+3. **Configure environment-specific parameters** for staging/production
+4. **Use Azure Deployment Environments** for team collaboration
+5. **Implement proper CI/CD pipeline** with testing and approval gates
+
+### Why GitHub Actions for Production:
+- ✅ **Automated testing** before deployment
+- ✅ **Environment promotion** (dev → staging → prod)
+- ✅ **Secret management** with GitHub secrets
+- ✅ **Rollback capabilities** if issues occur
+- ✅ **Audit trail** of all deployments
+- ✅ **Team collaboration** with pull request reviews
 
 ## 📞 Need Help?
 
 ### Common Issues:
 - **[Troubleshooting Guide](../operations/troubleshooting.md)** - Solutions to common problems
 - **[Configuration Issues](../configuration/environment-variables.md)** - Fix configuration problems
+- **[Local Development](../development/local-development.md)** - Set up your dev environment
 
 ### Community Support:
 - **[GitHub Issues](https://github.com/JFolberth/ai-in-a-box/issues)** - Report bugs or ask questions
@@ -298,4 +459,4 @@ Now that your AI app is running:
 
 ---
 
-**🎉 Congratulations!** Your AI Foundry SPA is now live and ready to use. → Continue to [First Steps](04-first-steps.md) to test all features.
+**🎉 Congratulations!** Your AI Foundry SPA is now live and ready to use. → Continue to [First Steps](04-first-steps.md) to test all features, or set up [Production Deployment](../deployment/deployment-guide.md) for your team.

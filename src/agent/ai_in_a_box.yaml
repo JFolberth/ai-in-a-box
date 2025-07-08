@@ -1,6 +1,5 @@
 # yaml-language-server: $schema=https://aka.ms/ai-foundry-vsc/agent/1.0.0
 version: 1.0.0
-id: asst_PzcEzGaglsRr2TyX4N48qlAJ
 name: AI in A Box Agent
 tools: []
 description: AI in A Box intelligent assistant agent created via infrastructure deployment

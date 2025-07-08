@@ -17,7 +17,7 @@ param aiFoundryResourceGroupName string
 param aiFoundryEndpoint string
 
 @description('AI Foundry agent ID')
-param aiFoundryAgentId string
+param aiFoundryAgentId string = ''
 
 @description('AI Foundry agent name')
 param aiFoundryAgentName string = 'AI in A Box'
@@ -27,10 +27,10 @@ param applicationName string
 
 param devCenterProjectName string = ''
 @description('Environment name (e.g., dev, staging, prod)')
-param environmentName string ='dev'
+param environmentName string = 'dev'
 
 @description('Azure region for resource deployment')
-param location string ='eastus2'
+param location string = 'eastus2'
 
 @description('Log Analytics Workspace Name for consolidated logging')
 param logAnalyticsWorkspaceName string
@@ -45,7 +45,9 @@ param tags object = {
 }
 
 // =========== VARIABLES ===========
-var nameSuffix = empty(adeName) ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}') : '${devCenterProjectName}-${adeName}'
+var nameSuffix = empty(adeName)
+  ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}')
+  : '${devCenterProjectName}-${adeName}'
 var nameSuffixShort = replace(nameSuffix, '-', '')
 
 var regionReference = {
@@ -111,12 +113,12 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     })
     kind: 'StorageV2'
     skuName: 'Standard_LRS'
-    
+
     // Enable system-assigned managed identity
     managedIdentities: {
       systemAssigned: true
     }
-    
+
     // Storage account properties for Function App
     accessTier: 'Hot'
     allowBlobPublicAccess: false
@@ -125,12 +127,12 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     minimumTlsVersion: 'TLS1_2'
     publicNetworkAccess: 'Enabled'
     allowCrossTenantReplication: false
-    
+
     // Basic blob services configuration
     blobServices: {
       deleteRetentionPolicyEnabled: true
       deleteRetentionPolicyDays: 7
-      containers:[
+      containers: [
         {
           name: 'function-container'
           properties: {
@@ -141,7 +143,7 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
           }
         }
       ]
-    }    // Network access rules
+    } // Network access rules
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -163,7 +165,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
 }
 )*/
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
-  name:  resourceNames.appServicePlan
+  name: resourceNames.appServicePlan
   location: location
   kind: 'functionapp'
   sku: {
@@ -174,7 +176,6 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
     reserved: true
   }
 }
-
 
 // =========== APP SERVICE PLAN FOR FUNCTIONS ===========
 /*
@@ -207,35 +208,35 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
       Component: 'Backend-FunctionApp'
     })
     kind: 'functionapp'
-    
+
     // Enable system-assigned managed identity for AI Foundry access
     managedIdentities: {
       systemAssigned: true
     }
-    
+
     // Function App configuration
-    functionAppConfig:{
+    functionAppConfig: {
       deployment: {
         storage: {
           value: '${functionStorageAccount.outputs.primaryBlobEndpoint}function-container'
           type: 'blobContainer'
-           authentication:{
-              type: 'SystemAssignedIdentity'
-           }
+          authentication: {
+            type: 'SystemAssignedIdentity'
           }
         }
-      runtime:{
-        name:'dotnet-isolated'
-        version:'8.0'
+      }
+      runtime: {
+        name: 'dotnet-isolated'
+        version: '8.0'
       }
       scaleAndConcurrency: {
         instanceMemoryMB: 512
         maximumInstanceCount: 40
-        }
       }
+    }
     serverFarmResourceId: appServicePlan.id
     httpsOnly: true
-    publicNetworkAccess: 'Enabled'      // Site configuration for Function App
+    publicNetworkAccess: 'Enabled' // Site configuration for Function App
     siteConfig: {
       alwaysOn: false
       http20Enabled: true
@@ -281,20 +282,24 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
 
 // Storage Blob Data Contributor role for Function App managed identity
 // Required for Flex Consumption model to access storage account
-// Note: NEVER use literal strings for role assignment names - always use guid() to avoid conflicts
+// Note: Using unique deployment-specific GUID to avoid conflicts with existing assignments
 resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, resourceNames.functionApp, resourceNames.functionStorageAccount, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  name: guid(resourceGroup().id, resourceNames.functionApp, 'storage-blob-contributor-v2')
   scope: resourceGroup()
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    ) // Storage Blob Data Contributor
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
     principalType: 'ServicePrincipal'
     description: 'Grants Storage Blob Data Contributor access to Function App managed identity for Flex Consumption model'
   }
 }
 
-// Azure AI Developer role for Function App managed identity to access AI Foundry
-// Required for AI Foundry API access with least privilege
+// Cognitive Services OpenAI User role for Function App managed identity to access AI Foundry
+// Required for creating threads, sending messages, and reading responses from AI Foundry agents
+// This role provides the necessary permissions for AI Foundry API access with least privilege
 // Using a separate module deployment to handle cross-resource group RBAC assignment
 // NOTE: The deploying identity must have User Access Administrator or Owner role on the AI Foundry resource group
 module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
@@ -302,7 +307,27 @@ module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI Developer
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'a97b65f3-24c7-4388-baec-2e87135dc908'
+    ) // Cognitive Services OpenAI User
+    targetResourceId: aiFoundryInstance.id
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Azure AI User role for Function App managed identity to access AI Foundry Project
+// Required for reading and calling the AI Foundry agent, accessing project-level resources
+// This complements the Cognitive Services OpenAI User role for complete agent access
+module functionAppAiFoundryProjectRoleAssignment 'rbac.bicep' = {
+  name: 'functionApp-aiproject-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+  scope: resourceGroup(aiFoundryResourceGroupName)
+  params: {
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+    ) // Azure AI User
     targetResourceId: aiFoundryInstance.id
     principalType: 'ServicePrincipal'
   }
@@ -326,7 +351,7 @@ output applicationInsightsId string = applicationInsights.outputs.resourceId
 output applicationInsightsInstrumentationKey string = applicationInsights.outputs.instrumentationKey
 
 @description('Backend API URL for frontend configuration')
-output backendApiUrl string = 'https://${functionApp.outputs.defaultHostname}/api'
+output backendApiUrl string = 'https://${functionApp.outputs.name}.azurewebsites.net/api'
 
 @description('Function App Name')
 output functionAppName string = functionApp.outputs.name
@@ -335,7 +360,7 @@ output functionAppName string = functionApp.outputs.name
 output functionAppSystemAssignedIdentityPrincipalId string = functionApp.outputs.systemAssignedMIPrincipalId!
 
 @description('Function App URL')
-output functionAppUrl string = 'https://${functionApp.outputs.defaultHostname}'
+output functionAppUrl string = 'https://${functionApp.outputs.name}.azurewebsites.net'
 
 @description('Function Storage Account Name')
 output functionStorageAccountName string = functionStorageAccount.outputs.name

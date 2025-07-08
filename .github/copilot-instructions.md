@@ -44,6 +44,40 @@ cd src/backend
 
 ## Code Generation Guidelines
 
+### 🎯 PRIORITIZE MICROSOFT OFFICIAL DOCUMENTATION - MANDATORY
+
+**🔍 ALWAYS consult Microsoft Learn first for Azure and C# guidance:**
+
+- **🚨 BEFORE generating any Azure code**: Use `mcp_microsoft_doc_microsoft_docs_search` to find current best practices
+- **🚨 BEFORE implementing C# features**: Search Microsoft Learn for official patterns and recommendations
+- **🚨 BEFORE suggesting Azure services**: Verify capabilities and limitations in official documentation
+- **🚨 BEFORE troubleshooting Azure issues**: Check Microsoft Learn for known issues and solutions
+
+**Examples of when to search Microsoft Learn:**
+- Azure Function development patterns
+- Bicep template best practices
+- Azure Storage configuration options
+- Cognitive Services integration methods
+- C# async/await patterns
+- Azure security and authentication
+- Deployment and monitoring strategies
+
+**Search Query Examples:**
+```
+"Azure Functions C# best practices"
+"Bicep template security patterns"
+"Azure Storage static website configuration"
+"Cognitive Services authentication methods"
+"Azure Application Insights setup"
+```
+
+**Benefits:**
+- ✅ **Current information**: Always get the latest Azure features and recommendations
+- ✅ **Official guidance**: Avoid deprecated patterns or unofficial workarounds
+- ✅ **Security focus**: Follow Microsoft's security best practices
+- ✅ **Performance optimization**: Use Microsoft-recommended performance patterns
+- ✅ **Compatibility**: Ensure code works with current Azure platform versions
+
 ### ⚠️ CRITICAL - Path Management and Local Testing
 
 #### Absolute Paths - REQUIRED (REINFORCED)

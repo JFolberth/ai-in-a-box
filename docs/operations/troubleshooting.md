@@ -27,11 +27,16 @@
 - RBAC assignment failures for AI Foundry resources
 
 **Root Cause:**
-This is the most common issue - AI Foundry resources must exist BEFORE running the orchestrator deployment due to circular dependency limitations in Azure's resource model.
+AI Foundry resources don't exist in the specified location or the orchestrator is configured to use existing resources that aren't available.
 
 **Solutions:**
 
-**1. Verify AI Foundry Resources Exist**
+**1. Check Deployment Configuration**
+Verify your `createAiFoundryResourceGroup` parameter setting:
+- Set to `true` to create new AI Foundry resources automatically
+- Set to `false` to use existing AI Foundry resources (must exist first)
+
+**2. Verify Existing AI Foundry Resources (if using existing)**
 ```bash
 # Check if your AI Foundry Cognitive Services account exists
 az cognitiveservices account show \
@@ -42,12 +47,15 @@ az cognitiveservices account show \
 az cognitiveservices account list --query "[?kind=='AIServices']" -o table
 ```
 
-**2. Create AI Foundry Resources First**
-If you don't have AI Foundry resources:
+**3. Create AI Foundry Resources**
+If you want to use existing resources but don't have them:
 - Follow the [AI Foundry Setup Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstart/)
 - Create the Cognitive Services account and AI project manually
 - Create the "AI in A Box" agent
 - Then update your deployment parameters with the correct resource names
+
+**4. Use Automated Creation**
+Alternatively, set `createAiFoundryResourceGroup: true` in your parameters to let the orchestrator create all AI Foundry resources automatically.
 
 **3. Update Parameters with Correct Information**
 ```bicep
@@ -100,31 +108,6 @@ az vm list-usage --location "eastus2" -o table
 
 # Solution: Request limit increase or use different region
 ```
-
-### Issue: Setting createAiFoundryResourceGroup = true Fails
-
-**Symptoms:**
-- Deployment fails with circular dependency errors
-- Bicep compilation errors related to AI Foundry resources
-- Cannot create Cognitive Services and Project in same deployment
-
-**Root Cause:**
-Azure's resource model has a circular dependency between Cognitive Services workspace and AI Foundry project resources that prevents them from being created atomically.
-
-**Why This Happens:**
-- AI Foundry project depends on Cognitive Services workspace
-- Cognitive Services workspace configuration depends on project details
-- Azure cannot resolve this circular reference in a single deployment pass
-
-**Solution:**
-Keep `createAiFoundryResourceGroup = false` and create AI Foundry resources manually first:
-
-1. **Create AI Foundry manually** using Azure Portal or separate deployment
-2. **Update parameters** with existing resource information
-3. **Deploy orchestrator** which will reference existing resources
-
-**Future Resolution:**
-This parameter exists for potential future use when/if Azure resolves the circular dependency limitation.
 
 ### Issue: Function App Deployment Package Error
 
