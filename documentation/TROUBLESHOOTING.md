@@ -2,7 +2,134 @@
 
 This document provides solutions to common issues you may encounter when deploying the AI in a Box application.
 
-## 🚨 Azure Function App Deployment Issues
+## � Preflight Check Failures
+
+The quickstart deployment script includes automatic preflight checks to validate Azure permissions and quota before deployment. These checks help catch common issues early.
+
+### Azure OpenAI Quota Exceeded
+
+**Error Message:**
+```
+(InsufficientQuota) This operation require 150 new capacity in quota Tokens Per Minute (thousands) - gpt-4o-mini, which is bigger than the current available capacity 0. The current quota usage is 450 and the quota limit is 450 for quota Tokens Per Minute (thousands) - gpt-4o-mini.
+```
+
+**Root Cause:**
+You don't have sufficient Azure OpenAI quota available to deploy the requested model capacity. This is the **most common deployment failure** for new Azure subscriptions.
+
+**Solutions:**
+
+1. **Use Existing AI Foundry Resources** (Recommended for quota issues):
+   ```powershell
+   .\deploy-quickstart.ps1 -UseExistingAiFoundry
+   ```
+   Then provide existing AI Foundry resource details when prompted.
+
+2. **Check Current Quota Usage**:
+   ```bash
+   # List all OpenAI accounts and their locations
+   az cognitiveservices account list --query "[?kind=='OpenAI'].{name:name, location:location, sku:sku.name}" --output table
+   
+   # Check quota usage in specific region
+   az cognitiveservices usage list --location eastus2 --output table
+   ```
+
+3. **Request Quota Increase**:
+   - Visit [Azure OpenAI Quota Management](https://aka.ms/azure-openai-quota)
+   - Submit a quota increase request for your required region
+   - Typical approval time: 1-3 business days
+
+4. **Free Up Existing Quota**:
+   ```bash
+   # List existing model deployments
+   az cognitiveservices account deployment list --name "your-openai-account" --resource-group "your-rg"
+   
+   # Delete unused deployments to free quota
+   az cognitiveservices account deployment delete --name "your-openai-account" --resource-group "your-rg" --deployment-name "unused-deployment"
+   ```
+
+5. **Deploy with Lower Capacity**:
+   Modify `dev-orchestrator.parameters.bicepparam`:
+   ```bicep
+   param aiFoundryDeploymentCapacity = 50  // Reduced from 150
+   ```
+
+**Microsoft Learn Resources:**
+- [Azure OpenAI Quota and Limits](https://learn.microsoft.com/azure/ai-services/openai/quotas-limits)
+- [Request quota increases](https://learn.microsoft.com/azure/ai-services/openai/quotas-limits#how-to-request-increases-to-the-default-quotas-and-limits)
+
+### Insufficient Azure Permissions
+
+**Error Message:**
+```
+The client 'user@domain.com' with object id 'xxx' does not have authorization to perform action 'Microsoft.Authorization/roleAssignments/write'
+```
+
+**Root Cause:**
+Your Azure account lacks the necessary permissions to create resources or assign RBAC roles.
+
+**Required Permissions:**
+- **Subscription-level roles**: Owner, Contributor, or User Access Administrator
+- **Resource-specific permissions**: 
+  - Create resource groups
+  - Deploy ARM/Bicep templates  
+  - Assign RBAC roles to managed identities
+  - Register resource providers
+
+**Solutions:**
+
+1. **Check Current Permissions**:
+   ```bash
+   # View your role assignments
+   az role assignment list --assignee $(az account show --query user.name -o tsv) --output table
+   
+   # Check subscription-level roles
+   az role assignment list --assignee $(az account show --query user.name -o tsv) --scope /subscriptions/$(az account show --query id -o tsv) --output table
+   ```
+
+2. **Request Access from Administrator**:
+   Contact your Azure subscription administrator to assign:
+   - **Contributor** role at subscription level (minimum)
+   - **User Access Administrator** role if RBAC assignment errors occur
+
+3. **Use Service Principal (CI/CD)**:
+   For automated deployments, create a service principal:
+   ```bash
+   az ad sp create-for-rbac --name "ai-foundry-spa-deploy" --role Contributor --scopes /subscriptions/YOUR_SUBSCRIPTION_ID
+   ```
+
+**Microsoft Learn Resources:**
+- [Azure RBAC roles](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles)
+- [Troubleshoot RBAC](https://learn.microsoft.com/azure/role-based-access-control/troubleshooting)
+
+### Resource Provider Not Registered
+
+**Error Message:**
+```
+The subscription is not registered to use namespace 'Microsoft.CognitiveServices'
+```
+
+**Root Cause:**
+Required Azure resource providers are not registered in your subscription.
+
+**Solution:**
+The preflight checks will identify unregistered providers. Register them manually:
+
+```bash
+# Register all required providers
+az provider register --namespace Microsoft.Web
+az provider register --namespace Microsoft.CognitiveServices  
+az provider register --namespace Microsoft.OperationalInsights
+az provider register --namespace Microsoft.Insights
+az provider register --namespace Microsoft.Authorization
+
+# Check registration status
+az provider list --query "[?namespace=='Microsoft.CognitiveServices'].{Namespace:namespace, State:registrationState}" --output table
+```
+
+**Microsoft Learn Resources:**
+- [Azure resource providers](https://learn.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types)
+
+## �🚨 Azure Function App Deployment Issues
 
 ### Missing .azurefunctions Directory Error
 
@@ -163,38 +290,170 @@ npm install
 npm run build
 ```
 
-## 🔧 Environment-Specific Issues
+## 🚨 Azure OpenAI Quota Issues
 
-### Azure Deployment Environments (ADE)
+### Insufficient Quota Error During Deployment
 
-**Issue**: ADE deployment fails with resource not found
-**Solution**: 
-1. Verify the ADE environment was deployed successfully
-2. Check the resource group and resource names match expectations
-3. Use Azure CLI to list resources and verify names:
-   ```bash
-   az functionapp list --query "[?contains(name, 'func-ai-foundry-spa-backend')].{name:name,resourceGroup:resourceGroup}" --output table
-   az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup}" --output table
-   ```
+**Error Message:**
+```
+(InsufficientQuota) This operation require 150 new capacity in quota Tokens Per Minute (thousands) - gpt-4o-mini, which is bigger than the current available capacity 0. The current quota usage is 450 and the quota limit is 450 for quota Tokens Per Minute (thousands) - gpt-4o-mini.
+```
 
-### Local Development
+**Root Cause:**
+Azure OpenAI models require quota allocation in units of **Tokens Per Minute (TPM)**. Each subscription has a quota limit per region per model. When deploying new AI Foundry resources with model deployments, you need sufficient available quota to allocate TPM to the new deployment.
 
-**Issue**: Function App doesn't start locally
-**Solution**: 
-1. Start Azurite emulator first
-2. Ensure local.settings.json is configured
-3. Use VS Code tasks for proper startup sequence
+**Understanding the Error:**
+- **Required**: 150,000 TPM (150 capacity units × 1,000 TPM per unit)
+- **Available**: 0 TPM remaining 
+- **Current Usage**: 450,000 TPM out of 450,000 TPM limit
+- **Model**: gpt-4o-mini in the specified region
 
-## 📞 Getting Help
+**Immediate Solutions:**
+#### 1. **Reduce Model Capacity** (Quickest Fix)
+Modify your deployment parameters to use less TPM:
+```bicep
+// In your .bicepparam file, reduce the capacity:
+param aiFoundryDeploymentCapacity = 30  // Reduced from 150 to 30 (30K TPM)
+```
 
-If you continue to experience issues:
+#### 2. **Skip Model Deployment** (Test Infrastructure Only)
+Set capacity to 0 to deploy infrastructure without model:
+```bicep
+// Deploy infrastructure only, add models later via portal
+param aiFoundryDeploymentCapacity = 0
+```
 
-1. **Check the logs**: Review Azure portal logs for detailed error messages
-2. **Verify configuration**: Ensure all environment variables and settings are correct
-3. **Test locally**: Reproduce the issue in a local development environment
-4. **Check documentation**: Review the specific deployment guide for your scenario
+#### 3. **Use Existing AI Foundry Resources**
+Point to existing resources instead of creating new ones:
+```bicep
+// Use existing AI Foundry resources
+param createAiFoundryResourceGroup = false
+param aiFoundryResourceName = 'your-existing-ai-foundry-resource'
+param aiFoundryResourceGroupName = 'your-existing-rg'
+param aiFoundryProjectName = 'your-existing-project'
+```
 
-For additional support, please refer to:
-- [Azure Functions Documentation](https://docs.microsoft.com/en-us/azure/azure-functions/)
-- [Azure Static Web Apps Documentation](https://docs.microsoft.com/en-us/azure/static-web-apps/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+**Checking Your Quota Usage:**
+Use this PowerShell script to check your current quota allocation:
+```powershell
+# Check-AzureOpenAIQuota.ps1
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$SubscriptionId,
+    
+    [Parameter(Mandatory=$false)]
+    [string]$Location = "eastus2"
+)
+
+# Get access token
+$accessToken = az account get-access-token --query accessToken --output tsv
+
+# Check quota usage
+$uri = "https://management.azure.com/subscriptions/$SubscriptionId/providers/Microsoft.CognitiveServices/locations/$Location/usages?api-version=2023-05-01"
+
+$headers = @{
+    Authorization = "Bearer $accessToken"
+    'Content-Type' = 'application/json'
+}
+
+try {
+    $response = Invoke-RestMethod -Uri $uri -Method GET -Headers $headers
+    
+    Write-Host "=== Azure OpenAI Quota Usage in $Location ===" -ForegroundColor Green
+    Write-Host ""
+    
+    foreach ($usage in $response.value) {
+        if ($usage.name.value -like "*TPM*" -or $usage.name.value -like "*RPM*") {
+            $percentage = if ($usage.limit -gt 0) { 
+                [math]::Round(($usage.currentValue / $usage.limit) * 100, 2) 
+            } else { 0 }
+            
+            $status = if ($percentage -ge 90) { "🔴 CRITICAL" } 
+                     elseif ($percentage -ge 75) { "🟡 HIGH" }
+                     elseif ($percentage -ge 50) { "🟠 MEDIUM" }
+                     else { "🟢 LOW" }
+            
+            Write-Host "Model: $($usage.name.localizedValue)" -ForegroundColor White
+            Write-Host "  Current: $($usage.currentValue)" -ForegroundColor Cyan
+            Write-Host "  Limit: $($usage.limit)" -ForegroundColor Cyan
+            Write-Host "  Available: $($usage.limit - $usage.currentValue)" -ForegroundColor $(if (($usage.limit - $usage.currentValue) -gt 0) { "Green" } else { "Red" })
+            Write-Host "  Usage: $percentage% $status" -ForegroundColor $(if ($percentage -ge 90) { "Red" } elseif ($percentage -ge 75) { "Yellow" } else { "Green" })
+            Write-Host ""
+        }
+    }
+    
+} catch {
+    Write-Error "Failed to retrieve quota information: $($_.Exception.Message)"
+    Write-Host "Please ensure you have proper permissions and the Azure CLI is authenticated." -ForegroundColor Yellow
+}
+```
+
+**Usage Example:**
+```powershell
+# Save the script above as Check-AzureOpenAIQuota.ps1
+& "C:\Users\BicepDeveloper\repo\ai-in-a-box\scripts\Check-AzureOpenAIQuota.ps1" -SubscriptionId "your-subscription-id" -Location "eastus2"
+```
+
+**Alternative: Azure CLI Method**
+```bash
+# Check your subscription's quota ID and offer type
+az rest --method GET --uri "https://management.azure.com/subscriptions/{subscription-id}?api-version=2020-01-01" --query "quotaId"
+
+# Check usage in a specific region
+az rest --method GET --uri "https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.CognitiveServices/locations/eastus2/usages?api-version=2023-05-01"
+```
+
+**Requesting Quota Increases:**
+If you need more quota, submit a request through the official channels:
+1. **Azure Portal Method:**
+   - Go to [Azure AI Foundry Portal](https://ai.azure.com/)
+   - Navigate to **Management** → **Model quota**
+   - Select **Request quota increase**
+2. **Direct Request Form:**
+   - Submit via [Official Quota Increase Form](https://aka.ms/oai/stuquotarequest)
+   - Priority given to customers with traffic that consumes existing quota
+   - Requests processed in order received
+3. **What to Include in Request:**
+   - Business justification for increased quota
+   - Expected usage patterns and traffic volume
+   - Model and region requirements
+   - Timeline for deployment
+
+**Managing Existing Deployments:**
+To free up quota from existing deployments:
+```powershell
+# List all Azure OpenAI deployments in your subscription
+az cognitiveservices account deployment list --name "your-openai-resource-name" --resource-group "your-rg"
+
+# Update deployment capacity (reduce TPM allocation)
+az cognitiveservices account deployment create \
+  --name "your-openai-resource-name" \
+  --resource-group "your-rg" \
+  --deployment-name "gpt-4o-mini" \
+  --model-name "gpt-4o-mini" \
+  --model-version "2024-07-18" \
+  --sku-capacity 30 \
+  --sku-name "Standard"
+```
+
+**Model-Specific Quota Requirements:**
+| Model | Capacity Unit | TPM per Unit | RPM per Unit |
+|-------|---------------|--------------|--------------|
+| GPT-4o-mini | 1 | 1,000 | 6 |
+| GPT-4o | 1 | 1,000 | 6 |
+| GPT-4 | 1 | 1,000 | 6 |
+| o1-mini | 1 | 10,000 | 1 |
+| o1-preview | 1 | 6,000 | 1 |
+
+**Prevention Tips:**
+- Always check quota availability before deploying new AI resources
+- Start with smaller capacity allocations and scale up as needed
+- Monitor quota usage regularly in production environments
+- Consider using existing AI Foundry resources for development/testing
+
+**Microsoft Learn Resources:**
+- [Manage Azure OpenAI Quota](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/quota)
+- [Azure OpenAI Quotas and Limits](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/quotas-limits)
+- [Request Quota Increases](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/deploy-models-openai#quota-for-deploying-and-inferencing-a-model)
+
+---

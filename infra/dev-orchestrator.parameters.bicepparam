@@ -1,7 +1,7 @@
 using 'main-orchestrator.bicep'
 
 // AI Foundry configuration (single endpoint) - Synced with local.settings.json
-param aiFoundryProjectDisplayName = 'AI in A Box Project (s)'
+param aiFoundryProjectDisplayName = 'AI in A Box Project'
 param aiFoundryResourceName = 'cs-ai-foundry-dev-eus2'
 param aiFoundryResourceGroupName = 'rg-ai-foundry-spa-aifoundry-dev-eus2'
 param aiFoundryProjectName = 'aiproj-ai-foundry-dev-eus2'
@@ -12,7 +12,12 @@ param createAiFoundryResourceGroup = true     // Using existing AI Foundry resou
 // aiFoundrySubscriptionId will use subscription() function default - no need to specify
 
 // Environment and application configuration
+param applicationName = 'ai-foundry-spa'
+param environmentName = 'dev'
 param location = 'eastus2'
+
+// AI Foundry model deployment configuration - REDUCED FOR QUOTA
+param aiFoundryDeploymentCapacity = 1  // Minimal capacity to avoid quota issues
 
 // Log Analytics workspace creation options - using defaults for pricing tier and retention
 param createLogAnalyticsWorkspace = true      // Creates new Log Analytics workspace and resource group with standard naming

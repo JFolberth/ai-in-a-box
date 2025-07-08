@@ -84,7 +84,7 @@ param aiFoundryModelDeploymentName string = 'gpt-4o-mini'
 param aiFoundryModelVersion string = '2024-07-18'
 
 @description('AI Foundry deployment capacity (TPM - Tokens Per Minute)')
-param aiFoundryDeploymentCapacity int = 150
+param aiFoundryDeploymentCapacity int = 100
 
 @description('AI Foundry project display name')
 param aiFoundryProjectDisplayName string = 'AI in A Box Project'
@@ -132,17 +132,17 @@ var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace
 
 // AI Foundry endpoint - either from deployed infrastructure or existing resource
 var effectiveAiFoundryEndpoint = createAiFoundryResourceGroup
-  ? aiFoundryInfrastructure.outputs.aiFoundryEndpoint
-  : '${existingCognitiveServices.properties.endpoint}api/projects/${aiFoundryProjectName}'
+  ? aiFoundryInfrastructure.?outputs.aiFoundryEndpoint ?? ''
+  : '${existingCognitiveServices.?properties.endpoint ?? ''}api/projects/${aiFoundryProjectName}'
 
 // Cognitive Services Account - either from deployed infrastructure or existing resource
 var effectiveCognitiveServicesAccount = createAiFoundryResourceGroup
-  ? aiFoundryInfrastructure.outputs.cognitiveServicesName
-  : existingCognitiveServices.name
+  ? aiFoundryInfrastructure.?outputs.cognitiveServicesName ?? ''
+  : existingCognitiveServices.?name ?? ''
 
 // AI Foundry project name - either from deployed infrastructure or existing parameter
 var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
-  ? aiFoundryInfrastructure.outputs.aiProjectName
+  ? aiFoundryInfrastructure.?outputs.aiProjectName ?? aiFoundryProjectName
   : aiFoundryProjectName
 
 // =========== RESOURCE GROUPS ===========
@@ -355,8 +355,8 @@ module aiFoundryUserRbac 'modules/rbac-assignment.bicep' = {
     roleDefinitionId: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User role
     principalType: 'ServicePrincipal'
     targetResourceId: createAiFoundryResourceGroup
-      ? aiFoundryInfrastructure.outputs.cognitiveServicesId
-      : existingCognitiveServices.id
+      ? aiFoundryInfrastructure.?outputs.cognitiveServicesId ?? ''
+      : existingCognitiveServices.?id ?? ''
     roleDescription: 'Grants Function App access to read and call AI Foundry agents'
   }
 }
@@ -370,8 +370,8 @@ module aiFoundryOpenAIRbac 'modules/rbac-assignment.bicep' = {
     roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908' // Cognitive Services OpenAI User role
     principalType: 'ServicePrincipal'
     targetResourceId: createAiFoundryResourceGroup
-      ? aiFoundryInfrastructure.outputs.cognitiveServicesId
-      : existingCognitiveServices.id
+      ? aiFoundryInfrastructure.?outputs.cognitiveServicesId ?? ''
+      : existingCognitiveServices.?id ?? ''
     roleDescription: 'Grants Function App access to AI Foundry chat completion service'
   }
 }
@@ -461,30 +461,30 @@ output aiFoundryEndpoint string = effectiveAiFoundryEndpoint
 
 @description('AI Foundry Resource Group Name')
 output aiFoundryResourceGroupName string = createAiFoundryResourceGroup
-  ? newAiFoundryResourceGroup.outputs.name
+  ? newAiFoundryResourceGroup.?outputs.name ?? ''
   : aiFoundryResourceGroupName
 
 @description('AI Foundry Resource Group Location')
 output aiFoundryResourceGroupLocation string = createAiFoundryResourceGroup
-  ? newAiFoundryResourceGroup.outputs.location
+  ? newAiFoundryResourceGroup.?outputs.location ?? location
   : location
 
 @description('Log Analytics Resource Group Name')
 output logAnalyticsResourceGroupName string = createLogAnalyticsWorkspace
-  ? newLogAnalyticsResourceGroup.outputs.name
-  : logAnalyticsResourceGroup.name
+  ? newLogAnalyticsResourceGroup.?outputs.name ?? ''
+  : logAnalyticsResourceGroup.?name ?? ''
 
 @description('Log Analytics Workspace Name (effective - created or existing)')
 output logAnalyticsWorkspaceName string = createLogAnalyticsWorkspace
-  ? logAnalyticsWorkspace.outputs.workspaceName
+  ? logAnalyticsWorkspace.?outputs.workspaceName ?? ''
   : effectiveLogAnalyticsWorkspaceName
 
 @description('Log Analytics Workspace ID (effective - created or existing)')
 output logAnalyticsWorkspaceId string = createLogAnalyticsWorkspace
-  ? logAnalyticsWorkspace.outputs.workspaceId
-  : existingLogAnalyticsWorkspace.id
+  ? logAnalyticsWorkspace.?outputs.workspaceId ?? ''
+  : existingLogAnalyticsWorkspace.?id ?? ''
 
 @description('Log Analytics Resource Group Location')
 output logAnalyticsResourceGroupLocation string = createLogAnalyticsWorkspace
-  ? newLogAnalyticsResourceGroup.outputs.location
-  : logAnalyticsResourceGroup.location
+  ? newLogAnalyticsResourceGroup.?outputs.location ?? location
+  : logAnalyticsResourceGroup.?location ?? location

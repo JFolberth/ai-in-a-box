@@ -225,6 +225,137 @@ if (-not $SkipValidation) {
     Write-ColorOutput "⚠️  Skipping prerequisite validation (as requested)" "Yellow"
 }
 
+# Remove preflight checks from here - they will be moved after configuration setup
+
+# Functions for preflight checks (will be called after configuration)
+function Test-AzureOpenAIQuota {
+    param(
+        [string]$Location,
+        [int]$RequiredCapacity = 150
+    )
+    
+    Write-ColorOutput "Checking Azure OpenAI quota in $Location..." "Yellow"
+    
+    try {
+        # Check if we can get quota information
+        $quotaCheck = az cognitiveservices account list-skus --location $Location --query "[?resourceType == 'Account' && kind == 'OpenAI']" --output json 2>$null
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-ColorOutput "   ⚠️  Unable to check OpenAI quota directly. Deployment will validate quota during creation." "Yellow"
+            return $true
+        }
+        
+        # Try to get existing OpenAI accounts to estimate quota usage
+        $openAIAccounts = az cognitiveservices account list --query "[?kind=='OpenAI']" --output json 2>$null
+        
+        if ($LASTEXITCODE -eq 0 -and $openAIAccounts) {
+            $accounts = $openAIAccounts | ConvertFrom-Json
+            $accountCount = $accounts.Count
+            
+            # Rough estimate: each standard deployment uses ~150k TPM
+            $estimatedUsedCapacity = $accountCount * 150
+            $estimatedAvailableCapacity = 450 - $estimatedUsedCapacity
+            
+            Write-ColorOutput "   📊 OpenAI quota check: Found $accountCount existing OpenAI accounts" "Green"
+            Write-ColorOutput "   📊 Estimated used capacity: $($estimatedUsedCapacity)k TPM" "Cyan"
+            Write-ColorOutput "   📊 Estimated available capacity: $($estimatedAvailableCapacity)k TPM" "Cyan"
+            Write-ColorOutput "   📊 Required for deployment: $($RequiredCapacity)k TPM" "Cyan"
+            
+            if ($estimatedAvailableCapacity -lt ($RequiredCapacity / 1000)) {
+                Write-ColorOutput "   ❌ INSUFFICIENT QUOTA DETECTED!" "Red"
+                Write-ColorOutput "   ⚠️  Required: $($RequiredCapacity)k TPM, Available: ~$($estimatedAvailableCapacity)k TPM" "Yellow"
+                Write-ColorOutput "   💡 SOLUTIONS:" "Yellow"
+                Write-ColorOutput "      • Use existing AI Foundry resources (-UseExistingAiFoundry)" "Cyan"
+                Write-ColorOutput "      • Request quota increase: https://aka.ms/azure-openai-quota" "Cyan"
+                Write-ColorOutput "      • Delete unused OpenAI resources to free quota" "Cyan"
+                Write-ColorOutput "      • Try a different region with available quota" "Cyan"
+                return $false
+            } else {
+                Write-ColorOutput "   ✅ Sufficient quota available for deployment" "Green"
+            }
+        } else {
+            Write-ColorOutput "   ✅ OpenAI quota check: Found 0 existing OpenAI accounts. Should have sufficient quota." "Green"
+        }
+        
+        return $true
+        
+    } catch {
+        Write-ColorOutput "   ⚠️  OpenAI quota check failed: $($_.Exception.Message)" "Yellow"
+        Write-ColorOutput "   💡 Deployment will validate quota during creation" "Cyan"
+        return $true
+    }
+}
+
+function Test-AzurePermissions {
+    Write-ColorOutput "Checking Azure RBAC permissions..." "Yellow"
+    
+    try {
+        # Get current user/service principal assignments
+        $roleAssignments = az role assignment list --assignee (az account show --query user.name -o tsv) --query "[].roleDefinitionName" -o tsv 2>$null
+        
+        if ($LASTEXITCODE -eq 0 -and $roleAssignments) {
+            $hasOwner = $roleAssignments -contains "Owner"
+            $hasContributor = $roleAssignments -contains "Contributor"
+            $hasRoleBasedAccess = $roleAssignments -contains "Role Based Access Control Administrator" -or $roleAssignments -contains "User Access Administrator"
+            
+            if ($hasOwner) {
+                Write-ColorOutput "   ✅ Permissions: Owner role detected - sufficient for deployment" "Green"
+                return $true
+            } elseif ($hasContributor -and $hasRoleBasedAccess) {
+                Write-ColorOutput "   ✅ Permissions: Contributor + RBAC admin roles detected - sufficient for deployment" "Green"
+                return $true
+            } else {
+                Write-ColorOutput "   ⚠️  Limited permissions detected. May need Owner or Contributor + User Access Administrator roles" "Yellow"
+                Write-ColorOutput "   📋 Required permissions: Create resource groups, deploy Bicep templates, assign RBAC roles" "Cyan"
+                return $true  # Continue anyway - let deployment validate
+            }
+        } else {
+            Write-ColorOutput "   ⚠️  Could not retrieve role assignments" "Yellow"
+            Write-ColorOutput "   💡 Continuing - deployment will validate permissions" "Cyan"
+            return $true
+        }
+        
+    } catch {
+        Write-ColorOutput "   ⚠️  Permission check failed: $($_.Exception.Message)" "Yellow"
+        Write-ColorOutput "   💡 Continuing - deployment will validate permissions" "Cyan"
+        return $true
+    }
+}
+
+function Test-ResourceProviders {
+    Write-ColorOutput "Checking Azure resource provider registrations..." "Yellow"
+    
+    $requiredProviders = @(
+        "Microsoft.Web",
+        "Microsoft.CognitiveServices", 
+        "Microsoft.OperationalInsights",
+        "Microsoft.Insights",
+        "Microsoft.Authorization"
+    )
+    
+    $allRegistered = $true
+    
+    foreach ($provider in $requiredProviders) {
+        try {
+            $providerStatus = az provider show --namespace $provider --query "registrationState" -o tsv 2>$null
+            
+            if ($providerStatus -eq "Registered") {
+                Write-ColorOutput "   ✅ ${provider}: Registered" "Green"
+            } elseif ($providerStatus -eq "Registering") {
+                Write-ColorOutput "   🔄 ${provider}: Currently registering..." "Yellow"
+            } else {
+                Write-ColorOutput "   ❌ ${provider}: Not registered ($providerStatus)" "Red"
+                Write-ColorOutput "   💡 Run: az provider register --namespace $provider" "Cyan"
+                $allRegistered = $false
+            }
+        } catch {
+            Write-ColorOutput "   ⚠️  Could not check $provider registration status" "Yellow"
+        }
+    }
+    
+    return $allRegistered
+}
+
 # Step 2: Configuration
 Write-ColorOutput "`n⚙️  Step 2: Configuration Setup..." "Green"
 
@@ -247,6 +378,21 @@ if ($UseExistingAiFoundry) {
     }
 }
 
+# Get existing AI Foundry resource details if not creating new
+if (-not $createAiFoundry) {
+    Write-ColorOutput "`n📝 Please provide existing AI Foundry resource information:" "Yellow"
+    $aiFoundryResourceGroupName = Get-UserInput "AI Foundry resource group name" "rg-ai-foundry-spa-aifoundry-$deployEnvironment-eus2"
+    $aiFoundryResourceName = Get-UserInput "AI Foundry resource name" "cs-ai-foundry-$deployEnvironment-eus2"
+    $aiFoundryProjectName = Get-UserInput "AI Foundry project name" "aiproj-ai-foundry-$deployEnvironment-eus2"
+    $aiFoundryAgentName = Get-UserInput "AI Foundry agent name" "AI In A Box"
+    
+    Write-ColorOutput "✅ Existing AI Foundry configuration:" "Green"
+    Write-ColorOutput "   Resource Group: $aiFoundryResourceGroupName" "Cyan"
+    Write-ColorOutput "   Resource Name: $aiFoundryResourceName" "Cyan"
+    Write-ColorOutput "   Project Name: $aiFoundryProjectName" "Cyan"
+    Write-ColorOutput "   Agent Name: $aiFoundryAgentName" "Cyan"
+}
+
 # Log Analytics configuration
 if ($UseExistingLogAnalytics) {
     $createLogAnalytics = $false
@@ -261,8 +407,94 @@ if ($UseExistingLogAnalytics) {
     }
 }
 
-# Prepare parameters file path
+# Get existing Log Analytics workspace details if not creating new
+if (-not $createLogAnalytics) {
+    Write-ColorOutput "`n📝 Please provide existing Log Analytics workspace information:" "Yellow"
+    $logAnalyticsResourceGroupName = Get-UserInput "Log Analytics resource group name" "rg-logging-$deployEnvironment-eus"
+    $logAnalyticsWorkspaceName = Get-UserInput "Log Analytics workspace name" "la-logging-$deployEnvironment-eus"
+    
+    Write-ColorOutput "✅ Existing Log Analytics configuration:" "Green"
+    Write-ColorOutput "   Resource Group: $logAnalyticsResourceGroupName" "Cyan"
+    Write-ColorOutput "   Workspace Name: $logAnalyticsWorkspaceName" "Cyan"
+}
+
+# Step 2.5: Preflight Checks (after configuration is collected)
+Write-ColorOutput "`n🔍 Step 2.5: Preflight Checks (Azure Permissions & Quota)..." "Green"
+
+$preflightPassed = $true
+
+# Check resource providers
+if (-not (Test-ResourceProviders)) {
+    Write-ColorOutput "❌ Some resource providers are not registered" "Red"
+    Write-ColorOutput "   Run the suggested 'az provider register' commands and try again" "Yellow"
+    $preflightPassed = $false
+}
+
+# Check permissions
+Test-AzurePermissions | Out-Null
+
+# Check quota only if creating new AI Foundry resources (region-aware)
+if ($createAiFoundry) {
+    $quotaCheckResult = Test-AzureOpenAIQuota -Location $deployLocation -RequiredCapacity 150
+    if (-not $quotaCheckResult) {
+        Write-ColorOutput "❌ CRITICAL: Insufficient Azure OpenAI quota detected!" "Red"
+        Write-ColorOutput "   Your subscription appears to be at or near the quota limit for OpenAI resources." "Yellow"
+        Write-ColorOutput "   This deployment will fail due to quota restrictions." "Yellow"
+        Write-ColorOutput "" "White"
+        Write-ColorOutput "🔧 IMMEDIATE SOLUTIONS:" "Yellow"
+        Write-ColorOutput "   1. Use existing AI Foundry resources:" "Cyan"
+        Write-ColorOutput "      .\deploy-quickstart.ps1 -UseExistingAiFoundry" "White"
+        Write-ColorOutput "   2. Request quota increase:" "Cyan"
+        Write-ColorOutput "      https://aka.ms/azure-openai-quota" "White"
+        Write-ColorOutput "   3. Delete unused OpenAI resources to free quota" "Cyan"
+        Write-ColorOutput "   4. Try deployment in a different region" "Cyan"
+        Write-ColorOutput "" "White"
+        Write-ColorOutput "Stopping deployment to prevent quota-related failures." "Red"
+        $preflightPassed = $false
+    }
+} else {
+    Write-ColorOutput "Skipping quota check (using existing AI Foundry resources)" "Cyan"
+}
+
+if (-not $preflightPassed) {
+    Write-ColorOutput "`n❌ Preflight checks failed. Please resolve the issues above before continuing." "Red"
+    Write-ColorOutput "💡 Common solutions:" "Cyan"
+    Write-ColorOutput "   • Register resource providers: az provider register --namespace Microsoft.CognitiveServices" "Cyan"
+    Write-ColorOutput "   • Check subscription permissions with your Azure administrator" "Cyan"
+    Write-ColorOutput "   • Verify Azure OpenAI quota: https://aka.ms/azure-openai-quota" "Cyan"
+    exit 1
+}
+
+Write-ColorOutput "✅ Preflight checks completed successfully!" "Green"
+
+# Prepare deployment parameters based on collected configuration
 $parametersFile = Join-Path $workspaceRoot "infra" "dev-orchestrator.parameters.bicepparam"
+
+# Prepare inline parameters based on collected configuration
+$inlineParameters = @(
+    "applicationName=$deployApplicationName"
+    "environmentName=$deployEnvironment"
+    "location=$deployLocation"
+    "createAiFoundryResourceGroup=$($createAiFoundry.ToString().ToLower())"
+    "createLogAnalyticsWorkspace=$($createLogAnalytics.ToString().ToLower())"
+)
+
+# Add existing resource parameters if not creating new ones
+if (-not $createAiFoundry) {
+    $inlineParameters += @(
+        "aiFoundryResourceGroupName=$aiFoundryResourceGroupName"
+        "aiFoundryResourceName=$aiFoundryResourceName"
+        "aiFoundryProjectName=$aiFoundryProjectName"
+        "aiFoundryAgentName=$aiFoundryAgentName"
+    )
+}
+
+if (-not $createLogAnalytics) {
+    $inlineParameters += @(
+        "logAnalyticsResourceGroupName=$logAnalyticsResourceGroupName"
+        "logAnalyticsWorkspaceName=$logAnalyticsWorkspaceName"
+    )
+}
 
 Write-ColorOutput "✅ Configuration prepared:" "Green"
 Write-ColorOutput "   Application Name: $deployApplicationName" "Cyan"
@@ -270,6 +502,17 @@ Write-ColorOutput "   Location: $deployLocation" "Cyan"
 Write-ColorOutput "   Environment: $deployEnvironment" "Cyan"
 Write-ColorOutput "   Create AI Foundry: $createAiFoundry" "Cyan"
 Write-ColorOutput "   Create Log Analytics: $createLogAnalytics" "Cyan"
+
+if (-not $createAiFoundry) {
+    Write-ColorOutput "   AI Foundry RG: $aiFoundryResourceGroupName" "Cyan"
+    Write-ColorOutput "   AI Foundry Resource: $aiFoundryResourceName" "Cyan"
+    Write-ColorOutput "   AI Foundry Project: $aiFoundryProjectName" "Cyan"
+}
+
+if (-not $createLogAnalytics) {
+    Write-ColorOutput "   Log Analytics RG: $logAnalyticsResourceGroupName" "Cyan"
+    Write-ColorOutput "   Log Analytics Workspace: $logAnalyticsWorkspaceName" "Cyan"
+}
 
 # Step 3: Deploy Infrastructure
 Write-ColorOutput "`n🏗️  Step 3: Deploying Infrastructure..." "Green"
@@ -284,35 +527,18 @@ try {
     # Deploy infrastructure
     $deploymentName = "quickstart-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     
-    # Create a temporary parameters file with the override values
-    $tempParamsPath = Join-Path $env:TEMP "quickstart-params-$(Get-Random).json"
-    $tempParams = @{
-        "`$schema" = "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#"
-        contentVersion = "1.0.0.0"
-        parameters = @{
-            applicationName = @{ value = $deployApplicationName }
-            location = @{ value = $deployLocation }
-            environmentName = @{ value = $deployEnvironment }
-            createAiFoundryResourceGroup = @{ value = $createAiFoundry }
-            createLogAnalyticsWorkspace = @{ value = $createLogAnalytics }
-        }
-    }
-    
-    $tempParams | ConvertTo-Json -Depth 10 | Out-File -FilePath $tempParamsPath -Encoding UTF8
-    
     Write-ColorOutput "   Running deployment command..." "Cyan"
     Write-ColorOutput "   Deployment name: $deploymentName" "Cyan"
-    Write-ColorOutput "   Using temporary parameters file: $tempParamsPath" "Cyan"
+    Write-ColorOutput "   Using inline parameters based on collected configuration" "Cyan"
     
-    # Try using only the temporary parameters file
-    az deployment sub create --template-file $infrastructureTemplate --parameters $tempParamsPath --location $deployLocation --name $deploymentName
+    # Use inline parameters to ensure collected configuration is used
+    $parametersString = $inlineParameters -join " "
+    Write-ColorOutput "   Parameters: $parametersString" "Gray"
+    
+    # Deploy with template file and inline parameters
+    az deployment sub create --template-file $infrastructureTemplate --parameters $parametersString --location $deployLocation --name $deploymentName
     
     $deployResult = $LASTEXITCODE
-    
-    # Clean up temporary file
-    if (Test-Path $tempParamsPath) {
-        Remove-Item $tempParamsPath -Force
-    }
     
     if ($deployResult -ne 0) {
         Write-ColorOutput "❌ Infrastructure deployment failed!" "Red"

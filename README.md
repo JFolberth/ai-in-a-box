@@ -31,12 +31,17 @@ cd ai-in-a-box
 
 **Quick Deploy to Azure:**
 ```bash
-# First: Update infra/dev-orchestrator.parameters.bicepparam with your AI Foundry details
+# Automated deployment with preflight checks (recommended)
+.\deploy-scripts\deploy-quickstart.ps1
+
+# Or manual deployment (update parameters first)
 az deployment sub create \
   --template-file "infra/main-orchestrator.bicep" \
   --parameters "infra/dev-orchestrator.parameters.bicepparam" \
   --location "eastus2"
 ```
+
+> 💡 **New!** The quickstart script includes automatic **preflight checks** for Azure permissions and OpenAI quota to catch common deployment issues early. See [Troubleshooting](docs/operations/troubleshooting.md) for quota and permission guidance.
 
 ## 🏗 Architecture
 
