@@ -29,7 +29,6 @@
     "vscode": {
       "extensions": [
         "ms-vscode.vscode-bicep",
-        "ms-vscode.azure-account",
         "ms-azuretools.vscode-azurefunctions",
         "ms-dotnettools.csharp",
         "ms-dotnettools.vscode-dotnet-runtime",

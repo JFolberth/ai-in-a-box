@@ -22,7 +22,6 @@ These run during DevBox provisioning:
 These run after user first login:
 - **VS Code Extensions** - Development-specific extensions:
   - `ms-vscode.vscode-bicep` - Azure Bicep language support
-  - `ms-vscode.azure-account` - Azure account integration
   - `ms-azuretools.vscode-azurefunctions` - Azure Functions development
   - `ms-dotnettools.csharp` - C# language support
   - `ms-dotnettools.vscode-dotnet-runtime` - .NET runtime integration

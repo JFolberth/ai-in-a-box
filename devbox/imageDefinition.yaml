@@ -53,7 +53,6 @@ userTasks:
         
         # Infrastructure & Deployment
         code --install-extension ms-vscode.vscode-bicep
-        code --install-extension ms-vscode.azure-account
         
         # Backend Development (C# Function App)
         code --install-extension ms-azuretools.vscode-azurefunctions

@@ -206,7 +206,6 @@ if (-not $SkipExtensions) {
     
     $extensions = @(
         @("ms-vscode.vscode-bicep", "Azure Bicep Language Support"),
-        @("ms-vscode.azure-account", "Azure Account Integration"),
         @("ms-azuretools.vscode-azurefunctions", "Azure Functions Development"),
         @("ms-dotnettools.csharp", "C# Language Support"),
         @("ms-dotnettools.vscode-dotnet-runtime", ".NET Runtime Integration"),
