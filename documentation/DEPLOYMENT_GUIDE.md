@@ -351,6 +351,49 @@ Environment Type: "dev"
 - Failed ADE deployments will fail the entire CI pipeline
 - Deployment URLs and resource names are logged in CI summary
 
+## 🌍 **Supported Azure Regions**
+
+The AI Foundry SPA can be deployed to **27 Azure regions** where Cognitive Services (AIServices) are available. This list is maintained based on actual Azure service availability and is validated during deployment.
+
+### **✅ Verified Regions (January 2025)**
+
+```
+australiaeast       brazilsouth        canadacentral      canadaeast
+eastus              eastus2            francecentral      germanywestcentral
+italynorth          japaneast          koreacentral       northcentralus
+norwayeast          polandcentral      southafricanorth   southcentralus
+southeastasia       southindia         spaincentral       swedencentral
+switzerlandnorth    switzerlandwest    uaenorth          uksouth
+westeurope          westus             westus3
+```
+
+### **🔍 How We Maintain This List**
+
+The region list is automatically validated using:
+```bash
+az cognitiveservices account list-skus --query "[?kind=='AIServices'].locations[]" -o tsv | sort -u
+```
+
+### **📋 Region Reference Mapping**
+
+Each region has a consistent 3-4 character abbreviation used in resource naming:
+
+| Region | Code | Example Resource Name |
+|--------|------|----------------------|
+| australiaeast | `ause` | `func-ai-foundry-spa-backend-dev-ause` |
+| brazilsouth | `brs` | `func-ai-foundry-spa-backend-dev-brs` |
+| canadacentral | `cac` | `func-ai-foundry-spa-backend-dev-cac` |
+| eastus2 | `eus2` | `func-ai-foundry-spa-backend-dev-eus2` |
+| westeurope | `weu` | `func-ai-foundry-spa-backend-dev-weu` |
+
+### **⚠️ Important Notes**
+
+- **Region availability changes**: This list is updated when Azure adds/removes Cognitive Services support
+- **Deployment validation**: The `deploy-quickstart.ps1` script validates region availability before deployment
+- **Fallback options**: Use existing AI Foundry resources (`-UseExistingAiFoundry`) if your preferred region isn't supported
+
+---
+
 ## 🔍 Resource Discovery Methods
 
 When working with existing infrastructure, use these methods to find resource names:

@@ -12,11 +12,12 @@ It orchestrates the complete deployment process: infrastructure → agent → ba
 The script:
 1. Validates prerequisites (Azure CLI, .NET SDK, Node.js)
 2. Prompts for configuration options (or uses defaults)
-3. Deploys infrastructure using Bicep templates
-4. Deploys/updates AI agent from YAML configuration
-5. Deploys backend Function App with agent configuration
-6. Deploys frontend Static Web App with backend integration
-7. Provides final URLs and validation results
+3. Performs preflight checks (quota, permissions, region compatibility, service availability)
+4. Deploys infrastructure using Bicep templates
+5. Deploys/updates AI agent from YAML configuration
+6. Deploys backend Function App with agent configuration
+7. Deploys frontend Static Web App with backend integration
+8. Provides final URLs and validation results
 
 .PARAMETER Location
 Azure region for deployment (default: eastus2)
@@ -294,6 +295,77 @@ function Test-AzureOpenAIQuota {
     }
 }
 
+function Test-CognitiveServicesAvailability {
+    param(
+        [string]$Location
+    )
+    
+    Write-ColorOutput "Checking Cognitive Services availability in $Location..." "Yellow"
+    
+    try {
+        # Check if Cognitive Services (AIServices kind) is available in the region
+        $availableSkus = az cognitiveservices account list-skus --location $Location --query "[?kind=='AIServices']" --output json 2>$null
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-ColorOutput "   ⚠️  Unable to check Cognitive Services availability directly." "Yellow"
+            Write-ColorOutput "   💡 Deployment will validate service availability during creation" "Cyan"
+            return $true
+        }
+        
+        # Parse the JSON response
+        if (-not [string]::IsNullOrEmpty($availableSkus)) {
+            try {
+                $skus = $availableSkus | ConvertFrom-Json
+                
+                # Check if we have any SKUs (array could be empty)
+                if ($skus -and ($skus.Count -gt 0 -or $skus.Length -gt 0)) {
+                    Write-ColorOutput "   ✅ Cognitive Services (AIServices) available in $Location" "Green"
+                    
+                    # Check for specific pricing tiers
+                    $s0Available = $skus | Where-Object { $_.name -eq 'S0' }
+                    if ($s0Available) {
+                        Write-ColorOutput "   ✅ S0 pricing tier available (required for deployment)" "Green"
+                    } else {
+                        Write-ColorOutput "   ⚠️  S0 pricing tier not found. Will attempt deployment with available tiers." "Yellow"
+                    }
+                    
+                    return $true
+                }
+                else {
+                    # Empty array means no SKUs available in this region
+                    Write-ColorOutput "   ❌ No Cognitive Services AIServices available in $Location" "Red"
+                }
+            }
+            catch {
+                Write-ColorOutput "   ⚠️  Failed to parse Cognitive Services availability response." "Yellow"
+                Write-ColorOutput "   💡 Deployment will validate service availability during creation" "Cyan"
+                return $true
+            }
+        }
+        else {
+            Write-ColorOutput "   ❌ Empty response from Cognitive Services availability check for $Location" "Red"
+        }
+        
+        Write-ColorOutput "   💡 SOLUTIONS:" "Yellow"
+        Write-ColorOutput "      • Try a verified Cognitive Services region:" "Cyan"
+        Write-ColorOutput "        australiaeast, brazilsouth, canadacentral, canadaeast, eastus, eastus2" "White"
+        Write-ColorOutput "        francecentral, germanywestcentral, italynorth, japaneast, koreacentral" "White"
+        Write-ColorOutput "        northcentralus, norwayeast, polandcentral, southafricanorth, southcentralus" "White"
+        Write-ColorOutput "        southeastasia, southindia, spaincentral, swedencentral, switzerlandnorth" "White"
+        Write-ColorOutput "        switzerlandwest, uaenorth, uksouth, westeurope, westus, westus3" "White"
+        Write-ColorOutput "      • Check Azure service availability: https://azure.microsoft.com/global-infrastructure/services/" "Cyan"
+        Write-ColorOutput "      • Use existing AI Foundry resources in supported region (-UseExistingAiFoundry)" "Cyan"
+        
+        return $false
+        
+    }
+    catch {
+        Write-ColorOutput "   ⚠️  Cognitive Services availability check failed: $($_.Exception.Message)" "Yellow"
+        Write-ColorOutput "   💡 Deployment will validate service availability during creation" "Cyan"
+        return $true
+    }
+}
+
 function Test-AzurePermissions {
     Write-ColorOutput "Checking Azure RBAC permissions..." "Yellow"
     
@@ -438,7 +510,7 @@ if (-not $createLogAnalytics) {
 }
 
 # Step 2.5: Preflight Checks (after configuration is collected)
-Write-ColorOutput "`n🔍 Step 2.5: Preflight Checks (Azure Permissions & Quota)..." "Green"
+Write-ColorOutput "`n🔍 Step 2.5: Preflight Checks (Azure Permissions, Quota & Service Availability)..." "Green"
 
 $preflightPassed = $true
 
@@ -471,9 +543,33 @@ if ($createAiFoundry) {
         Write-ColorOutput "Stopping deployment to prevent quota-related failures." "Red"
         $preflightPassed = $false
     }
+    
+    # Check Cognitive Services availability in the region
+    $cognitiveServicesAvailable = Test-CognitiveServicesAvailability -Location $deployLocation
+    if (-not $cognitiveServicesAvailable) {
+        Write-ColorOutput "❌ CRITICAL: Cognitive Services not available in $deployLocation!" "Red"
+        Write-ColorOutput "   AI Foundry requires both Azure OpenAI and Cognitive Services multi-service accounts." "Yellow"
+        Write-ColorOutput "   This deployment will fail due to service availability restrictions." "Yellow"
+        Write-ColorOutput "" "White"
+        Write-ColorOutput "🔧 IMMEDIATE SOLUTIONS:" "Yellow"
+        Write-ColorOutput "   1. Use a verified Cognitive Services region:" "Cyan"
+        Write-ColorOutput "      Examples: .\deploy-quickstart.ps1 -Location eastus2" "White"
+        Write-ColorOutput "      Examples: .\deploy-quickstart.ps1 -Location westeurope" "White"
+        Write-ColorOutput "      Examples: .\deploy-quickstart.ps1 -Location australiaeast" "White"
+        Write-ColorOutput "      Examples: .\deploy-quickstart.ps1 -Location southeastasia" "White"
+        Write-ColorOutput "      Examples: .\deploy-quickstart.ps1 -Location canadacentral" "White"
+        Write-ColorOutput "   2. Use existing AI Foundry resources:" "Cyan"
+        Write-ColorOutput "      .\deploy-quickstart.ps1 -UseExistingAiFoundry" "White"
+        Write-ColorOutput "   3. Check current Azure service availability:" "Cyan"
+        Write-ColorOutput "      https://azure.microsoft.com/en-us/global-infrastructure/services/" "White"
+        Write-ColorOutput "" "White"
+        Write-ColorOutput "Stopping deployment to prevent service availability failures." "Red"
+        $preflightPassed = $false
+    }
 }
 else {
     Write-ColorOutput "Skipping quota check (using existing AI Foundry resources)" "Cyan"
+    Write-ColorOutput "Skipping Cognitive Services availability check (using existing AI Foundry resources)" "Cyan"
 }
 
 if (-not $preflightPassed) {
@@ -482,6 +578,7 @@ if (-not $preflightPassed) {
     Write-ColorOutput "   • Register resource providers: az provider register --namespace Microsoft.CognitiveServices" "Cyan"
     Write-ColorOutput "   • Check subscription permissions with your Azure administrator" "Cyan"
     Write-ColorOutput "   • Verify Azure OpenAI quota: https://aka.ms/azure-openai-quota" "Cyan"
+    Write-ColorOutput "   • Choose a region with full Cognitive Services support" "Cyan"
     exit 1
 }
 

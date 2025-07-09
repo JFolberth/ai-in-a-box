@@ -49,13 +49,36 @@ param principalType string = 'ServicePrincipal'
 
 // =========== VARIABLES ===========
 
-// Region reference mapping for consistent naming
+// Region reference mapping - ONLY regions where Cognitive Services AIServices are available
+// Source: az cognitiveservices account list-skus --query "[?kind=='AIServices'].locations[]" -o tsv | sort -u
 var regionReference = {
-  centralus: 'cus'
+  australiaeast: 'ause'
+  brazilsouth: 'brs'
+  canadacentral: 'cac'
+  canadaeast: 'cae'
   eastus: 'eus'
   eastus2: 'eus2'
+  francecentral: 'frc'
+  germanywestcentral: 'gwc'
+  italynorth: 'itn'
+  japaneast: 'jpe'
+  koreacentral: 'krc'
+  northcentralus: 'ncus'
+  norwayeast: 'noe'
+  polandcentral: 'poc'
+  southafricanorth: 'san'
+  southcentralus: 'scus'
+  southeastasia: 'sea'
+  southindia: 'ins'
+  spaincentral: 'spc'
+  swedencentral: 'swc'
+  switzerlandnorth: 'swn'
+  switzerlandwest: 'sww'
+  uaenorth: 'uaen'
+  uksouth: 'uks'
+  westeurope: 'weu'
   westus: 'wus'
-  westus2: 'wus2'
+  westus3: 'wus3'
 }
 
 // Consistent naming pattern following project standards
