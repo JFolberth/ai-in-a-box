@@ -35,16 +35,16 @@
 #     🔴 CRITICAL (90-100% usage)
 
 param(
-    [Parameter(Mandatory=$true, HelpMessage="Azure subscription ID to check quota for")]
+    [Parameter(Mandatory = $true, HelpMessage = "Azure subscription ID to check quota for")]
     [ValidatePattern("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")]
     [string]$SubscriptionId,
     
-    [Parameter(Mandatory=$false, HelpMessage="Azure region to check quota for")]
+    [Parameter(Mandatory = $false, HelpMessage = "Azure region to check quota for")]
     [ValidateSet("eastus", "eastus2", "westus", "westus2", "centralus", "northcentralus", "southcentralus", 
-                 "westeurope", "northeurope", "uksouth", "ukwest", "francecentral", "germanywestcentral",
-                 "norwayeast", "switzerlandnorth", "swedencentral", "australiaeast", "southeastasia",
-                 "eastasia", "japaneast", "japanwest", "koreacentral", "southafricanorth", "uaenorth",
-                 "brazilsouth", "canadacentral", "canadaeast", "westus3")]
+        "westeurope", "northeurope", "uksouth", "ukwest", "francecentral", "germanywestcentral",
+        "norwayeast", "switzerlandnorth", "swedencentral", "australiaeast", "southeastasia",
+        "eastasia", "japaneast", "japanwest", "koreacentral", "southafricanorth", "uaenorth",
+        "brazilsouth", "canadacentral", "canadaeast", "westus3")]
     [string]$Location = "eastus2"
 )
 
@@ -92,7 +92,7 @@ try {
     $uri = "https://management.azure.com/subscriptions/$SubscriptionId/providers/Microsoft.CognitiveServices/locations/$Location/usages?api-version=2023-05-01"
     
     $headers = @{
-        Authorization = "Bearer $accessToken"
+        Authorization  = "Bearer $accessToken"
         'Content-Type' = 'application/json'
     }
 
@@ -113,7 +113,8 @@ try {
             
             $percentage = if ($usage.limit -gt 0) { 
                 [math]::Round(($usage.currentValue / $usage.limit) * 100, 2) 
-            } else { 0 }
+            }
+            else { 0 }
             
             $available = $usage.limit - $usage.currentValue
             $status, $color = Get-UsageStatus -Percentage $percentage
@@ -130,9 +131,9 @@ try {
             
             if ($available -gt 0) {
                 $availableModels += [PSCustomObject]@{
-                    Model = $modelName
+                    Model     = $modelName
                     Available = $available
-                    Unit = if ($usage.name.value -like "*TPM*") { "TPM" } else { "RPM" }
+                    Unit      = if ($usage.name.value -like "*TPM*") { "TPM" } else { "RPM" }
                 }
             }
         }
@@ -147,7 +148,8 @@ try {
         Write-Host ""
         Write-Host "💡 To request Azure OpenAI access:" -ForegroundColor Cyan
         Write-Host "   https://aka.ms/oai/stuquotarequest" -ForegroundColor Cyan
-    } else {
+    }
+    else {
         # Summary of models with available capacity
         $modelsWithCapacity = $availableModels | Where-Object { $_.Available -gt 0 -and $_.Unit -eq "TPM" }
         
@@ -157,7 +159,8 @@ try {
                 $capacityUnits = [math]::Floor($model.Available / 1000)
                 Write-Host "✅ $($model.Model): $($model.Available.ToString('N0')) TPM available ($capacityUnits capacity units)" -ForegroundColor Green
             }
-        } else {
+        }
+        else {
             Write-Host "⚠️  No models have available TPM capacity in this region" -ForegroundColor Yellow
             Write-Host "   Consider:" -ForegroundColor Yellow
             Write-Host "   • Using a different region" -ForegroundColor Yellow
@@ -172,7 +175,8 @@ try {
         Write-Host "   • Quota documentation: https://learn.microsoft.com/azure/ai-foundry/openai/how-to/quota" -ForegroundColor Cyan
     }
     
-} catch {
+}
+catch {
     Write-Error "Failed to retrieve quota information: $($_.Exception.Message)"
     Write-Host ""
     Write-Host "Troubleshooting steps:" -ForegroundColor Yellow

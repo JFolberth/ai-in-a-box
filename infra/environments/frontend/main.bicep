@@ -33,7 +33,9 @@ param tags object = {
 
 // =========== VARIABLES ===========
 
-var nameSuffix = empty(adeName) ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}') : '${devCenterProjectName}-${adeName}'
+var nameSuffix = empty(adeName)
+  ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}')
+  : '${devCenterProjectName}-${adeName}'
 
 var regionReference = {
   centralus: 'cus'
@@ -41,6 +43,7 @@ var regionReference = {
   eastus2: 'eus2'
   westus: 'wus'
   westus2: 'wus2'
+  australiaeast: 'ause'
 }
 
 var resourceNames = {
@@ -62,7 +65,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
 
 // Application Insights for frontend monitoring using AVM
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
-  name: 'frontend-applicationInsights'
+  name: 'frontend-applicationInsights-${regionReference[location]}'
   params: {
     name: resourceNames.applicationInsights
     location: location
@@ -79,14 +82,14 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
 
 // Static Web App for hosting the frontend using AVM
 module staticWebApp 'br/public:avm/res/web/static-site:0.5.0' = {
-  name: 'frontend-staticWebApp'
+  name: 'frontend-staticWebApp-${regionReference[location]}'
   params: {
     name: resourceNames.staticWebApp
     location: location
     tags: union(tags, {
       Component: 'Frontend-StaticWebApp'
     })
-    
+
     // Application Insights integration
     appSettings: {
       APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.outputs.instrumentationKey
@@ -94,8 +97,6 @@ module staticWebApp 'br/public:avm/res/web/static-site:0.5.0' = {
     }
   }
 }
-
-
 
 // =========== RBAC ASSIGNMENTS ===========
 

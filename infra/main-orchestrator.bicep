@@ -101,6 +101,7 @@ var regionReference = {
   eastus2: 'eus2'
   westus: 'wus'
   westus2: 'wus2'
+  australiaeast: 'ause'
 }
 
 // Name suffix patterns following backend naming convention
@@ -149,7 +150,7 @@ var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
 
 // Frontend Resource Group using AVM module
 module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = {
-  name: 'frontend-rg-deployment'
+  name: 'frontend-rg-deployment-${regionReference[location]}'
   params: {
     name: frontendResourceGroupName
     location: location
@@ -162,7 +163,7 @@ module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' 
 
 // Backend Resource Group using AVM module
 module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = {
-  name: 'backend-rg-deployment'
+  name: 'backend-rg-deployment-${regionReference[location]}'
   params: {
     name: backendResourceGroupName
     location: location
@@ -175,7 +176,7 @@ module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' =
 
 // AI Foundry Resource Group (conditional deployment)
 module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createAiFoundryResourceGroup) {
-  name: 'aifoundry-rg-deployment'
+  name: 'aifoundry-rg-deployment-${regionReference[location]}'
   params: {
     name: newAiFoundryResourceGroupName
     location: location
@@ -188,7 +189,7 @@ module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4
 
 // Log Analytics Resource Group (conditional deployment)
 module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createLogAnalyticsWorkspace) {
-  name: 'loganalytics-rg-deployment'
+  name: 'loganalytics-rg-deployment-${regionReference[location]}'
   params: {
     name: newLogAnalyticsResourceGroupName
     location: location
@@ -223,7 +224,7 @@ resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04
 
 // Create Log Analytics workspace (conditionally creates both resource group and workspace)
 module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyticsWorkspace) {
-  name: 'shared-log-analytics'
+  name: 'shared-log-analytics-${regionReference[location]}'
   scope: resourceGroup(effectiveLogAnalyticsResourceGroupName)
   dependsOn: [
     newLogAnalyticsResourceGroup
@@ -244,7 +245,7 @@ module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyt
 
 // Deploy frontend infrastructure (Static Web App + Application Insights)
 module frontendInfrastructure 'environments/frontend/main.bicep' = {
-  name: 'frontend-deployment'
+  name: 'frontend-deployment-${regionReference[location]}'
   scope: resourceGroup(frontendResourceGroupName)
   // EXPLICIT DEPENDENCY REQUIRED: Conditional dependencies cannot be automatically inferred by Bicep
   // when the dependency itself is conditionally deployed. We need explicit dependsOn to ensure
@@ -273,7 +274,7 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
 
 // Deploy AI Foundry infrastructure (Cognitive Services + AI Project + Model)
 module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryResourceGroup) {
-  name: 'aifoundry-deployment'
+  name: 'aifoundry-deployment-${regionReference[location]}'
   scope: resourceGroup(effectiveAiFoundryResourceGroupName)
   dependsOn: [
     newAiFoundryResourceGroup
@@ -303,7 +304,7 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
 // - Azure AI User: Required for reading and calling AI Foundry agents at the project level
 // These roles provide least-privilege access for AI agent interactions via managed identity
 module backendInfrastructure 'environments/backend/main.bicep' = {
-  name: 'backend-deployment'
+  name: 'backend-deployment-${regionReference[location]}'
   scope: resourceGroup(backendResourceGroupName)
   // EXPLICIT DEPENDENCY REQUIRED: Backend needs AI Foundry endpoint when creating new AI Foundry resources
   dependsOn: createLogAnalyticsWorkspace && createAiFoundryResourceGroup
@@ -348,7 +349,7 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
 // Deploy RBAC assignments for Function App to access AI Foundry (always runs regardless of new/existing)
 // Azure AI User role - Required for reading and calling AI Foundry agents at the project level
 module aiFoundryUserRbac 'modules/rbac-assignment.bicep' = {
-  name: 'aifoundry-user-rbac-assignment'
+  name: 'aifoundry-user-rbac-assignment-${regionReference[location]}'
   scope: resourceGroup(effectiveAiFoundryResourceGroupName)
   params: {
     principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
@@ -363,7 +364,7 @@ module aiFoundryUserRbac 'modules/rbac-assignment.bicep' = {
 
 // Cognitive Services OpenAI User role - Required for creating threads, sending messages, and reading responses
 module aiFoundryOpenAIRbac 'modules/rbac-assignment.bicep' = {
-  name: 'aifoundry-openai-rbac-assignment'
+  name: 'aifoundry-openai-rbac-assignment-${regionReference[location]}'
   scope: resourceGroup(effectiveAiFoundryResourceGroupName)
   params: {
     principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId

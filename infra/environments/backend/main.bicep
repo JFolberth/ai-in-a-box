@@ -56,6 +56,7 @@ var regionReference = {
   eastus2: 'eus2'
   westus: 'wus'
   westus2: 'wus2'
+  australiaeast: 'ause'
 }
 var resourceNames = {
   applicationInsights: 'appi-${nameSuffix}'
@@ -83,7 +84,7 @@ resource aiFoundryInstance 'Microsoft.MachineLearningServices/workspaces@2024-04
 
 // Application Insights for backend monitoring using AVM
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
-  name: 'backend-applicationInsights'
+  name: 'backend-applicationInsights-${regionReference[location]}'
   params: {
     name: resourceNames.applicationInsights
     location: location
@@ -104,7 +105,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
 
 // Storage account for Function App runtime requirements
 module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
-  name: 'backend-functionStorageAccount'
+  name: 'backend-functionStorageAccount-${regionReference[location]}'
   params: {
     name: resourceNames.functionStorageAccount
     location: location
@@ -200,7 +201,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
 
 // Function App for AI Foundry backend proxy using AVM
 module functionApp 'br/public:avm/res/web/site:0.16.0' = {
-  name: 'backend-functionApp'
+  name: 'backend-functionApp-${regionReference[location]}'
   params: {
     name: resourceNames.functionApp
     location: location
@@ -303,7 +304,7 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
 // Using a separate module deployment to handle cross-resource group RBAC assignment
 // NOTE: The deploying identity must have User Access Administrator or Owner role on the AI Foundry resource group
 module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
-  name: 'functionApp-aiFoundry-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+  name: 'functionApp-aiFoundry-rbac-${regionReference[location]}-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
@@ -320,7 +321,7 @@ module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
 // Required for reading and calling the AI Foundry agent, accessing project-level resources
 // This complements the Cognitive Services OpenAI User role for complete agent access
 module functionAppAiFoundryProjectRoleAssignment 'rbac.bicep' = {
-  name: 'functionApp-aiproject-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+  name: 'functionApp-aiproject-rbac-${regionReference[location]}-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
