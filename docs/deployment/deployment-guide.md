@@ -8,27 +8,73 @@ This guide covers production deployment scenarios, from single environment deplo
 
 ## 🚀 Deployment Options
 
-### 1. **Manual Azure CLI Deployment** (Recommended for getting started)
+### 1. **Quick Start Script** (Local Development Only)
+- **Best for**: Learning, development, testing
+- **Effort**: ~15 minutes automated deployment
+- **Skills needed**: Basic PowerShell, Azure CLI
+- **⚠️ Important**: Uses defaults from `main-orchestrator.bicep`, NOT the `.bicepparam` file
+
+### 2. **Manual Azure CLI Deployment** (Recommended for getting started)
 - **Best for**: Learning, development, small teams
 - **Effort**: ~30 minutes for first deployment
 - **Skills needed**: Basic Azure CLI, command line
+- **Uses**: `.bicepparam` parameter files for configuration
 
-### 2. **Azure Deployment Environments (ADE)** 
+### 3. **Azure Deployment Environments (ADE)** 
 - **Best for**: Enterprise teams, standardized deployments
 - **Effort**: ~1 hour for initial setup, then 15 minutes per deployment
 - **Skills needed**: Azure portal navigation, ADE concepts
+- **Uses**: `.bicepparam` parameter files for configuration
 
-### 3. **GitHub Actions CI/CD** (Automated)
+### 4. **GitHub Actions CI/CD** (Automated)
 - **Best for**: Teams with ongoing development, production systems
 - **Effort**: ~2 hours for pipeline setup, then automatic
 - **Skills needed**: GitHub Actions, CI/CD concepts
+- **Uses**: `.bicepparam` parameter files for configuration
 
-### 4. **Code-Only Deployment** (Existing infrastructure)
+### 5. **Code-Only Deployment** (Existing infrastructure)
 - **Best for**: Updates to existing deployments
 - **Effort**: ~10 minutes per deployment
 - **Skills needed**: PowerShell, Azure CLI
 
-## 🔧 Method 1: Manual Azure CLI Deployment
+## 📋 Parameter Configuration
+
+**Quick Start Script vs Parameter Files:**
+
+- **Quick Start Script** (`deploy-quickstart.ps1`): Uses default values from `main-orchestrator.bicep` parameters. Interactive prompts override defaults. Does NOT use `.bicepparam` files.
+
+- **CI/CD & Manual Deployments**: Use `.bicepparam` parameter files for configuration. These files override the defaults in `main-orchestrator.bicep`.
+
+**Configuration Priority:**
+1. Quick Start Script: Interactive prompts → `main-orchestrator.bicep` defaults
+2. CI/CD/Manual: `.bicepparam` files → `main-orchestrator.bicep` defaults
+
+## 🔧 Method 1: Quick Start Script (Local Development)
+
+### Prerequisites
+- Azure CLI installed and logged in
+- PowerShell Core installed
+- Azure subscription with Contributor permissions
+- Git repository cloned locally
+
+### Usage
+```powershell
+# Navigate to project directory
+cd /path/to/ai-in-a-box
+
+# Run quick start deployment
+./deploy-scripts/deploy-quickstart.ps1
+
+# Or with specific parameters
+./deploy-scripts/deploy-quickstart.ps1 -Location "eastus2" -ApplicationName "myapp" -InteractiveMode:$false
+```
+
+**⚠️ Important Notes:**
+- Quick start script uses defaults from `main-orchestrator.bicep`, NOT parameter files
+- Designed for local development and testing only
+- For production deployments, use CI/CD or manual deployment methods
+
+## 🔧 Method 2: Manual Azure CLI Deployment
 
 ### Prerequisites
 - Azure CLI installed and logged in

@@ -456,4 +456,46 @@ az cognitiveservices account deployment create \
 - [Azure OpenAI Quotas and Limits](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/quotas-limits)
 - [Request Quota Increases](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/deploy-models-openai#quota-for-deploying-and-inferencing-a-model)
 
----
+## 🔧 Deployment Errors
+
+### "The content for this response was already consumed" Error
+
+**Error Message:**
+```
+Error: The content for this response was already consumed.
+```
+
+**Root Cause:**
+This is an Azure CLI error that occurs when the HTTP response stream is consumed multiple times. This commonly happens during deployment commands when the CLI attempts to read the same response multiple times.
+
+**Solutions:**
+
+1. **Use --debug flag for detailed error information**:
+   ```bash
+   az deployment sub create --template-file infra/main-orchestrator.bicep --parameters @infra/dev-orchestrator.parameters.bicepparam --location eastus2 --name my-deployment --debug
+   ```
+
+2. **Clear Azure CLI cache**:
+   ```bash
+   az cache purge
+   az account clear
+   az login
+   ```
+
+3. **Use a different deployment name**:
+   ```bash
+   # Generate unique deployment name
+   az deployment sub create --name "deployment-$(date +%Y%m%d-%H%M%S)" --template-file infra/main-orchestrator.bicep --parameters @infra/dev-orchestrator.parameters.bicepparam --location eastus2
+   ```
+
+4. **Wait and retry**:
+   - Sometimes this is a transient Azure API issue
+   - Wait 5-10 minutes and retry the deployment
+
+5. **Use PowerShell instead of Bash**:
+   ```powershell
+   # PowerShell tends to handle Azure CLI responses more reliably
+   az deployment sub create --template-file "infra/main-orchestrator.bicep" --parameters "@infra/dev-orchestrator.parameters.bicepparam" --location "eastus2" --name "my-deployment"
+   ```
+
+## 📋 Preflight Check Failures
