@@ -15,6 +15,7 @@ These run during DevBox provisioning:
 - **Azure CLI** - Infrastructure deployment and management
 - **Azure Functions Core Tools** - Local Function App development and testing
 - **Python 3.12** - Development scripting and tooling support
+- **PowerShell Core** - Cross-platform scripting and automation
 - **Docker Desktop** - Container platform for development and testing
 - **Azure CLI Extensions** - Infrastructure deployment and ADE development (system-wide)
 

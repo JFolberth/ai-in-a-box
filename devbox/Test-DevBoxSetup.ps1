@@ -104,6 +104,7 @@ Test-Command "az" "Azure CLI"
 Test-Command "python" "Python 3.12"
 Test-Command "pip" "Python Package Manager"
 Test-Command "git" "Git Version Control"
+Test-Command "pwsh" "PowerShell Core"
 
 # Test for func (Azure Functions Core Tools)
 Write-Host ""

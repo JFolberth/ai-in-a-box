@@ -31,6 +31,10 @@ tasks:
     parameters:
       package: Python.Python.3.12
   - name: winget
+    description: Install PowerShell Core for cross-platform scripting
+    parameters:
+      package: Microsoft.PowerShell
+  - name: winget
     description: Install Docker Desktop for containerized development
     parameters:
       package: Docker.DockerDesktop
