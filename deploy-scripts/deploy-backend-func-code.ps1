@@ -197,7 +197,16 @@ try {
         Remove-Item $zipPath -Force
     }
     
-    Compress-Archive -Path "./bin/publish/*" -DestinationPath $zipPath
+    # Change to publish directory and create zip from there to include all files and hidden directories
+    Push-Location "./bin/publish"
+    try {
+        # Use Compress-Archive with relative paths to include all files including hidden ones
+        $allItems = Get-ChildItem -Path "." -Force | ForEach-Object { $_.Name }
+        Compress-Archive -Path $allItems -DestinationPath "../../deploy.zip"
+    }
+    finally {
+        Pop-Location
+    }
     Write-ColorOutput "Deployment package created: $zipPath" "Green"
 } catch {
     Write-ColorOutput "Failed to create deployment package!" "Red"
