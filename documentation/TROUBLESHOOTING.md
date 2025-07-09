@@ -10,7 +10,7 @@ The quickstart deployment script includes automatic preflight checks to validate
 
 **Error Message:**
 ```
-(InsufficientQuota) This operation require 150 new capacity in quota Tokens Per Minute (thousands) - gpt-4o-mini, which is bigger than the current available capacity 0. The current quota usage is 450 and the quota limit is 450 for quota Tokens Per Minute (thousands) - gpt-4o-mini.
+(InsufficientQuota) This operation require 150 new capacity in quota Tokens Per Minute (thousands) - gpt-4.1-mini, which is bigger than the current available capacity 0. The current quota usage is 450 and the quota limit is 450 for quota Tokens Per Minute (thousands) - gpt-4.1-mini.
 ```
 
 **Root Cause:**
@@ -296,7 +296,7 @@ npm run build
 
 **Error Message:**
 ```
-(InsufficientQuota) This operation require 150 new capacity in quota Tokens Per Minute (thousands) - gpt-4o-mini, which is bigger than the current available capacity 0. The current quota usage is 450 and the quota limit is 450 for quota Tokens Per Minute (thousands) - gpt-4o-mini.
+(InsufficientQuota) This operation require 150 new capacity in quota Tokens Per Minute (thousands) - gpt-4.1-mini, which is bigger than the current available capacity 0. The current quota usage is 450 and the quota limit is 450 for quota Tokens Per Minute (thousands) - gpt-4.1-mini.
 ```
 
 **Root Cause:**
@@ -306,7 +306,7 @@ Azure OpenAI models require quota allocation in units of **Tokens Per Minute (TP
 - **Required**: 150,000 TPM (150 capacity units × 1,000 TPM per unit)
 - **Available**: 0 TPM remaining 
 - **Current Usage**: 450,000 TPM out of 450,000 TPM limit
-- **Model**: gpt-4o-mini in the specified region
+- **Model**: gpt-4.1-mini in the specified region
 
 **Immediate Solutions:**
 #### 1. **Reduce Model Capacity** (Quickest Fix)
@@ -429,9 +429,9 @@ az cognitiveservices account deployment list --name "your-openai-resource-name" 
 az cognitiveservices account deployment create \
   --name "your-openai-resource-name" \
   --resource-group "your-rg" \
-  --deployment-name "gpt-4o-mini" \
-  --model-name "gpt-4o-mini" \
-  --model-version "2024-07-18" \
+  --deployment-name "gpt-4.1-mini" \
+  --model-name "gpt-4.1-mini" \
+  --model-version "2025-04-14" \
   --sku-capacity 30 \
   --sku-name "Standard"
 ```
@@ -439,7 +439,7 @@ az cognitiveservices account deployment create \
 **Model-Specific Quota Requirements:**
 | Model | Capacity Unit | TPM per Unit | RPM per Unit |
 |-------|---------------|--------------|--------------|
-| GPT-4o-mini | 1 | 1,000 | 6 |
+| GPT-4.1-mini | 1 | 1,000 | 6 |
 | GPT-4o | 1 | 1,000 | 6 |
 | GPT-4 | 1 | 1,000 | 6 |
 | o1-mini | 1 | 10,000 | 1 |
