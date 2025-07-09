@@ -78,10 +78,10 @@ param aiFoundrySubscriptionId string = subscription().subscriptionId
 param createAiFoundryResourceGroup bool = true
 
 @description('AI Foundry model deployment name')
-param aiFoundryModelDeploymentName string = 'gpt-4o-mini'
+param aiFoundryModelDeploymentName string = 'gpt-4.1-mini'
 
 @description('AI Foundry model version')
-param aiFoundryModelVersion string = '2024-07-18'
+param aiFoundryModelVersion string = '2025-04-14'
 
 @description('AI Foundry deployment capacity (TPM - Tokens Per Minute)')
 param aiFoundryDeploymentCapacity int = 100
@@ -90,7 +90,7 @@ param aiFoundryDeploymentCapacity int = 100
 param aiFoundryProjectDisplayName string = 'AI in A Box Project'
 
 @description('AI Foundry project description')
-param aiFoundryProjectDescription string = 'AI in A Box foundry project with GPT-4o-mini model deployment'
+param aiFoundryProjectDescription string = 'AI in A Box foundry project with GPT-4.1-mini model deployment'
 
 // =========== VARIABLES ===========
 

@@ -56,7 +56,7 @@ param aiFoundryResourceGroupName = 'rg-your-ai-foundry'
 param aiFoundryResourceName = 'your-ai-foundry-resource'
 param aiFoundryProjectName = 'firstProject'
 param aiFoundryEndpoint = 'https://your-production-ai-foundry.cognitiveservices.azure.com/'
-param aiFoundryModelDeploymentName = 'gpt-4o-mini'
+param aiFoundryModelDeploymentName = 'gpt-4.1-mini'
 param aiFoundryAgentName = 'AI in A Box'
 
 // Required: Your user principal ID

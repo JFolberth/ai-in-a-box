@@ -3,7 +3,7 @@
 // - Cognitive Services Account (Multi-service AI Services)
 // - AI Studio Workspace (Machine Learning Services)
 // - AI Project (Foundry project workspace)
-// - GPT-4o-mini Model Deployment
+// - GPT-4.1-mini Model Deployment
 // - RBAC assignment to Function App (Azure AI Developer role)
 
 targetScope = 'resourceGroup'
@@ -29,13 +29,13 @@ param modelDeploymentName string = 'gpt-4o-mini'
 param modelVersion string = '2024-07-18'
 
 @description('Model deployment capacity (Tokens Per Minute)')
-param deploymentCapacity int = 10000
+param deploymentCapacity int = 100
 
 @description('AI Foundry project display name')
 param projectName string = 'AI in A Box Project'
 
 @description('AI Foundry project description')
-param projectDescription string = 'AI in A Box foundry project with GPT-4o-mini model deployment'
+param projectDescription string = 'AI in A Box foundry project with GPT-4.1-mini model deployment'
 
 @description('Function App system-assigned managed identity principal ID for RBAC')
 param functionAppPrincipalId string = ''
@@ -118,20 +118,20 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-prev
   }
 }
 
-// Model Deployment (GPT-4o-mini)
+// Model Deployment (GPT-4.1-mini)
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
   parent: cognitiveServices
   name: modelDeploymentName
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4o-mini'
+      name: 'gpt-4.1-mini'
       version: modelVersion
     }
     raiPolicyName: 'Microsoft.Default'
   }
   sku: {
-    name: 'Standard'
+    name: 'GlobalStandard'
     capacity: deploymentCapacity
   }
 }

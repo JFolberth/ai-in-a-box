@@ -16,8 +16,8 @@ param applicationName = 'ai-foundry-spa'
 param environmentName = 'dev'
 param location = 'eastus2'
 
-// AI Foundry model deployment configuration - REDUCED FOR QUOTA
-param aiFoundryDeploymentCapacity = 1  // Minimal capacity to avoid quota issues
+// AI Foundry model deployment configuration
+param aiFoundryDeploymentCapacity = 100  // TPM (Tokens Per Minute) - matches Bicep template default
 
 // Log Analytics workspace creation options - using defaults for pricing tier and retention
 param createLogAnalyticsWorkspace = true      // Creates new Log Analytics workspace and resource group with standard naming

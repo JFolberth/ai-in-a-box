@@ -36,7 +36,7 @@ You need an active Azure subscription to deploy the application.
 - **Resource Group Name** containing the AI Foundry resource
 - **Resource Name** of the Cognitive Services account
 - **Project Name** (e.g., `firstProject`)
-- **Deployment Name** (e.g., `gpt-4o-mini`)
+- **Deployment Name** (e.g., `gpt-4.1-mini`)
 - **Agent Name** (should be `AI in A Box`)
 
 ### 3. **Resource Permissions** (Important)

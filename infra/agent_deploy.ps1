@@ -83,7 +83,7 @@ $ErrorActionPreference = "Stop"
 
 # Configuration constants
 $AgentDescription = "AI in A Box intelligent assistant agent created via infrastructure deployment"
-$ModelDeploymentName = "gpt-4o-mini"
+$ModelDeploymentName = "gpt-4.1-mini"
 $LogLevel = "Information"
 
 # Initialize logging
@@ -191,7 +191,7 @@ try {
             }
             
             # Extract model configuration
-            $modelId = "gpt-4o-mini" # Default
+            $modelId = "gpt-4.1-mini" # Default
             if ($YamlContent -match 'model:\s*\n\s*id:\s*(.+)') {
                 $modelId = $matches[1].Trim()
             }
