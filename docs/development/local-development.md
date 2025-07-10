@@ -1,6 +1,6 @@
-# Local Development Environment Setup
+# Development Guide
 
-*Set up your development environment for customizing and extending the AI Foundry SPA.*
+*Comprehensive guide for local development setup, workflows, and best practices for the Azure AI Foundry SPA project.*
 
 ## 🎯 Overview
 
@@ -9,24 +9,103 @@ This guide helps you set up a local development environment where you can:
 - Make changes and see them immediately
 - Test integrations with Azure AI Foundry
 - Debug issues before deploying to Azure
+- Understand the development workflows and tooling
 
-## 📋 Prerequisites
+## 🛠️ Development Setup
 
-Before starting, ensure you have these tools installed:
+### Prerequisites
 
-### Required Tools:
-- **[Node.js 20+](https://nodejs.org/)** - For frontend development
-- **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** - For backend development
-- **[Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)** - For local Functions
-- **[Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)** - For Azure resource management
-- **[Git](https://git-scm.com/)** - For version control
+**Required Tools:**
+- **[Node.js 20+](https://nodejs.org/)** and npm (for frontend development)
+- **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** (for backend Azure Functions development)
+- **[Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)** with Azure Bicep and DevCenter extensions
+- **[Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)** (for local Azure Functions development)
+- **[Git](https://git-scm.com/)** (for version control)
 
-### Optional Tools:
+**Optional Tools:**
 - **[Visual Studio Code](https://code.visualstudio.com/)** - Recommended editor
 - **[Azure Tools Extension Pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack)** - VS Code extensions
 - **[Azurite](https://docs.microsoft.com/azure/storage/common/storage-use-azurite)** - Local storage emulator
+- **[Python 3.12+](https://www.python.org/)** (for development tooling and scripting, optional)
 
-### Verification:
+### Installation Commands
+
+#### Windows
+```powershell
+# Node.js (using winget)
+winget install OpenJS.NodeJS.LTS
+
+# .NET 8 SDK
+winget install Microsoft.DotNet.SDK.8
+
+# Azure CLI
+winget install Microsoft.AzureCLI
+
+# Azure Functions Core Tools
+winget install Microsoft.Azure.FunctionsCoreTools
+# OR via npm
+npm install -g azure-functions-core-tools@4 --unsafe-perm true
+
+# Python (optional, for development tooling)
+winget install Python.Python.3.12
+
+# Install Azure Bicep
+az bicep install
+az extension add --name bicep
+```
+
+#### macOS
+```bash
+# Node.js (using Homebrew)
+brew install node@20
+
+# .NET 8 SDK
+brew install --cask dotnet-sdk
+
+# Azure CLI
+brew install azure-cli
+
+# Azure Functions Core Tools
+brew tap azure/functions
+brew install azure-functions-core-tools@4
+
+# Python (optional, for development tooling)
+brew install python@3.12
+
+# Install Azure Bicep
+az bicep install
+az extension add --name bicep
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+# Node.js
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# .NET 8 SDK
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0
+
+# Azure CLI
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+# Azure Functions Core Tools
+curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
+sudo apt-get update && sudo apt-get install azure-functions-core-tools-4
+
+# Python (optional, for development tooling)
+sudo apt-get update && sudo apt-get install -y python3.12 python3.12-pip python3.12-venv
+
+# Install Azure Bicep
+az bicep install
+az extension add --name bicep
+```
+
+### Verification
 ```bash
 # Verify installations
 node --version      # Should be 20.0+ or later
@@ -144,86 +223,148 @@ If using VS Code, you can use the included tasks:
 
 This will start both frontend and backend simultaneously.
 
-## 🖥️ Development Environment Options
+## 📦 Deployment Scripts
 
-### Local Development (Recommended)
+Beyond local development, the project includes specialized deployment scripts for different scenarios:
 
-**Best for**: Full development experience with complete AI Foundry integration
+### Available Scripts
 
-**Pros:**
-- ✅ **Complete AI Foundry support** - All agent operations work properly
-- ✅ **Native Azure authentication** - Browser-based authentication with full token scopes
-- ✅ **Performance** - No latency from cloud environments
-- ✅ **Offline capability** - Work without internet connection for local development
-
-**Cons:**
-- ❌ **Setup time** - Requires installing all tools locally
-- ❌ **Environment consistency** - May vary between team members
-
-### GitHub Codespaces (Limited)
-
-**Best for**: Quick code editing, infrastructure deployment, and frontend development
-
-**⚠️ IMPORTANT LIMITATION**: GitHub Codespaces cannot deploy AI Foundry agents due to authentication restrictions.
-
-**What Works in Codespaces:**
-- ✅ **Infrastructure deployment** - Bicep templates and Azure resource creation
-- ✅ **Frontend development** - React/Vite development with hot reload
-- ✅ **Backend development** - Function App development (without AI agent calls)
-- ✅ **Code editing** - Full VS Code experience with extensions
-- ✅ **Source control** - Git operations and pull requests
-
-**What Doesn't Work in Codespaces:**
-- ❌ **AI agent deployment** - Authentication issues with device code authentication
-- ❌ **AI Foundry API calls** - Limited token scopes and authentication method compatibility
-- ❌ **Complete integration testing** - Cannot test full AI conversation flow
-
-**Recommended Codespaces Workflow:**
-1. **Infrastructure**: Deploy Azure resources from Codespaces
-2. **Development**: Code editing and frontend development in Codespaces
-3. **Agent Operations**: Switch to local environment for AI agent deployment
-4. **Testing**: Final integration testing in local environment
-
+#### Frontend Scripts
 ```bash
-# Example: Hybrid workflow
-# In Codespaces: Deploy infrastructure
-.\deploy-scripts\deploy.ps1 -Location "eastus2" -EnvironmentName "dev"
+cd src/frontend
 
-# Locally: Deploy agent (requires proper authentication)
-.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint"
+# Development server with hot reload
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Clean build artifacts
+npm run clean
 ```
 
-### Azure DevBox (Cloud Development)
+#### Backend Scripts
+```bash
+cd src/backend
 
-**Best for**: Cloud-based development with full AI Foundry support
+# Build the Azure Functions
+dotnet build
 
-**Pros:**
-- ✅ **Full AI Foundry support** - Native Azure authentication in cloud environment
-- ✅ **Pre-configured** - All tools and extensions ready to use
-- ✅ **Enterprise security** - Managed by your organization
-- ✅ **Team consistency** - Same environment for all developers
+# Run locally with hot reload
+func start
 
-**Cons:**
-- ❌ **Cost** - Requires Azure DevBox subscription
-- ❌ **Setup complexity** - Requires organizational DevBox setup
+# Clean build artifacts
+dotnet clean
+```
 
-**Setup Azure DevBox:**
-1. Use the provided `devbox/imageDefinition.yaml` configuration
-2. Follow the DevBox setup guide in `devbox/README.md`
-3. All required tools are pre-installed and configured
+### Code-Only Deployment (Recommended for ADE)
 
-### VS Code DevContainers (Alternative)
+When infrastructure is already deployed (via Azure Deployment Environments or Azure Bicep), use these simplified scripts to deploy application code:
 
-**Best for**: Containerized development with consistent environment
+#### Backend Code Deployment
+```powershell
+# Required parameters (no defaults or auto-detection)
+./deploy-scripts/deploy-backend-func-code.ps1 `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2"
 
-**Pros:**
-- ✅ **Consistent environment** - Same setup across team and CI/CD
-- ✅ **Isolation** - Development environment isolated from host system
-- ✅ **Version control** - Development environment configuration in Git
+# Optional parameters
+./deploy-scripts/deploy-backend-func-code.ps1 `
+    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2" `
+    -SkipBuild `
+    -SkipTest
+```
 
-**Cons:**
-- ❌ **AI Foundry limitations** - Similar authentication issues as Codespaces
-- ❌ **Performance** - Container overhead affects development speed
+**What it does:**
+- ✅ Validates Azure CLI authentication
+- ✅ Verifies Azure Functions exists in specified resource group
+- ✅ Builds .NET Azure Functions (unless `-SkipBuild`)
+- ✅ Creates deployment package and deploys to Azure
+- ✅ Tests health endpoint (unless `-SkipTest`)
+- ✅ Provides deployment summary with URLs
+
+#### Frontend Code Deployment
+```powershell
+# Required parameters (no defaults or auto-detection)
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2"
+
+# With backend URL configuration
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
+    -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
+
+# Skip build if already built
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
+    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
+    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
+    -SkipBuild
+```
+
+**What it does:**
+- ✅ Validates Azure CLI authentication
+- ✅ Verifies Azure Static Web Apps exists in specified resource group
+- ✅ Creates DEV environment configuration with hardcoded Azure AI Foundry settings
+- ✅ Builds frontend application (unless `-SkipBuild`)
+- ✅ Installs [SWA CLI](https://learn.microsoft.com/en-us/azure/static-web-apps/static-web-apps-cli-overview) if needed and deploys to Azure Static Web Apps
+- ✅ Provides deployment summary with URLs
+
+### Complete Infrastructure + Code Deployment
+
+For greenfield deployments or when infrastructure changes are needed:
+
+```powershell
+# Deploy everything (infrastructure + code)
+./deploy-scripts/deploy.ps1
+```
+
+### 🔍 Finding Resource Names for ADE Environments
+
+When working with [Azure Deployment Environments](https://learn.microsoft.com/en-us/azure/deployment-environments/), you'll need to discover the resource names:
+
+#### Method 1: Azure Portal
+1. Navigate to your ADE environment
+2. Go to "Resources" tab
+3. Note the Azure Functions and Azure Static Web Apps names
+
+#### Method 2: Azure CLI
+```bash
+# List Function Apps in a resource group
+az functionapp list --resource-group "rg-name" --query "[].{name:name,state:state}" --output table
+
+# List Static Web Apps in a resource group
+az staticwebapp list --resource-group "rg-name" --query "[].{name:name,defaultHostname:defaultHostname}" --output table
+
+# Search by resource type across subscription
+az resource list --resource-type "Microsoft.Web/sites" --query "[?kind=='functionapp'].{name:name,resourceGroup:resourceGroup}" --output table
+az resource list --resource-type "Microsoft.Web/staticSites" --query "[].{name:name,resourceGroup:resourceGroup}" --output table
+```
+
+### Development vs Deployment Reference
+
+| Task | Tool | Purpose | Infrastructure Required |
+|------|------|---------|------------------------|
+| **Local Frontend Development** | `npm run dev` | Hot reload, debugging | None (local only) |
+| **Local Backend Development** | `func start` or VS Code tasks | Function testing | Azurite (local storage) |
+| **Frontend Code Deployment** | `deploy-frontend-spa-code.ps1` | Deploy SPA to existing Azure Static Web App | ✅ Static Web App must exist |
+| **Backend Code Deployment** | `deploy-backend-func-code.ps1` | Deploy Function App to existing Azure infrastructure | ✅ Function App must exist |
+| **Complete Deployment** | `deploy.ps1` | Infrastructure + code (legacy/greenfield) | Creates infrastructure |
+| **Infrastructure Only** | Azure CLI + Bicep or ADE | Resource provisioning | Creates all resources |
+
+### ⚠️ Important Deployment Notes
+
+- **🏠 Local Development**: Use `npm run dev` and `func start` for local development and testing
+- **☁️ Code-Only Scripts**: Deployment scripts are for existing Azure infrastructure only
+- **🏗️ Infrastructure First**: Deploy infrastructure through ADE, Bicep, or CI/CD before deploying code
+- **📋 Explicit Parameters**: Scripts require exact resource names - no auto-detection or defaults
+- **🎯 ADE Compatible**: Designed to work with Azure Deployment Environment provisioned resources
+- **⚙️ Environment Configuration**: Frontend script includes hardcoded DEV environment AI Foundry settings
 
 ---
 

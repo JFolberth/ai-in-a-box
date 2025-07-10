@@ -1,10 +1,10 @@
-# Infrastructure Guide
+# Infrastructure Reference
 
-*Understanding the Azure architecture and infrastructure patterns used in the AI Foundry SPA.*
+This guide provides detailed information about the Azure AI Foundry SPA infrastructure, architecture decisions, and deployment patterns.
 
 ## 🏗️ Architecture Overview
 
-The AI Foundry SPA uses a **multi-resource group, microservices architecture** designed for enterprise-grade security, scalability, and maintainability.
+The Azure AI Foundry SPA uses a **modular, multi-resource group architecture** designed for separation of concerns, security, and scalability.
 
 ### High-Level Architecture
 
@@ -381,3 +381,135 @@ resource budget 'Microsoft.Consumption/budgets@2021-10-01' = {
 ---
 
 **Ready to deploy this infrastructure?** → Continue to [Deployment Guide](deployment-guide.md)
+
+## 🏗️ Infrastructure as Code
+
+### Azure Verified Modules (AVM)
+
+The project uses Azure Verified Modules (AVM) for:
+- **Consistent resource provisioning**
+- **Best practice configurations**
+- **Reduced boilerplate code**
+- **Community-maintained standards**
+
+#### AVM Modules Used
+
+The following table lists all Azure Verified Modules implemented in this project:
+
+| Module | Version | Purpose | Official Documentation |
+|--------|---------|---------|------------------------|
+| **Resource Groups** | 0.4.0 | Create and manage resource groups for multi-RG architecture | [avm/res/resources/resource-group](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/resources/resource-group) |
+| **Application Insights** | 0.6.0 | Monitoring and telemetry for frontend and backend components | [avm/res/insights/component](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/insights/component) |
+| **Azure Functions** | 0.16.0 | Serverless compute for Azure AI Foundry proxy backend | [avm/res/web/site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/site) |
+| **Storage Accounts** | 0.20.0 | Azure Functions runtime storage with secure configuration | [avm/res/storage/storage-account](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account) |
+| **Log Analytics Workspace** | 0.9.0 | Centralized logging and monitoring workspace | [avm/res/operational-insights/workspace](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/operational-insights/workspace) |
+| **Azure Static Web Apps** | 0.5.0 | Modern SPA hosting for the frontend application | [avm/res/web/static-site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/static-site) |
+| **App Service Plans** | 0.4.1 | Compute hosting plans for Azure Functions | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
+
+#### AVM Benefits for This Project
+
+- **Security by Default**: All modules include security best practices and managed identity support
+- **Standardized Configuration**: Consistent parameter names and resource configurations across environments
+- **Version Control**: Pinned module versions ensure deployment reproducibility
+- **Community Support**: Modules are maintained by Microsoft and the Azure community
+- **Compliance**: Built-in configurations meet Azure Well-Architected Framework principles
+
+#### Usage Examples
+
+**Resource Group Creation (Orchestrator)**
+```bicep
+module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = {
+  name: 'frontend-rg-deployment'
+  params: {
+    name: frontendResourceGroupName
+    location: location
+    tags: union(tags, {
+      Component: 'Frontend'
+      ResourceType: 'Storage-StaticWebsite'
+    })
+  }
+}
+```
+
+**Application Insights with Log Analytics Integration**
+```bicep
+module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
+  name: 'backend-applicationInsights'
+  params: {
+    name: resourceNames.applicationInsights
+    location: location
+    kind: 'web'
+    applicationType: 'web'
+    workspaceResourceId: logAnalyticsWorkspace.id
+    tags: union(tags, {
+      Component: 'Backend-ApplicationInsights'
+    })
+  }
+}
+```
+
+#### Module Structure
+```
+infra/
+├── main-orchestrator.bicep          # Main deployment orchestrator
+├── dev-orchestrator.parameters.bicepparam  # Environment parameters
+├── modules/
+│   └── log-analytics.bicep          # Log Analytics Workspace module
+└── environments/
+    ├── frontend/
+    │   ├── main.bicep               # Frontend infrastructure
+    │   └── environment.yaml        # ADE configuration
+    └── backend/
+        ├── main.bicep               # Backend infrastructure
+        ├── rbac.bicep               # Backend RBAC assignments
+        └── environment.yaml         # ADE configuration
+```
+
+### Deployment Strategy
+
+#### 1. Subscription-Scoped Deployment
+```bicep
+targetScope = 'subscription'
+
+// Creates resource groups and deploys resources
+resource frontendRG 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+  name: frontendResourceGroupName
+  location: location
+}
+```
+
+#### 2. Modular Resource Deployment
+```bicep
+// Deploy frontend resources
+module frontend 'modules/frontend.bicep' = {
+  scope: frontendRG
+  name: 'ai-foundry-spa-frontend'
+  params: {
+    // Frontend-specific parameters
+  }
+}
+
+// Deploy backend resources  
+module backend 'modules/backend.bicep' = {
+  scope: backendRG
+  name: 'ai-foundry-spa-backend'
+  params: {
+    // Backend-specific parameters
+  }
+}
+```
+
+#### 3. Environment-Specific RBAC Assignments
+```bicep
+// RBAC assignments are now handled within environment modules
+// Example: Backend RBAC is managed in environments/backend/rbac.bicep
+module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
+  name: 'function-app-ai-foundry-rbac'
+  scope: resourceGroup(aiFoundryResourceGroupName)
+  params: {
+    principalId: functionApp.outputs.systemAssignedMIPrincipalId
+    aiFoundryResourceId: aiFoundryInstance.id
+    roleDefinitionId: 'Azure AI Developer'
+  }
+}
+```

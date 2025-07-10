@@ -1,4 +1,4 @@
-# Health Endpoint Documentation
+# Health Endpoint API Reference
 
 ## Overview
 
@@ -220,3 +220,9 @@ requests
 - The endpoint uses async operations to avoid blocking the Function App
 - Comprehensive error handling ensures the endpoint remains responsive even during failures
 - CORS headers are included to support browser-based monitoring dashboards
+
+## Related Documentation
+
+- [Configuration Reference](../configuration/configuration-reference.md) - Complete configuration guide
+- [Troubleshooting Guide](../operations/troubleshooting.md) - Common issues and solutions
+- [Local Development](../development/local-development.md) - Development setup and testing

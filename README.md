@@ -38,17 +38,17 @@ cd ai-in-a-box
 
 **Deploy with Existing Resources (Brownfield):**
 ```bash
-# Script will ask if you want to use existing AI Foundry, then prompt for:
-# - Resource Group Name, AI Foundry Resource Name, Project Name, Agent Name
+# Option 1: Use command-line flags (specific to what you want to reuse)
+.\deploy-scripts\deploy-quickstart.ps1 -UseExistingAiFoundry
+.\deploy-scripts\deploy-quickstart.ps1 -UseExistingLogAnalytics  
+.\deploy-scripts\deploy-quickstart.ps1 -UseExistingAiFoundry -UseExistingLogAnalytics
+
+# Option 2: Interactive prompting (script asks what you want to reuse)
 .\deploy-scripts\deploy-quickstart.ps1
 
-# Script will ask if you want to use existing Log Analytics, then prompt for:
-# - Resource Group Name, Log Analytics Workspace Name  
-.\deploy-scripts\deploy-quickstart.ps1
-
-# For mixed scenarios, the script will ask about both AI Foundry and Log Analytics
-# and prompt for details of whichever you choose to use existing
-.\deploy-scripts\deploy-quickstart.ps1
+# For both options, script will prompt for resource details:
+# AI Foundry: Resource Group Name, AI Foundry Resource Name, Project Name, Agent Name
+# Log Analytics: Resource Group Name, Log Analytics Workspace Name
 ```
 
 **Manual Deployment:**
@@ -136,8 +136,7 @@ The CI pipeline includes comprehensive Azure Bicep template validation:
 ### Complete Documentation
 📖 **[Full Documentation Hub](docs/README.md)** - Browse all guides organized by topic
 
-### Legacy Documentation
-The original documentation in the `documentation/` folder is still available but is being phased out in favor of the new organized structure in `docs/`.
+The project uses a unified documentation structure in the `docs/` folder with guides organized by topic for easy navigation.
 
 ## 🛠 Development Environments
 

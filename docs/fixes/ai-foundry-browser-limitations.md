@@ -1,4 +1,4 @@
-# AI Foundry Browser Integration - SOLVED with Backend Proxy! ✅
+# AI Foundry Browser Integration - Backend Proxy Solution
 
 ## Problem Resolution
 
@@ -122,3 +122,10 @@ return assistantMessages.FirstOrDefault()?.Content?.FirstOrDefault()?.Text ?? "N
 ✅ **DEPLOYED**: Multi-resource group architecture with proper RBAC  
 
 The AI Foundry SPA now provides **full real AI integration** with **enterprise-grade security** and **public accessibility**! 🚀
+
+## Related Documentation
+
+- [Thread Persistence Fix](thread-persistence-fix.md) - Conversation continuity implementation
+- [Health Endpoint](../api/health-endpoint.md) - Backend API monitoring and testing
+- [Configuration Reference](../configuration/configuration-reference.md) - Backend proxy configuration
+- [Local Development](../development/local-development.md) - Development environment setup

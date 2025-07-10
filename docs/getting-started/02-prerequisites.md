@@ -21,23 +21,24 @@ You need an active Azure subscription to deploy the application.
 - Permission to deploy Azure resources (Functions, Static Web Apps, Storage)
 - Access to create managed identities and role assignments
 
-### 2. **Azure AI Foundry Resource** (Required - Must Exist Before Deployment)
+### 2. **Azure AI Foundry Resource** (Optional - Can Be Created Automatically)
 
-⚠️ **CRITICAL REQUIREMENT**: You need an existing Azure AI Foundry service with an "AI in A Box" agent **before** running the orchestrator deployment, OR you can let the orchestrator create new AI Foundry resources by setting `createAiFoundryResourceGroup` to `true`.
+🎯 **FLEXIBLE DEPLOYMENT**: The deployment script can create new AI Foundry resources automatically OR use your existing ones for centralized management.
 
-**If you don't have one:**
-1. **Check with your organization** - Many companies already have AI Foundry set up
-2. **Use the orchestrator** - Set `createAiFoundryResourceGroup: true` to create new AI Foundry resources automatically
-3. **Create manually** - Follow the [AI Foundry Setup Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstart/)
-4. **Ask for access** - If your organization has AI Foundry, request access to the "AI in A Box" agent
+**Options for AI Foundry:**
+1. **Greenfield (Default)**: Let the script create new AI Foundry resources automatically
+2. **Brownfield**: Use existing AI Foundry resources for centralized management
+3. **Mixed**: Use existing AI Foundry with new Log Analytics, or vice versa
 
-**What you'll need to know:**
-- **AI Foundry Endpoint URL** (e.g., `https://your-ai-foundry.cognitiveservices.azure.com/`)
+**If using existing AI Foundry resources, you'll need:**
 - **Resource Group Name** containing the AI Foundry resource
-- **Resource Name** of the Cognitive Services account
-- **Project Name** (e.g., `firstProject`)
-- **Deployment Name** (e.g., `gpt-4.1-mini`)
-- **Agent Name** (should be `AI in A Box`)
+- **AI Foundry Resource Name** (Cognitive Services account)
+- **AI Foundry Project Name** within that resource
+- **Agent Name** (if you have an existing agent to use)
+
+**If creating new (default behavior):**
+- No additional setup required - the script handles everything
+- Creates Cognitive Services account, AI project, and agent automatically
 
 ### 3. **Resource Permissions** (Important)
 Make sure you have these permissions in your Azure subscription:
@@ -99,10 +100,9 @@ Before starting the deployment, verify you have:
 
 ### Azure Setup:
 - [ ] Active Azure subscription with sufficient permissions
-- [ ] **EXISTING Azure AI Foundry resource with "AI in A Box" agent** (REQUIRED - must exist before deployment)
-- [ ] AI Foundry endpoint URL, resource group, resource name, and project name
-- [ ] AI Foundry deployment name and agent name
 - [ ] Azure CLI installed and working (`az --version`)
+- [ ] **Optional**: Existing AI Foundry resources if you want centralized management
+- [ ] **Optional**: Existing Log Analytics workspace if you want centralized logging
 
 ### Development Environment:
 - [ ] Git installed and working (`git --version`)

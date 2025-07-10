@@ -57,16 +57,17 @@ cd ai-in-a-box
 
 **Use Existing Resources (Brownfield):**
 ```powershell
-# Run the script - it will ask if you want to use existing resources
+# Option 1: Use command-line flags to specify what you want to reuse
+.\deploy-scripts\deploy-quickstart.ps1 -UseExistingAiFoundry
+.\deploy-scripts\deploy-quickstart.ps1 -UseExistingLogAnalytics
+.\deploy-scripts\deploy-quickstart.ps1 -UseExistingAiFoundry -UseExistingLogAnalytics
+
+# Option 2: Interactive prompting - script will ask what you want to reuse
 .\deploy-scripts\deploy-quickstart.ps1
 
-# If you choose to use existing AI Foundry, script will prompt for:
-# - Resource Group Name, AI Foundry Resource Name, Project Name, Agent Name
-
-# If you choose to use existing Log Analytics, script will prompt for:
-# - Resource Group Name, Log Analytics Workspace Name
-
-# You can mix and match - use existing AI Foundry with new Log Analytics, or vice versa
+# For both approaches, if you choose to use existing resources, script will prompt for:
+# AI Foundry: Resource Group Name, AI Foundry Resource Name, Project Name, Agent Name
+# Log Analytics: Resource Group Name, Log Analytics Workspace Name
 ```
 
 **What the automated script does:**
@@ -101,7 +102,7 @@ cd ai-in-a-box
 Before starting, ensure you have:
 - **Azure CLI** installed and authenticated
 - **.NET 8 SDK** for backend development
-- **Node.js 18+** for frontend development
+- **Node.js 20+** for frontend development
 - **Azure subscription** with appropriate permissions
 
 ### Get the Code
