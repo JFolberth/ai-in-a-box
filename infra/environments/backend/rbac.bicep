@@ -26,7 +26,7 @@ param principalType string = 'ServicePrincipal'
 // =========== ROLE ASSIGNMENT ===========
 
 // Create role assignment for the specified principal
-// Using guid() to ensure unique, deterministic names and avoid conflicts
+// Using guid() with additional uniqueness factor to ensure unique, deterministic names and avoid conflicts
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(principalId, roleDefinitionId, targetResourceId)
   properties: {

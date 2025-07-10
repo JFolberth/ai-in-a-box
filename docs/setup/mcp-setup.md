@@ -180,10 +180,10 @@ cat .devcontainer/devcontainer.json | jq '.'
 
 ## Related Documentation
 
-- [Development Guide](DEVELOPMENT.md) - Local development setup and workflows
-- [Configuration Guide](CONFIGURATION.md) - Environment variables and service configuration
-- [Setup Instructions](SETUP.md) - Complete project setup guide
-- [DevBox README](../devbox/README.md) - DevBox environment configuration
+- [Local Development](../development/local-development.md) - Local development setup and workflows
+- [Configuration Reference](../configuration/configuration-reference.md) - Environment variables and service configuration
+- [Public Mode Setup](public-mode-setup.md) - Complete project setup guide
+- [DevBox README](../../devbox/README.md) - DevBox environment configuration
 
 ## Support
 
@@ -197,5 +197,5 @@ For MCP-related issues:
 
 ---
 
-*Last Updated: June 2025*  
+*Last Updated: July 2025*  
 *MCP Configuration Version: 1.0*

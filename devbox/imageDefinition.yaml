@@ -1,11 +1,25 @@
 $schema: "1.0"
 name: "ai-foundry-spa-devbox"
 image: microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2
+
+# Enable DevDrive for improved development performance
+# DevDrive provides faster file I/O, better caching, and reduced antivirus scanning overhead
+# for development workloads on Windows 11
+devDrive:
+  - driveLetter: "Z"
+    sizeInGB: 100
+    label: "DevDrive"
+    fileSystem: "NTFS"
+
 tasks:
   - name: winget
-    description: Install Node.js LTS for frontend development
+    description: Install Windows Package Manager Client (winget) updates
     parameters:
-      package: OpenJS.NodeJS.LTS
+      package: Microsoft.AppInstaller
+  - name: winget
+    description: Install Node.js 20 LTS for frontend development (compatible with SWA CLI)
+    parameters:
+      package: OpenJS.NodeJS
   - name: winget
     description: Install Visual Studio Code for development
     parameters:
@@ -31,6 +45,10 @@ tasks:
     parameters:
       package: Python.Python.3.12
   - name: winget
+    description: Install PowerShell Core for cross-platform scripting
+    parameters:
+      package: Microsoft.PowerShell
+  - name: winget
     description: Install Docker Desktop for containerized development
     parameters:
       package: Docker.DockerDesktop
@@ -53,7 +71,6 @@ userTasks:
         
         # Infrastructure & Deployment
         code --install-extension ms-vscode.vscode-bicep
-        code --install-extension ms-vscode.azure-account
         
         # Backend Development (C# Function App)
         code --install-extension ms-azuretools.vscode-azurefunctions
@@ -93,18 +110,41 @@ userTasks:
         # Install npm global packages for the current user
         npm install -g azurite@latest
         
-        # Create user workspace directories
+
         $workspaceDir = Join-Path $env:USERPROFILE "Workspaces"
         $azuriteDir = Join-Path $env:USERPROFILE ".azurite"
         
+        # Verify Azure Functions Core Tools is available
+        if (Get-Command func -ErrorAction SilentlyContinue) {
+            $funcVersion = func --version
+            Write-Host "✅ Azure Functions Core Tools found: $funcVersion" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Azure Functions Core Tools not found via PATH" -ForegroundColor Yellow
+            Write-Host "   It may be installed but not in PATH, or you may need to install it" -ForegroundColor Gray
+        }
+        
+        # Create user workspace directories on DevDrive (Z:) for optimal performance
+        $workspaceDir = "Z:\Workspaces"
+        $azuriteDir = "Z:\Azurite"
+        $npmCacheDir = "Z:\npm-cache"
+        $nugetCacheDir = "Z:\nuget-cache"
+        
+        # Create directories on DevDrive Z:
         New-Item -ItemType Directory -Force -Path $workspaceDir
         New-Item -ItemType Directory -Force -Path $azuriteDir
+        New-Item -ItemType Directory -Force -Path $npmCacheDir
+        New-Item -ItemType Directory -Force -Path $nugetCacheDir
         
-        # Set up user-specific environment variables
+        # Set up user-specific environment variables to use DevDrive
         [Environment]::SetEnvironmentVariable("AZURE_STORAGE_EMULATOR_LOCATION", $azuriteDir, "User")
+        [Environment]::SetEnvironmentVariable("WORKSPACES_DIR", $workspaceDir, "User")
         
-        # Configure npm registry for user
+        # Configure npm to use DevDrive cache for better performance
+        npm config set cache $npmCacheDir
         npm config set registry https://registry.npmjs.org/
+        
+        # Configure NuGet to use DevDrive cache
+        [Environment]::SetEnvironmentVariable("NUGET_PACKAGES", $nugetCacheDir, "User")
         
         # Configure Python for user development
         python -m pip install --user --upgrade pip

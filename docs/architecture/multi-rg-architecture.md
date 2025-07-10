@@ -62,7 +62,7 @@ npm run build:dev
 
 ### Using PowerShell Script
 ```powershell
-../deploy-scripts/deploy.ps1  # Uses default parameters from bicepparam file
+../deploy-scripts/deploy-quickstart.ps1  # Automated deployment with validation and configuration options
 ```
 
 ## Key Changes from Previous Architecture
@@ -129,3 +129,9 @@ The orchestrator provides the following outputs:
 4. Test frontend-to-backend communication through Function App proxy
 5. Verify static website hosting and CORS configuration
 6. Consider implementing alerts and dashboards for each component
+
+## Related Documentation
+
+- [Infrastructure Overview](../deployment/infrastructure.md) - High-level infrastructure design
+- [Deployment Guide](../deployment/deployment-guide.md) - Step-by-step deployment instructions
+- [Configuration Reference](../configuration/environment-variables.md) - Environment variable documentation

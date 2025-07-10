@@ -21,27 +21,24 @@ You need an active Azure subscription to deploy the application.
 - Permission to deploy Azure resources (Functions, Static Web Apps, Storage)
 - Access to create managed identities and role assignments
 
-### 2. **Azure AI Foundry Resource** (Required - Must Exist Before Deployment)
+### 2. **Azure AI Foundry Resource** (Optional - Can Be Created Automatically)
 
-⚠️ **CRITICAL REQUIREMENT**: You need an existing Azure AI Foundry service with an "AI in A Box" agent **before** running the orchestrator deployment.
+🎯 **FLEXIBLE DEPLOYMENT**: The deployment script can create new AI Foundry resources automatically OR use your existing ones for centralized management.
 
-**Why AI Foundry Must Exist First:**
-Due to a circular dependency in Azure's resource model between Cognitive Services workspace and AI Foundry project resources, the orchestrator cannot create both in a single deployment. This is a known Azure platform limitation that prevents automated AI Foundry resource creation.
+**Options for AI Foundry:**
+1. **Greenfield (Default)**: Let the script create new AI Foundry resources automatically
+2. **Brownfield**: Use existing AI Foundry resources for centralized management
+3. **Mixed**: Use existing AI Foundry with new Log Analytics, or vice versa
 
-**If you don't have one:**
-1. **Check with your organization** - Many companies already have AI Foundry set up
-2. **Create a new one** - Follow the [AI Foundry Setup Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstart/)
-3. **Ask for access** - If your organization has AI Foundry, request access to the "AI in A Box" agent
-
-**What you'll need to know:**
-- **AI Foundry Endpoint URL** (e.g., `https://your-ai-foundry.cognitiveservices.azure.com/`)
+**If using existing AI Foundry resources, you'll need:**
 - **Resource Group Name** containing the AI Foundry resource
-- **Resource Name** of the Cognitive Services account
-- **Project Name** (e.g., `firstProject`)
-- **Deployment Name** (e.g., `gpt-4o-mini`)
-- **Agent Name** (should be `AI in A Box`)
+- **AI Foundry Resource Name** (Cognitive Services account)
+- **AI Foundry Project Name** within that resource
+- **Agent Name** (if you have an existing agent to use)
 
-**Future Improvement Note**: The infrastructure includes a `createAiFoundryResourceGroup` parameter (currently defaulted to `false`) that could enable automated AI Foundry creation if/when Azure resolves this circular dependency limitation.
+**If creating new (default behavior):**
+- No additional setup required - the script handles everything
+- Creates Cognitive Services account, AI project, and agent automatically
 
 ### 3. **Resource Permissions** (Important)
 Make sure you have these permissions in your Azure subscription:
@@ -103,10 +100,9 @@ Before starting the deployment, verify you have:
 
 ### Azure Setup:
 - [ ] Active Azure subscription with sufficient permissions
-- [ ] **EXISTING Azure AI Foundry resource with "AI in A Box" agent** (REQUIRED - must exist before deployment)
-- [ ] AI Foundry endpoint URL, resource group, resource name, and project name
-- [ ] AI Foundry deployment name and agent name
 - [ ] Azure CLI installed and working (`az --version`)
+- [ ] **Optional**: Existing AI Foundry resources if you want centralized management
+- [ ] **Optional**: Existing Log Analytics workspace if you want centralized logging
 
 ### Development Environment:
 - [ ] Git installed and working (`git --version`)
@@ -163,9 +159,14 @@ az --version
 
 ### Issue: "Can't find AI Foundry resource"
 **Solution**: 
-1. Check Azure Portal for existing AI Foundry resources
-2. Ask your organization's Azure admin
-3. Create a new AI Foundry resource if needed
+1. **For Greenfield Deployment**: No action needed - the deployment script will create AI Foundry resources automatically
+2. **For Brownfield Deployment**: The script will ask if you want to use existing AI Foundry resources. If yes, ensure you have:
+   - Resource Group Name containing your AI Foundry resource
+   - AI Foundry Resource Name (Cognitive Services account)
+   - AI Foundry Project Name within that resource
+   - Agent Name (if using an existing agent)
+3. Check Azure Portal for existing AI Foundry resources in your subscription
+4. Ask your organization's Azure admin about centralized AI Foundry resources
 
 ### Issue: "Node/npm commands not working"
 **Solution**: Install Node.js and restart terminal

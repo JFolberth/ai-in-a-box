@@ -229,6 +229,31 @@ jobs:
         app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
         package: './backend-artifacts/backend-deployment.zip'
         
+    - name: Update Function App Settings with Agent ID
+      run: |
+        echo "🔧 Updating Function App settings with AI Foundry agent configuration..."
+        
+        FUNCTION_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}"
+        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}"
+        AGENT_ID="${{ needs.deploy-agent.outputs.agent-id }}"
+        AGENT_NAME="${{ needs.deploy-agent.outputs.agent-name }}"
+        
+        if [ -z "$AGENT_ID" ]; then
+          echo "⚠️ Agent ID not available from deployment step - Function App will use default fallback"
+        else
+          echo "🔧 Updating Function App settings..."
+          az functionapp config appsettings set \
+            --name "$FUNCTION_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP_NAME" \
+            --settings \
+              "AiFoundryAgentId=$AGENT_ID" \
+              "AiFoundryAgentName=$AGENT_NAME"
+          
+          echo "✅ Function App settings updated successfully:"
+          echo "  - Agent ID: $AGENT_ID"
+          echo "  - Agent Name: $AGENT_NAME"
+        fi
+        
     - name: Backend Deployment Summary
       run: |
         echo "## 🚀 Backend Code Deployment Summary" >> $GITHUB_STEP_SUMMARY
@@ -238,10 +263,15 @@ jobs:
         echo "- **Resource Group**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Function App URL**: [${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }})" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🤖 AI Foundry Agent Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **Agent ID**: \`${{ needs.deploy-agent.outputs.agent-id }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Agent Name**: \`${{ needs.deploy-agent.outputs.agent-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Action Used**: Azure/functions-action@v1" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
         echo "- **Deploy Method**: Native GitHub Action" >> $GITHUB_STEP_SUMMARY
+        echo "- **Configuration Update**: Function App settings updated with agent configuration" >> $GITHUB_STEP_SUMMARY
 
   deploy-frontend-code:
     name: Deploy Frontend Code

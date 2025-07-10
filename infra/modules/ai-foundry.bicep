@@ -3,13 +3,8 @@
 // - Cognitive Services Account (Multi-service AI Services)
 // - AI Studio Workspace (Machine Learning Services)
 // - AI Project (Foundry project workspace)
-// - GPT-4o-mini Model Deployment
+// - GPT-4.1-mini Model Deployment
 // - RBAC assignment to Function App (Azure AI Developer role)
-//
-// IMPORTANT: This module is currently disabled by default due to a circular dependency
-// limitation in Azure's resource model. Cognitive Services workspace and AI Project
-// resources cannot be created in a single deployment pass. This module exists for
-// future use when/if Azure resolves this platform constraint.
 
 targetScope = 'resourceGroup'
 
@@ -34,13 +29,13 @@ param modelDeploymentName string = 'gpt-4o-mini'
 param modelVersion string = '2024-07-18'
 
 @description('Model deployment capacity (Tokens Per Minute)')
-param deploymentCapacity int = 10000
+param deploymentCapacity int = 100
 
 @description('AI Foundry project display name')
 param projectName string = 'AI in A Box Project'
 
-@description('AI Foundry project description')  
-param projectDescription string = 'AI in A Box foundry project with GPT-4o-mini model deployment'
+@description('AI Foundry project description')
+param projectDescription string = 'AI in A Box foundry project with GPT-4.1-mini model deployment'
 
 @description('Function App system-assigned managed identity principal ID for RBAC')
 param functionAppPrincipalId string = ''
@@ -54,13 +49,36 @@ param principalType string = 'ServicePrincipal'
 
 // =========== VARIABLES ===========
 
-// Region reference mapping for consistent naming
+// Region reference mapping - ONLY regions where Cognitive Services AIServices are available
+// Source: az cognitiveservices account list-skus --query "[?kind=='AIServices'].locations[]" -o tsv | sort -u
 var regionReference = {
-  centralus: 'cus'
+  australiaeast: 'ause'
+  brazilsouth: 'brs'
+  canadacentral: 'cac'
+  canadaeast: 'cae'
   eastus: 'eus'
   eastus2: 'eus2'
+  francecentral: 'frc'
+  germanywestcentral: 'gwc'
+  italynorth: 'itn'
+  japaneast: 'jpe'
+  koreacentral: 'krc'
+  northcentralus: 'ncus'
+  norwayeast: 'noe'
+  polandcentral: 'poc'
+  southafricanorth: 'san'
+  southcentralus: 'scus'
+  southeastasia: 'sea'
+  southindia: 'ins'
+  spaincentral: 'spc'
+  swedencentral: 'swc'
+  switzerlandnorth: 'swn'
+  switzerlandwest: 'sww'
+  uaenorth: 'uaen'
+  uksouth: 'uks'
+  westeurope: 'weu'
   westus: 'wus'
-  westus2: 'wus2'
+  westus3: 'wus3'
 }
 
 // Consistent naming pattern following project standards
@@ -90,12 +108,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-prev
       ipRules: []
     }
     allowProjectManagement: true
-    defaultProject: aiProjectName
-    associatedProjects: [
-      aiProjectName
-    ]
     publicNetworkAccess: 'Enabled'
-    
   }
   sku: {
     name: 'S0'
@@ -105,20 +118,20 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-prev
   }
 }
 
-// Model Deployment (GPT-4o-mini)
+// Model Deployment (GPT-4.1-mini)
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
   parent: cognitiveServices
   name: modelDeploymentName
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4o-mini'
+      name: 'gpt-4.1-mini'
       version: modelVersion
     }
     raiPolicyName: 'Microsoft.Default'
   }
   sku: {
-    name: 'Standard'
+    name: 'GlobalStandard'
     capacity: deploymentCapacity
   }
 }

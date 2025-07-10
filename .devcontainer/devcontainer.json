@@ -22,6 +22,9 @@
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.12",
       "installTools": true
+    },
+    "ghcr.io/devcontainers/features/powershell:1": {
+      "version": "latest"
     }
   },
 
@@ -29,7 +32,7 @@
     "vscode": {
       "extensions": [
         "ms-vscode.vscode-bicep",
-        "ms-vscode.azure-account",
+        "ms-vscode.PowerShell",
         "ms-azuretools.vscode-azurefunctions",
         "ms-dotnettools.csharp",
         "ms-dotnettools.vscode-dotnet-runtime",
@@ -69,6 +72,10 @@
         },
         "bicep.trace.server": "Off",
         "bicep.experimental.deployment": true,
+        "powershell.integratedConsole.showOnStartup": false,
+        "powershell.scriptAnalysis.enable": true,
+        "powershell.codeFormatting.preset": "OTBS",
+        "powershell.codeFormatting.useCorrectCasing": true,
         "editor.quickSuggestions": {
           "strings": true
         },

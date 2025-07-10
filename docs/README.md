@@ -13,11 +13,12 @@ If you're new to Azure AI Foundry or want to understand what this project does, 
 4. **[Quick Start](getting-started/03-quick-start.md)** - Deploy your AI app in 15 minutes
 5. **[First Steps](getting-started/04-first-steps.md)** - Test and verify your deployment
 
-## 🛠️ Development
+## 🛠️ Development & Setup
 
-Ready to customize and develop? These guides cover local development, project structure, and testing:
+Ready to customize and develop? These guides cover setup, local development, project structure, and testing:
 
-### Development Environment
+### Setup & Development Environment
+- **[Setup Guide](setup/setup-guide.md)** - Complete setup instructions for all environments
 - **[Local Development](development/local-development.md)** - Set up your development environment
 - **[Project Structure](development/project-structure.md)** - Understanding the codebase
 - **[Testing Guide](development/testing-guide.md)** - Running tests and validation
@@ -31,6 +32,10 @@ Customize your AI app with these configuration guides:
 - **[Environment Variables](configuration/environment-variables.md)** - All configuration options explained
 - **[AI Foundry Setup](configuration/ai-foundry-setup.md)** - AI Foundry resource configuration
 - **[Customization](configuration/customization.md)** - How to customize the agent and UI
+
+### Setup Guides
+- **[Public Mode Setup](setup/public-mode-setup.md)** - Configure public access without authentication
+- **[MCP Setup](setup/mcp-setup.md)** - Model Context Protocol configuration
 
 ## 🚀 Deployment
 
@@ -57,9 +62,15 @@ Deep-dive into advanced concepts and customizations:
 
 ### Advanced Concepts
 - **[Architecture Decisions](advanced/architecture-decisions.md)** - Technical deep-dives
-- **[Multi-Resource Groups](advanced/multi-resource-groups.md)** - Architecture patterns
-- **[Azure Deployment Environments](advanced/azure-deployment-environments.md)** - ADE integration
+- **[Multi-Resource Group Architecture](architecture/multi-rg-architecture.md)** - Multi-RG deployment patterns
+- **[Azure Deployment Environments](deployment/azure-deployment-environments.md)** - ADE integration
 - **[Security](advanced/security.md)** - Security considerations and best practices
+
+### Technical Fixes & API Documentation
+- **[Health Endpoint](api/health-endpoint.md)** - API health monitoring
+- **[Thread Persistence Fix](fixes/thread-persistence-fix.md)** - Conversation thread management
+- **[CI URL Retrieval Fix](fixes/ci-url-retrieval-fix.md)** - CI/CD deployment improvements  
+- **[AI Foundry Browser Limitations](fixes/ai-foundry-browser-limitations.md)** - Backend proxy solution
 
 ## 📚 Reference
 
@@ -74,6 +85,7 @@ Technical reference documentation:
 
 ### By Task:
 - **First time deploying?** → [Getting Started](getting-started/)
+- **Want comprehensive setup?** → [Setup Guide](setup/setup-guide.md)
 - **Want to customize the UI?** → [Customization Guide](configuration/customization.md)
 - **Setting up local development?** → [Local Development](development/local-development.md)
 - **Deploying to production?** → [Deployment Guide](deployment/deployment-guide.md)

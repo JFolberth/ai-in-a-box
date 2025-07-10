@@ -12,6 +12,7 @@ tests/
 ├── core/                              # Primary test scripts (daily use)
 │   ├── Test-FunctionEndpoints.ps1    # 🎯 Main endpoint and AI integration testing
 │   ├── Test-AzuriteSetup.ps1         # 🔧 Local development environment setup
+│   ├── Test-FunctionAppRbac.ps1      # 🔒 RBAC diagnostic and validation
 │   └── simulate-ci-workflow.sh       # 🚀 CI/CD workflow simulation
 ├── integration/                       # Integration and validation tests
 │   ├── test-ade-workflows.sh         # 📋 ADE parameter extraction workflows
@@ -321,3 +322,30 @@ Example GitHub Actions integration:
 - ✅ **Reduced confusion**: No more wondering which script to use
 
 This reorganization reduces maintenance overhead while improving usability and ensuring comprehensive test coverage for the AI Foundry SPA project.
+
+## 🧹 Recent Cleanup (July 2025)
+
+**Removed One-off Debugging Scripts:**
+The following debugging scripts were created for specific troubleshooting sessions and have been removed after the issues were resolved:
+
+- `Debug-AgentResultParsing.ps1` - Agent result parsing debugging
+- `Test-AgentResultParsing.ps1` - Agent deployment result logic testing  
+- `Test-QuickStartAgentLogic.ps1` - Quick-start agent ID logic debugging
+- `Test-AgentDeploymentLogic.ps1` - Agent deployment logic validation
+- `Test-AgentIdFlow.ps1` - Dynamic agent ID flow testing
+- `Test-DeploymentOutputs.ps1` - Deployment output extraction debugging
+- `Test-OutputExtraction.ps1` - Output extraction logic testing
+
+**Rationale:**
+- These were temporary debugging tools for specific issues that have been resolved
+- They provided no ongoing value for development or CI/CD processes  
+- The core functionality they tested is now validated by the remaining production scripts
+- Keeping them would clutter the test suite and confuse developers
+
+**Remaining Scripts:**
+All remaining scripts provide ongoing value for:
+- ✅ Production troubleshooting (`Test-FunctionAppRbac.ps1`)
+- ✅ Local development validation (`Test-AzuriteSetup.ps1`) 
+- ✅ Endpoint testing (`Test-FunctionEndpoints.ps1`)
+- ✅ CI/CD integration (`simulate-ci-workflow.sh`
+- ✅ Reusable utilities (`utilities/extract-*.sh`)

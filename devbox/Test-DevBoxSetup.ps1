@@ -104,6 +104,7 @@ Test-Command "az" "Azure CLI"
 Test-Command "python" "Python 3.12"
 Test-Command "pip" "Python Package Manager"
 Test-Command "git" "Git Version Control"
+Test-Command "pwsh" "PowerShell Core"
 
 # Test for func (Azure Functions Core Tools)
 Write-Host ""
@@ -209,7 +210,6 @@ if (-not $SkipExtensions) {
     
     $extensions = @(
         @("ms-vscode.vscode-bicep", "Azure Bicep Language Support"),
-        @("ms-vscode.azure-account", "Azure Account Integration"),
         @("ms-azuretools.vscode-azurefunctions", "Azure Functions Development"),
         @("ms-dotnettools.csharp", "C# Language Support"),
         @("ms-dotnettools.vscode-dotnet-runtime", ".NET Runtime Integration"),

@@ -17,7 +17,6 @@ build/
 .env.production.local
 
 # IDE files
-.vscode/settings.json
 .vscode/launch.json
 .idea/
 *.swp
@@ -111,7 +110,6 @@ obj/
 *.suo
 *.userprefs
 .vs/
-.vscode/
 project.lock.json
 *.nuget.props
 *.nuget.targets
