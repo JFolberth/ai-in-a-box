@@ -324,7 +324,7 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
 // Azure AI User role assignment for Function App to access AI Foundry
 // Required for reading and calling AI Foundry agents at the project level
 module aiFoundryUserRbac 'rbac.bicep' = {
-  name: 'backend-aifoundry-user-rbac-${uniqueString(resourceGroup().id)}'
+  name: 'backend-aifoundry-user-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
