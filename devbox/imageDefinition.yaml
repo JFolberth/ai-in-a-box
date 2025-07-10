@@ -94,8 +94,8 @@ userTasks:
         npm install -g azurite@latest
         
         # Create user workspace directories
-        $workspaceDir = "$env:USERPROFILE\Workspaces"
-        $azuriteDir = "$env:USERPROFILE\.azurite"
+        $workspaceDir = Join-Path $env:USERPROFILE "Workspaces"
+        $azuriteDir = Join-Path $env:USERPROFILE ".azurite"
         
         New-Item -ItemType Directory -Force -Path $workspaceDir
         New-Item -ItemType Directory -Force -Path $azuriteDir
@@ -111,7 +111,7 @@ userTasks:
         python -m pip install --user virtualenv
         
         # Verify Docker Desktop installation and setup
-        $dockerPath = "${env:ProgramFiles}\Docker\Docker\Docker Desktop.exe"
+        $dockerPath = Join-Path ${env:ProgramFiles} "Docker\Docker\Docker Desktop.exe"
         if (Test-Path $dockerPath) {
             Write-Host "✅ Docker Desktop installed successfully!" -ForegroundColor Green
             Write-Host "📋 Docker will be available after DevBox restart and Docker Desktop startup" -ForegroundColor Yellow

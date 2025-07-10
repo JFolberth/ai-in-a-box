@@ -158,8 +158,11 @@ Write-Host "2️⃣ Testing User Environment..." -ForegroundColor Yellow
 Write-Host "==============================" -ForegroundColor Yellow
 
 # Test workspace directories
-Test-Directory "$env:USERPROFILE\Workspaces" "Workspace Directory"
-Test-Directory "$env:USERPROFILE\.azurite" "Azurite Data Directory"
+$workspaceDir = if ($env:USERPROFILE) { Join-Path $env:USERPROFILE "Workspaces" } else { Join-Path $env:HOME "Workspaces" }
+$azuriteDir = if ($env:USERPROFILE) { Join-Path $env:USERPROFILE ".azurite" } else { Join-Path $env:HOME ".azurite" }
+
+Test-Directory $workspaceDir "Workspace Directory"
+Test-Directory $azuriteDir "Azurite Data Directory"
 
 # Test Azurite installation
 try {
@@ -238,19 +241,25 @@ Write-Host "===================================" -ForegroundColor Yellow
 $currentPath = Get-Location
 $isInProject = $false
 
-if (Test-Path "src\frontend\package.json") {
+$frontendPackageJson = Join-Path "src" "frontend" "package.json"
+$devboxFrontendPackageJson = Join-Path ".." ".." "src" "frontend" "package.json"
+
+if (Test-Path $frontendPackageJson) {
     Write-Host "✅ Project structure detected (at root)" -ForegroundColor Green
     $isInProject = $true
-    $frontendPath = "src\frontend"
-    $backendPath = "src\backend"
-} elseif (Test-Path "..\..\src\frontend\package.json") {
+    $frontendPath = Join-Path "src" "frontend"
+    $backendPath = Join-Path "src" "backend"
+} elseif (Test-Path $devboxFrontendPackageJson) {
     Write-Host "✅ Project structure detected (in devbox directory)" -ForegroundColor Green
     $isInProject = $true
-    $frontendPath = "..\..\src\frontend"
-    $backendPath = "..\..\src\backend"
+    $frontendPath = Join-Path ".." ".." "src" "frontend"
+    $backendPath = Join-Path ".." ".." "src" "backend"
 } else {
     Write-Host "⚠️  Project not cloned or not in correct directory" -ForegroundColor Yellow
-    Write-Host "   Clone repository to: %USERPROFILE%\Workspaces\ai-in-a-box" -ForegroundColor Gray
+    $homeDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
+    $workspaceDir = Join-Path $homeDir "Workspaces"
+    $projectDir = Join-Path $workspaceDir "ai-in-a-box"
+    Write-Host "   Clone repository to: $projectDir" -ForegroundColor Gray
     $warnings++
 }
 
@@ -312,7 +321,10 @@ if ($errors -gt 0) {
     Write-Host "   1. Configure Git: git config --global user.name 'Your Name'" -ForegroundColor Gray
     Write-Host "   2. Configure Git: git config --global user.email 'your.email@example.com'" -ForegroundColor Gray
     Write-Host "   3. Sign in to Azure: az login" -ForegroundColor Gray
-    Write-Host "   4. Clone repository: git clone <url> %USERPROFILE%\Workspaces\ai-in-a-box" -ForegroundColor Gray
+    $homeDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
+    $workspaceDir = Join-Path $homeDir "Workspaces"
+    $projectDir = Join-Path $workspaceDir "ai-in-a-box"
+    Write-Host "   4. Clone repository: git clone <url> $projectDir" -ForegroundColor Gray
     Write-Host "   5. Start development workflow" -ForegroundColor Gray
 }
 
