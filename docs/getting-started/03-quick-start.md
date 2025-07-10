@@ -46,25 +46,42 @@ This guide supports **flexible deployment options**:
 
 We've created an automated script that orchestrates the entire deployment process:
 
+**Complete New Setup (Greenfield):**
 ```powershell
 # Navigate to the project directory
 cd ai-in-a-box
 
-# Run the automated deployment script
+# Run the automated deployment script (creates everything)
 .\deploy-scripts\deploy-quickstart.ps1
+```
+
+**Use Existing Resources (Brownfield):**
+```powershell
+# Run the script - it will ask if you want to use existing resources
+.\deploy-scripts\deploy-quickstart.ps1
+
+# If you choose to use existing AI Foundry, script will prompt for:
+# - Resource Group Name, AI Foundry Resource Name, Project Name, Agent Name
+
+# If you choose to use existing Log Analytics, script will prompt for:
+# - Resource Group Name, Log Analytics Workspace Name
+
+# You can mix and match - use existing AI Foundry with new Log Analytics, or vice versa
 ```
 
 **What the automated script does:**
 1. **Validates prerequisites** (Azure CLI, .NET SDK, Node.js)
 2. **Prompts for configuration** (AI Foundry options, location, etc.)
-3. **Deploys infrastructure** using Bicep templates
-4. **Deploys AI agent** from YAML configuration
-5. **Deploys backend code** to Function App
-6. **Deploys frontend code** to Static Web App
-7. **Provides final URLs** and validation steps
+3. **Prompts for existing resource details** (if using brownfield options)
+4. **Deploys infrastructure** using Bicep templates
+5. **Deploys AI agent** from YAML configuration (if creating new or updating existing)
+6. **Deploys backend code** to Function App
+7. **Deploys frontend code** to Static Web App
+8. **Provides final URLs** and validation steps
 
 **Advantages of automated deployment:**
 - ✅ **Zero manual parameter passing** between steps
+- ✅ **Interactive prompts** for existing resource details
 - ✅ **Automatic output extraction** from each deployment phase
 - ✅ **Error handling** with clear failure points
 - ✅ **Final validation** of all endpoints

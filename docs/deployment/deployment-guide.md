@@ -97,13 +97,21 @@ cp infra/dev-orchestrator.parameters.bicepparam infra/prod-orchestrator.paramete
 ```bicep
 using 'main-orchestrator.bicep'
 
-// Required: Your existing AI Foundry configuration (must exist before deployment)
+// Deployment Mode: Choose greenfield (create everything) or brownfield (use existing)
+param createAiFoundryResourceGroup = false  // Set to true for greenfield
+param createLogAnalyticsWorkspace = false   // Set to true for greenfield
+
+// For Brownfield (using existing AI Foundry): Provide existing resource details
 param aiFoundryResourceGroupName = 'rg-your-ai-foundry'
 param aiFoundryResourceName = 'your-ai-foundry-resource'
 param aiFoundryProjectName = 'firstProject'
 param aiFoundryEndpoint = 'https://your-production-ai-foundry.cognitiveservices.azure.com/'
 param aiFoundryModelDeploymentName = 'gpt-4.1-mini'
 param aiFoundryAgentName = 'AI in A Box'
+
+// For Brownfield (using existing Log Analytics): Provide existing resource details
+param logAnalyticsResourceGroupName = 'rg-your-logging'
+param logAnalyticsWorkspaceName = 'your-log-analytics-workspace'
 
 // Required: Your user principal ID
 param userPrincipalId = 'your-user-principal-id'
@@ -116,6 +124,8 @@ param applicationName = 'ai-foundry-spa'
 // Optional: Custom domain for production
 param customDomainName = 'ai.yourcompany.com'  // Optional
 ```
+
+> 💡 **Tip**: For production environments using centralized AI Foundry or Log Analytics, set the corresponding `create*` parameters to `false` and provide the existing resource details.
 
 ### Step 2: Deploy Infrastructure
 

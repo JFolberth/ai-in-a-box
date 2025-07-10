@@ -159,9 +159,14 @@ az --version
 
 ### Issue: "Can't find AI Foundry resource"
 **Solution**: 
-1. Check Azure Portal for existing AI Foundry resources
-2. Ask your organization's Azure admin
-3. Create a new AI Foundry resource if needed
+1. **For Greenfield Deployment**: No action needed - the deployment script will create AI Foundry resources automatically
+2. **For Brownfield Deployment**: The script will ask if you want to use existing AI Foundry resources. If yes, ensure you have:
+   - Resource Group Name containing your AI Foundry resource
+   - AI Foundry Resource Name (Cognitive Services account)
+   - AI Foundry Project Name within that resource
+   - Agent Name (if using an existing agent)
+3. Check Azure Portal for existing AI Foundry resources in your subscription
+4. Ask your organization's Azure admin about centralized AI Foundry resources
 
 ### Issue: "Node/npm commands not working"
 **Solution**: Install Node.js and restart terminal

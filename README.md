@@ -5,22 +5,23 @@ A beginner-friendly, production-ready single-page application (SPA) that demonst
 
 ## 🚀 Quick Start
 
-**⚠️ IMPORTANT: AI Foundry Required Dependency**
+**🎯 Flexible Deployment Options**
 
-This application requires an **existing Azure AI Foundry resource** with an "AI in A Box" agent before deployment. Due to circular dependencies in Azure's resource model, the orchestrator cannot create AI Foundry resources automatically.
+This application supports both **greenfield** (creates everything) and **brownfield** (bring your own resources) deployment scenarios:
+
+- **🆕 Greenfield**: Automated deployment creates all required Azure AI Foundry and Log Analytics resources
+- **🏢 Brownfield**: Use existing AI Foundry or Log Analytics resources for centralized management
 
 **New to Azure AI Foundry?** Start with our beginner-friendly guide:
 
 ### 15-Minute Getting Started Journey
 1. **[What is AI Foundry?](docs/getting-started/00-what-is-ai-foundry.md)** - Understanding Azure AI Foundry (5 min read)
 2. **[Project Overview](docs/getting-started/01-project-overview.md)** - What this app does (3 min read)
-3. **[Prerequisites](docs/getting-started/02-prerequisites.md)** - What you need including AI Foundry setup (2 min setup)
+3. **[Prerequisites](docs/getting-started/02-prerequisites.md)** - What you need (2 min setup)
 4. **[Quick Start](docs/getting-started/03-quick-start.md)** - Deploy in 15 minutes
 5. **[First Steps](docs/getting-started/04-first-steps.md)** - Verify and test (5 min)
 
-### Already Familiar with AI Foundry?
-
-**⚠️ Prerequisite**: Ensure you have an existing AI Foundry resource before deployment. See [Prerequisites](docs/getting-started/02-prerequisites.md) for setup instructions.
+### Ready to Deploy?
 
 **Local Development:**
 ```bash
@@ -29,12 +30,30 @@ cd ai-in-a-box
 # See docs/development/local-development.md for complete setup
 ```
 
-**Quick Deploy to Azure:**
+**Quick Deploy to Azure (Greenfield - Creates Everything):**
 ```bash
 # Automated deployment with preflight checks (recommended)
 .\deploy-scripts\deploy-quickstart.ps1
+```
 
-# Or manual deployment (update parameters first)
+**Deploy with Existing Resources (Brownfield):**
+```bash
+# Script will ask if you want to use existing AI Foundry, then prompt for:
+# - Resource Group Name, AI Foundry Resource Name, Project Name, Agent Name
+.\deploy-scripts\deploy-quickstart.ps1
+
+# Script will ask if you want to use existing Log Analytics, then prompt for:
+# - Resource Group Name, Log Analytics Workspace Name  
+.\deploy-scripts\deploy-quickstart.ps1
+
+# For mixed scenarios, the script will ask about both AI Foundry and Log Analytics
+# and prompt for details of whichever you choose to use existing
+.\deploy-scripts\deploy-quickstart.ps1
+```
+
+**Manual Deployment:**
+```bash
+# Update parameters first, then deploy
 az deployment sub create \
   --template-file "infra/main-orchestrator.bicep" \
   --parameters "infra/dev-orchestrator.parameters.bicepparam" \

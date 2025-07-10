@@ -36,7 +36,16 @@ Verify your `createAiFoundryResourceGroup` parameter setting:
 - Set to `true` to create new AI Foundry resources automatically
 - Set to `false` to use existing AI Foundry resources (must exist first)
 
-**2. Verify Existing AI Foundry Resources (if using existing)**
+**2. For Brownfield Deployment (Using Existing Resources)**
+The automated script will ask if you want to use existing AI Foundry resources. If you choose yes, ensure you have:
+- **Resource Group Name** where your AI Foundry resource exists
+- **AI Foundry Resource Name** (Cognitive Services account name)
+- **AI Foundry Project Name** within that resource
+- **Agent Name** (if you have an existing agent to use)
+
+Similarly, it will ask about existing Log Analytics resources and prompt for the workspace details if you choose to use existing.
+
+Verify your resources exist:
 ```bash
 # Check if your AI Foundry Cognitive Services account exists
 az cognitiveservices account show \
@@ -52,10 +61,10 @@ If you want to use existing resources but don't have them:
 - Follow the [AI Foundry Setup Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstart/)
 - Create the Cognitive Services account and AI project manually
 - Create the "AI in A Box" agent
-- Then update your deployment parameters with the correct resource names
+- Then use `-UseExistingAiFoundry` and provide the resource details when prompted
 
-**4. Use Automated Creation**
-Alternatively, set `createAiFoundryResourceGroup: true` in your parameters to let the orchestrator create all AI Foundry resources automatically.
+**4. Use Automated Creation (Greenfield)**
+Alternatively, run the script without flags to let it create all AI Foundry resources automatically.
 
 **3. Update Parameters with Correct Information**
 ```bicep

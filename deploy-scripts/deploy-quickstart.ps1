@@ -9,11 +9,14 @@ It orchestrates the complete deployment process: infrastructure → agent → ba
 
 🚨 IMPORTANT: This is for LOCAL DEVELOPMENT ONLY. For production deployments, use GitHub Actions CI/CD pipeline.
 
+The script supports both greenfield deployments (creates everything) and brownfield scenarios where you 
+bring your own existing AI Foundry or Log Analytics resources for centralized management.
+
 The script:
 1. Validates prerequisites (Azure CLI, .NET SDK, Node.js)
 2. Prompts for configuration options (or uses defaults)
 3. Performs preflight checks (quota, permissions, region compatibility, service availability)
-4. Deploys infrastructure using Bicep templates
+4. Deploys infrastructure using Bicep templates (creates new or integrates with existing resources)
 5. Deploys/updates AI agent from YAML configuration
 6. Deploys backend Function App with agent configuration
 7. Deploys frontend Static Web App with backend integration
@@ -32,16 +35,18 @@ Application name used for resource naming (default: ai-foundry-spa)
 Skip prerequisite validation (use with caution)
 
 .PARAMETER UseExistingAiFoundry
-Use existing AI Foundry resources instead of creating new ones
+Use existing AI Foundry resources instead of creating new ones. 
+Ideal for centralized AI Foundry management scenarios where multiple applications share the same AI Foundry instance.
 
 .PARAMETER UseExistingLogAnalytics
-Use existing Log Analytics workspace instead of creating new one
+Use existing Log Analytics workspace instead of creating new one.
+Ideal for centralized logging scenarios where multiple applications share the same workspace.
 
 .PARAMETER InteractiveMode
 Prompt for all configuration options (default: true)
 
 .EXAMPLE
-# Full automated deployment with defaults
+# Full automated deployment with defaults (creates everything)
 .\deploy-quickstart.ps1
 
 .EXAMPLE
@@ -53,11 +58,19 @@ Prompt for all configuration options (default: true)
 .\deploy-quickstart.ps1 -Location "westus2"
 
 .EXAMPLE
-# Use existing AI Foundry resources
+# Use existing AI Foundry resources for centralized AI management
 .\deploy-quickstart.ps1 -UseExistingAiFoundry
 
 .EXAMPLE
-# Non-interactive mode with all defaults
+# Use existing Log Analytics workspace for centralized logging
+.\deploy-quickstart.ps1 -UseExistingLogAnalytics
+
+.EXAMPLE
+# Use both existing AI Foundry and Log Analytics (full brownfield scenario)
+.\deploy-quickstart.ps1 -UseExistingAiFoundry -UseExistingLogAnalytics
+
+.EXAMPLE
+# Non-interactive mode with all defaults (creates everything)
 .\deploy-quickstart.ps1 -InteractiveMode:$false
 
 .PREREQUISITES
