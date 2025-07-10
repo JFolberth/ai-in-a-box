@@ -19,10 +19,8 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       host: true
     },
-    define: {
-      // Enable access to environment variables in the browser
-      'process.env': process.env
-    },
+    // Environment variables prefixed with VITE_ are automatically exposed by Vite
+    // No need to manually define process.env, which is a security risk
     // Ensure proper environment file loading
     envDir: '.',
     envPrefix: 'VITE_'
