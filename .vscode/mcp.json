@@ -1,0 +1,9 @@
+{
+    "servers": {
+        "my-mcp-server-bb07f4b3": {
+            "url": "https://api.githubcopilot.com/mcp/",
+            "name": "GitHub Copilot",
+            "description": "GitHub Copilot MCP integration for enhanced AI-powered development assistance"
+        }
+    }
+}

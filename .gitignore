@@ -110,7 +110,6 @@ obj/
 *.suo
 *.userprefs
 .vs/
-.vscode/
 project.lock.json
 *.nuget.props
 *.nuget.targets

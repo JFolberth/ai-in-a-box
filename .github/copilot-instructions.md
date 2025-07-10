@@ -186,4 +186,12 @@ cd src/backend
 - Quota limits and SKU availability differ by subscription type
 - Deprecated commands can cause deployment failures
 - Incorrect query syntax leads to empty or wrong results
+
+### 📝 Documentation Guidelines
+
+- **NO automatic summary files**: Do not create summary markdown files (.md) after making changes unless explicitly requested
+- **Inline documentation**: Update existing documentation files when relevant
+- **Code comments**: Add appropriate comments in code for complex logic
+- **README updates**: Update README files when functionality changes significantly
+- **Only when prompted**: Create summary/documentation files only when the user specifically asks for them
 ````

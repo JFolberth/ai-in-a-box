@@ -208,21 +208,106 @@ if (-not $SkipValidation) {
         exit 1
     }
     
+    # Refresh environment variables to ensure PATH is updated
+    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    
     # Check Node.js
     Write-ColorOutput "Checking Node.js..." "Yellow"
     if (-not (Test-Command "node")) {
-        Write-ColorOutput "❌ Node.js not found. Please install Node.js 18+ for frontend development." "Red"
-        Write-ColorOutput "   Download: https://nodejs.org/" "Cyan"
+        Write-ColorOutput "❌ Node.js not found. Please install Node.js 20 LTS first." "Red"
+        Write-ColorOutput "   Download from: https://nodejs.org/dist/v20.18.0/node-v20.18.0-x64.msi" "Cyan"
+        Write-ColorOutput "   After installation, restart your terminal and run this script again." "Cyan"
         exit 1
     }
     
     try {
         $nodeVersion = node --version
         Write-ColorOutput "✅ Node.js found: $nodeVersion" "Green"
+        
+        # Warn if using Node.js 22 (known compatibility issues with SWA CLI)
+        if ($nodeVersion -match "v22\.") {
+            Write-ColorOutput "⚠️  Warning: Node.js 22 may have compatibility issues with SWA CLI." "Yellow"
+            Write-ColorOutput "   Consider using Node.js 20 LTS for better compatibility." "Yellow"
+        }
     }
     catch {
         Write-ColorOutput "❌ Failed to get Node.js version." "Red"
         exit 1
+    }
+    
+    # Check npm (comes with Node.js)
+    Write-ColorOutput "Checking npm..." "Yellow"
+    if (-not (Test-Command "npm")) {
+        Write-ColorOutput "❌ npm not found. Please ensure Node.js installation is complete." "Red"
+        Write-ColorOutput "   npm should be included with Node.js installation" "Cyan"
+        exit 1
+    }
+    
+    try {
+        $npmVersion = npm --version
+        Write-ColorOutput "✅ npm found: $npmVersion" "Green"
+    }
+    catch {
+        Write-ColorOutput "❌ Failed to get npm version." "Red"
+        exit 1
+    }
+    
+    # Azure Static Web Apps CLI - Check and install if needed
+    Write-ColorOutput "Checking Azure Static Web Apps CLI (SWA CLI)..." "Yellow"
+    try {
+        # Ensure npm global packages are in PATH
+        $npmGlobalPath = npm config get prefix 2>$null
+        if ($npmGlobalPath -and -not $env:PATH.Contains($npmGlobalPath)) {
+            $env:PATH = "$npmGlobalPath;" + $env:PATH
+            Write-ColorOutput "✅ Added npm global path to PATH: $npmGlobalPath" "Green"
+        }
+        
+        # Check if SWA CLI is installed
+        $swaVersion = swa --version 2>$null
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
+            Write-ColorOutput "✅ SWA CLI found: $swaVersion" "Green"
+        }
+        else {
+            Write-ColorOutput "📦 SWA CLI not found, installing..." "Yellow"
+            npm install -g @azure/static-web-apps-cli
+            if ($LASTEXITCODE -eq 0) {
+                $swaVersion = swa --version 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ColorOutput "✅ SWA CLI installed successfully: $swaVersion" "Green"
+                } else {
+                    Write-ColorOutput "⚠️  SWA CLI installed but not accessible" "Yellow"
+                    Write-ColorOutput "   This may require a terminal restart" "Cyan"
+                }
+            } else {
+                Write-ColorOutput "⚠️  Failed to install SWA CLI" "Yellow"
+                Write-ColorOutput "   Frontend deployment may require manual SWA CLI installation" "Cyan"
+                Write-ColorOutput "   � Manual install: npm install -g @azure/static-web-apps-cli" "Cyan"
+            }
+        }
+    }
+    catch {
+        Write-ColorOutput "⚠️  Could not check SWA CLI status" "Yellow"
+        Write-ColorOutput "   SWA CLI will be installed during frontend deployment if needed" "Cyan"
+        Write-ColorOutput "   💡 For local development: npm install -g @azure/static-web-apps-cli" "Cyan"
+    }
+    
+    # Check Azure Functions Core Tools
+    Write-ColorOutput "Checking Azure Functions Core Tools..." "Yellow"
+    try {
+        $funcVersion = $null
+        $funcVersion = func --version 2>$null
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($funcVersion)) {
+            Write-ColorOutput "✅ Azure Functions Core Tools found: $funcVersion" "Green"
+        }
+        else {
+            throw "Azure Functions Core Tools not found"
+        }
+    }
+    catch {
+        Write-ColorOutput "⚠️  Azure Functions Core Tools not found" "Yellow"
+        Write-ColorOutput "   This is optional for deployment (backend uses Azure CLI directly)" "Cyan"
+        Write-ColorOutput "   For local development: npm install -g azure-functions-core-tools@4 --unsafe-perm true" "Cyan"
+        Write-ColorOutput "   Or download: https://docs.microsoft.com/azure/azure-functions/functions-run-local" "Cyan"
     }
     
     Write-ColorOutput "✅ All prerequisites validated successfully!" "Green"
@@ -407,12 +492,14 @@ function Test-AzureOpenAIQuota {
         if ($quotaFound -and $sufficientQuota) {
             Write-ColorOutput "   ✅ Quota check passed - deployment can proceed" "Green"
             return $true
-        } else {
+        }
+        else {
             Write-ColorOutput "   ❌ Quota check failed - deployment cannot proceed" "Red"
             return $false
         }
         
-    } catch {
+    }
+    catch {
         Write-ColorOutput "   ⚠️  Error during quota check: $($_.Exception.Message)" "Yellow"
         Write-ColorOutput "   🛑 Stopping deployment due to quota check failure" "Red"
         return $false
@@ -449,7 +536,8 @@ function Test-CognitiveServicesAvailability {
                     $s0Available = $skus | Where-Object { $_.name -eq 'S0' }
                     if ($s0Available) {
                         Write-ColorOutput "   ✅ S0 pricing tier available (required for deployment)" "Green"
-                    } else {
+                    }
+                    else {
                         Write-ColorOutput "   ⚠️  S0 pricing tier not found. Will attempt deployment with available tiers." "Yellow"
                     }
                     
@@ -491,29 +579,142 @@ function Test-CognitiveServicesAvailability {
 }
 
 function Test-AzurePermissions {
+    param(
+        [bool]$CreateAiFoundry = $true,
+        [string]$AiFoundryResourceGroupName = "",
+        [string]$AiFoundryResourceName = "",
+        [string]$AiFoundryProjectName = ""
+    )
+    
     Write-ColorOutput "Checking Azure RBAC permissions..." "Yellow"
     
     try {
-        # Get current user/service principal assignments
-        $roleAssignments = az role assignment list --assignee (az account show --query user.name -o tsv) --query "[].roleDefinitionName" -o tsv 2>$null
+        # Get current user details
+        $currentUser = az account show --query user.name -o tsv 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($currentUser)) {
+            Write-ColorOutput "   ⚠️  Unable to get current user information" "Yellow"
+            Write-ColorOutput "   💡 Continuing - deployment will validate permissions" "Cyan"
+            return $true
+        }
+        
+        # Check general Azure permissions
+        $roleAssignments = az role assignment list --assignee $currentUser --query "[].roleDefinitionName" -o tsv 2>$null
         
         if ($LASTEXITCODE -eq 0 -and $roleAssignments) {
             $hasOwner = $roleAssignments -contains "Owner"
             $hasContributor = $roleAssignments -contains "Contributor"
             $hasRoleBasedAccess = $roleAssignments -contains "Role Based Access Control Administrator" -or $roleAssignments -contains "User Access Administrator"
+            $hasCognitiveServicesContrib = $roleAssignments -contains "Cognitive Services Contributor"
+            
+            Write-ColorOutput "   📋 General Azure Permissions:" "Cyan"
             
             if ($hasOwner) {
-                Write-ColorOutput "   ✅ Permissions: Owner role detected - sufficient for deployment" "Green"
-                return $true
+                Write-ColorOutput "      ✅ Owner role detected - sufficient for all operations" "Green"
+                $generalPermsSufficient = $true
             }
             elseif ($hasContributor -and $hasRoleBasedAccess) {
-                Write-ColorOutput "   ✅ Permissions: Contributor + RBAC admin roles detected - sufficient for deployment" "Green"
+                Write-ColorOutput "      ✅ Contributor + RBAC admin roles detected - sufficient for deployment" "Green"
+                $generalPermsSufficient = $true
+            }
+            elseif ($hasCognitiveServicesContrib) {
+                Write-ColorOutput "      ✅ Cognitive Services Contributor role detected" "Green"
+                $generalPermsSufficient = $true
+            }
+            else {
+                Write-ColorOutput "      ⚠️  Limited permissions detected" "Yellow"
+                Write-ColorOutput "      📋 Required: Owner, Contributor+RBAC, or Cognitive Services Contributor" "Cyan"
+                $generalPermsSufficient = $false
+            }
+            
+            # Check AI Foundry specific permissions
+            Write-ColorOutput "   🤖 AI Foundry Permissions:" "Cyan"
+            
+            if ($CreateAiFoundry) {
+                Write-ColorOutput "      Creating new AI Foundry resources..." "Yellow"
+                
+                # For creating new AI Foundry resources, check subscription-level permissions
+                $subscriptionId = az account show --query id -o tsv
+                $subscriptionRoles = az role assignment list --assignee $currentUser --scope "/subscriptions/$subscriptionId" --query "[].roleDefinitionName" -o tsv 2>$null
+                
+                $hasAiAccountOwner = $subscriptionRoles -contains "Azure AI Account Owner"
+                $hasSubscriptionContributor = $subscriptionRoles -contains "Contributor"
+                $hasSubscriptionOwner = $subscriptionRoles -contains "Owner"
+                
+                if ($hasSubscriptionOwner -or $hasAiAccountOwner -or $hasSubscriptionContributor) {
+                    Write-ColorOutput "      ✅ Sufficient permissions for creating AI Foundry resources" "Green"
+                    $aiFoundryPermsSufficient = $true
+                }
+                else {
+                    Write-ColorOutput "      ❌ Insufficient permissions for creating AI Foundry resources" "Red"
+                    Write-ColorOutput "      📋 Required: Owner, Contributor, or Azure AI Account Owner at subscription level" "Cyan"
+                    $aiFoundryPermsSufficient = $false
+                }
+            }
+            else {
+                Write-ColorOutput "      Using existing AI Foundry resources..." "Yellow"
+                
+                # For existing AI Foundry resources, check project-level permissions
+                if (-not [string]::IsNullOrEmpty($AiFoundryResourceGroupName) -and -not [string]::IsNullOrEmpty($AiFoundryResourceName)) {
+                    try {
+                        # Check if we can access the AI Foundry resource
+                        $aiFoundryResource = az resource show --resource-group $AiFoundryResourceGroupName --name $AiFoundryResourceName --resource-type "Microsoft.CognitiveServices/accounts" --query "id" -o tsv 2>$null
+                        
+                        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($aiFoundryResource)) {
+                            Write-ColorOutput "      ✅ AI Foundry resource accessible: $AiFoundryResourceName" "Green"
+                            
+                            # Check specific project permissions if project name is provided
+                            if (-not [string]::IsNullOrEmpty($AiFoundryProjectName)) {
+                                # Note: Azure AI project permissions are typically managed through the AI Foundry portal
+                                # We'll verify access during agent deployment
+                                Write-ColorOutput "      💡 AI Foundry project permissions will be validated during agent deployment" "Cyan"
+                            }
+                            
+                            $aiFoundryPermsSufficient = $true
+                        }
+                        else {
+                            Write-ColorOutput "      ❌ Cannot access AI Foundry resource: $AiFoundryResourceName" "Red"
+                            Write-ColorOutput "      📋 Required: Azure AI User or Azure AI Project Manager role on the project" "Cyan"
+                            $aiFoundryPermsSufficient = $false
+                        }
+                    }
+                    catch {
+                        Write-ColorOutput "      ⚠️  Error checking AI Foundry resource access: $($_.Exception.Message)" "Yellow"
+                        Write-ColorOutput "      💡 Permissions will be validated during deployment" "Cyan"
+                        $aiFoundryPermsSufficient = $true
+                    }
+                }
+                else {
+                    Write-ColorOutput "      ⚠️  AI Foundry resource details not provided for permission check" "Yellow"
+                    $aiFoundryPermsSufficient = $true
+                }
+            }
+            
+            # Check authentication method for Codespaces warning
+            $isCodespaces = $env:CODESPACES -eq "true" -or $env:GITHUB_CODESPACES -eq "true"
+            if ($isCodespaces) {
+                Write-ColorOutput "   🚨 CODESPACES AUTHENTICATION WARNING:" "Yellow"
+                Write-ColorOutput "      GitHub Codespaces detected - agent deployment may fail due to authentication issues" "Red"
+                Write-ColorOutput "      💡 Codespaces uses device code authentication which can have token scope limitations" "Cyan"
+                Write-ColorOutput "      🔧 SOLUTIONS:" "Yellow"
+                Write-ColorOutput "         • Use 'az login --use-device-code' to ensure proper authentication" "Cyan"
+                Write-ColorOutput "         • Consider using local development environment or DevBox for agent operations" "Cyan"
+                Write-ColorOutput "         • Deploy infrastructure from Codespaces, but deploy agent from local environment" "Cyan"
+            }
+            
+            # Overall permission assessment
+            if ($generalPermsSufficient -and $aiFoundryPermsSufficient) {
+                Write-ColorOutput "   ✅ All permission checks passed" "Green"
+                return $true
+            }
+            elseif ($generalPermsSufficient) {
+                Write-ColorOutput "   ⚠️  General Azure permissions sufficient, but AI Foundry permissions may be limited" "Yellow"
+                Write-ColorOutput "   💡 Deployment will continue but may fail during AI Foundry operations" "Cyan"
                 return $true
             }
             else {
-                Write-ColorOutput "   ⚠️  Limited permissions detected. May need Owner or Contributor + User Access Administrator roles" "Yellow"
-                Write-ColorOutput "   📋 Required permissions: Create resource groups, deploy Bicep templates, assign RBAC roles" "Cyan"
-                return $true  # Continue anyway - let deployment validate
+                Write-ColorOutput "   ❌ Insufficient permissions detected" "Red"
+                Write-ColorOutput "   💡 Deployment may fail - contact your Azure administrator" "Cyan"
+                return $false
             }
         }
         else {
@@ -645,8 +846,18 @@ if (-not (Test-ResourceProviders)) {
     $preflightPassed = $false
 }
 
-# Check permissions
-Test-AzurePermissions | Out-Null
+# Check permissions with AI Foundry context
+if ($createAiFoundry) {
+    $permissionResult = Test-AzurePermissions -CreateAiFoundry $true
+}
+else {
+    $permissionResult = Test-AzurePermissions -CreateAiFoundry $false -AiFoundryResourceGroupName $aiFoundryResourceGroupName -AiFoundryResourceName $aiFoundryResourceName -AiFoundryProjectName $aiFoundryProjectName
+}
+
+if (-not $permissionResult) {
+    Write-ColorOutput "❌ Critical permission issues detected" "Red"
+    $preflightPassed = $false
+}
 
 # Check quota only if creating new AI Foundry resources (region-aware)
 if ($createAiFoundry) {
