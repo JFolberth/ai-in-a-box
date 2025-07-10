@@ -979,14 +979,31 @@ try {
         }
     }
     else {
-        Write-ColorOutput "⚠️  Agent deployment failed" "Yellow"
-        Write-ColorOutput "   This may prevent the backend from working properly" "Red"
-        Write-ColorOutput "   Consider checking AI Foundry permissions and endpoint configuration" "Yellow"
+        Write-ColorOutput "❌ CRITICAL: Agent deployment failed!" "Red"
+        Write-ColorOutput "   The backend Function App requires a valid AI agent to function properly." "Red"
+        Write-ColorOutput "   Without an agent, the application will not work." "Yellow"
+        Write-ColorOutput "" "White"
+        Write-ColorOutput "🔧 TROUBLESHOOTING STEPS:" "Yellow"
+        Write-ColorOutput "   1. Check AI Foundry permissions and endpoint configuration" "Cyan"
+        Write-ColorOutput "   2. Verify the AI Foundry endpoint is accessible" "Cyan"
+        Write-ColorOutput "   3. Ensure your account has permissions to create agents" "Cyan"
+        Write-ColorOutput "   4. Check the agent YAML configuration file" "Cyan"
+        Write-ColorOutput "" "White"
+        Write-ColorOutput "Stopping deployment due to agent deployment failure." "Red"
+        exit 1
     }
 }
 catch {
-    Write-ColorOutput "⚠️  Agent deployment error: $($_.Exception.Message)" "Yellow"
-    Write-ColorOutput "   This may prevent the backend from working properly" "Red"
+    Write-ColorOutput "❌ CRITICAL: Agent deployment error: $($_.Exception.Message)" "Red"
+    Write-ColorOutput "   The backend Function App requires a valid AI agent to function properly." "Red"
+    Write-ColorOutput "" "White"
+    Write-ColorOutput "🔧 TROUBLESHOOTING STEPS:" "Yellow"
+    Write-ColorOutput "   1. Check AI Foundry permissions and endpoint configuration" "Cyan"
+    Write-ColorOutput "   2. Verify the AI Foundry endpoint is accessible" "Cyan"
+    Write-ColorOutput "   3. Ensure your account has permissions to create agents" "Cyan"
+    Write-ColorOutput "" "White"
+    Write-ColorOutput "Stopping deployment due to agent deployment error." "Red"
+    exit 1
 }
 
 # Step 5: Deploy Backend
