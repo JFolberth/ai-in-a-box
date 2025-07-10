@@ -144,6 +144,89 @@ If using VS Code, you can use the included tasks:
 
 This will start both frontend and backend simultaneously.
 
+## 🖥️ Development Environment Options
+
+### Local Development (Recommended)
+
+**Best for**: Full development experience with complete AI Foundry integration
+
+**Pros:**
+- ✅ **Complete AI Foundry support** - All agent operations work properly
+- ✅ **Native Azure authentication** - Browser-based authentication with full token scopes
+- ✅ **Performance** - No latency from cloud environments
+- ✅ **Offline capability** - Work without internet connection for local development
+
+**Cons:**
+- ❌ **Setup time** - Requires installing all tools locally
+- ❌ **Environment consistency** - May vary between team members
+
+### GitHub Codespaces (Limited)
+
+**Best for**: Quick code editing, infrastructure deployment, and frontend development
+
+**⚠️ IMPORTANT LIMITATION**: GitHub Codespaces cannot deploy AI Foundry agents due to authentication restrictions.
+
+**What Works in Codespaces:**
+- ✅ **Infrastructure deployment** - Bicep templates and Azure resource creation
+- ✅ **Frontend development** - React/Vite development with hot reload
+- ✅ **Backend development** - Function App development (without AI agent calls)
+- ✅ **Code editing** - Full VS Code experience with extensions
+- ✅ **Source control** - Git operations and pull requests
+
+**What Doesn't Work in Codespaces:**
+- ❌ **AI agent deployment** - Authentication issues with device code authentication
+- ❌ **AI Foundry API calls** - Limited token scopes and authentication method compatibility
+- ❌ **Complete integration testing** - Cannot test full AI conversation flow
+
+**Recommended Codespaces Workflow:**
+1. **Infrastructure**: Deploy Azure resources from Codespaces
+2. **Development**: Code editing and frontend development in Codespaces
+3. **Agent Operations**: Switch to local environment for AI agent deployment
+4. **Testing**: Final integration testing in local environment
+
+```bash
+# Example: Hybrid workflow
+# In Codespaces: Deploy infrastructure
+.\deploy-scripts\deploy.ps1 -Location "eastus2" -EnvironmentName "dev"
+
+# Locally: Deploy agent (requires proper authentication)
+.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint"
+```
+
+### Azure DevBox (Cloud Development)
+
+**Best for**: Cloud-based development with full AI Foundry support
+
+**Pros:**
+- ✅ **Full AI Foundry support** - Native Azure authentication in cloud environment
+- ✅ **Pre-configured** - All tools and extensions ready to use
+- ✅ **Enterprise security** - Managed by your organization
+- ✅ **Team consistency** - Same environment for all developers
+
+**Cons:**
+- ❌ **Cost** - Requires Azure DevBox subscription
+- ❌ **Setup complexity** - Requires organizational DevBox setup
+
+**Setup Azure DevBox:**
+1. Use the provided `devbox/imageDefinition.yaml` configuration
+2. Follow the DevBox setup guide in `devbox/README.md`
+3. All required tools are pre-installed and configured
+
+### VS Code DevContainers (Alternative)
+
+**Best for**: Containerized development with consistent environment
+
+**Pros:**
+- ✅ **Consistent environment** - Same setup across team and CI/CD
+- ✅ **Isolation** - Development environment isolated from host system
+- ✅ **Version control** - Development environment configuration in Git
+
+**Cons:**
+- ❌ **AI Foundry limitations** - Similar authentication issues as Codespaces
+- ❌ **Performance** - Container overhead affects development speed
+
+---
+
 ## 🔧 Development Workflow
 
 ### Making Changes

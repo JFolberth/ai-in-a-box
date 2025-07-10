@@ -370,172 +370,86 @@ az monitor app-insights query \
 
 ## 🔐 Authentication and Permissions
 
-### Issue: "Access Denied" Errors
+### Issue: Agent Deployment Fails in GitHub Codespaces
 
 **Symptoms:**
-- Permission denied when accessing resources
-- Role assignment failures
-- Cannot create or modify resources
+- Agent deployment succeeds locally but fails in GitHub Codespaces
+- Authentication errors when calling AI Foundry APIs
+- "Insufficient permissions" or "Access denied" errors during agent operations
+- Token scope or authentication method errors
+
+**Root Cause:**
+GitHub Codespaces uses **device code authentication** by default, which has different token scopes and authentication flows compared to browser-based authentication used in local development. This can cause issues with AI Foundry API calls that require specific token scopes.
+
+**🚨 CRITICAL: Codespaces Limitation**
+Agent deployment from GitHub Codespaces is **not recommended** and may fail due to authentication limitations. This is a known limitation of the Codespaces authentication model.
 
 **Solutions:**
 
-**1. Check Your Azure Permissions**
+**1. Use Local Development Environment (Recommended)**
 ```bash
-# List your role assignments
-az role assignment list --assignee $(az ad signed-in-user show --query id -o tsv) --all --query "[].{Role:roleDefinitionName, Scope:scope}"
+# Clone repository locally
+git clone https://github.com/your-org/ai-in-a-box.git
+cd ai-in-a-box
 
-# Required roles:
-# - Contributor or Owner (for resource management)
-# - User Access Administrator (for role assignments)
+# Run deployment from local environment
+.\deploy-scripts\deploy-quickstart.ps1
 ```
 
-**2. Check Subscription Context**
+**2. Use Azure DevBox (Alternative)**
+Azure DevBox provides a cloud-based development environment with proper Azure authentication:
 ```bash
-# Verify correct subscription
-az account show --query "{subscriptionId: id, name: name, state: state}"
-
-# Switch if needed
-az account set --subscription "Your Subscription Name"
+# Set up DevBox from the devbox/ directory
+# DevBox has proper Azure authentication configured
+.\deploy-scripts\deploy-quickstart.ps1
 ```
 
-### Issue: Managed Identity Role Assignment Fails
+**3. Hybrid Approach (Codespaces + Local)**
+Deploy infrastructure from Codespaces, but deploy agent locally:
+```bash
+# In Codespaces: Deploy infrastructure only
+.\deploy-scripts\deploy.ps1  # Infrastructure deployment
+
+# Locally: Deploy agent with proper authentication
+.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint"
+```
+
+**4. Force Browser Authentication in Codespaces (Advanced)**
+If you must use Codespaces, try forcing browser authentication:
+```bash
+# Clear existing authentication
+az logout
+
+# Login with browser authentication (may not work in all Codespaces configurations)
+az login --use-device-code
+
+# Verify authentication method
+az account show --query user
+```
+
+**Why This Happens:**
+- **Device Code Auth**: Codespaces uses device code authentication which has limited token scopes
+- **Token Scope Differences**: Different authentication methods provide different levels of access to Azure services
+- **Conditional Access**: Some organizations have conditional access policies that restrict device code authentication
+- **API Compatibility**: AI Foundry APIs may require specific authentication flows not available in device code authentication
+
+**Best Practices:**
+- ✅ **Use local development** for agent deployment and testing
+- ✅ **Use Azure DevBox** for cloud-based development with proper authentication
+- ✅ **Use Codespaces** for infrastructure deployment and code editing
+- ❌ **Avoid agent deployment from Codespaces** due to authentication limitations
+
+---
+
+### Issue: Insufficient Permissions for AI Foundry Resources
 
 **Symptoms:**
-- Cannot assign Azure AI Developer role
-- Permission errors during deployment
-- Role assignment commands fail
+- Permission denied errors during AI Foundry operations
+- Cannot create or access AI agents
+- RBAC assignment failures for AI Foundry resources
+- "User does not have permission" errors
 
-**Solutions:**
+**Root Cause:**
+Missing or insufficient Azure RBAC permissions for AI Foundry operations.
 
-**1. Manual Role Assignment**
-```bash
-# Get resource IDs
-AI_FOUNDRY_RESOURCE_ID="/subscriptions/$(az account show --query id -o tsv)/resourceGroups/YOUR_AI_FOUNDRY_RG/providers/Microsoft.CognitiveServices/accounts/YOUR_AI_FOUNDRY_NAME"
-PRINCIPAL_ID=$(az functionapp identity show --name "$FUNCTION_APP_NAME" --resource-group "$FUNCTION_RG" --query principalId -o tsv)
-
-# Assign role manually
-az role assignment create \
-  --assignee "$PRINCIPAL_ID" \
-  --role "Azure AI Developer" \
-  --scope "$AI_FOUNDRY_RESOURCE_ID"
-```
-
-**2. Check Role Definition**
-```bash
-# Verify Azure AI Developer role exists
-az role definition list --name "Azure AI Developer" --query "[0].{Name:roleName, Id:id}"
-```
-
----
-
-## ⚡ Performance Issues
-
-### Issue: Slow Response Times
-
-**Symptoms:**
-- API calls take more than 10 seconds
-- Frontend feels sluggish
-- Timeouts in production
-
-**Analysis:**
-
-**1. Check Function App Performance**
-```bash
-# Monitor metrics
-az monitor metrics list \
-  --resource "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$FUNCTION_RG/providers/Microsoft.Web/sites/$FUNCTION_APP_NAME" \
-  --metric "AverageResponseTime" \
-  --interval PT1M
-```
-
-**2. AI Foundry Response Times**
-```bash
-# Check Application Insights for AI calls
-az monitor app-insights query \
-  --app "$APP_INSIGHTS_NAME" \
-  --analytics-query "dependencies | where name contains 'AI_Foundry' | summarize avg(duration) by bin(timestamp, 5m)"
-```
-
-**Solutions:**
-
-**1. Optimize Function App**
-- Consider Premium hosting plan
-- Increase memory allocation
-- Enable Application Insights profiling
-
-**2. Frontend Optimization**
-- Implement request caching
-- Add loading indicators
-- Use request debouncing
-
----
-
-## 🛠️ Diagnostic Commands
-
-### Complete Health Check Script
-
-```bash
-#!/bin/bash
-# Complete diagnostic script
-
-echo "=== AI Foundry SPA Diagnostics ==="
-
-# Get resource names
-FUNCTION_APP_NAME=$(az functionapp list --query "[?contains(name, 'ai-foundry-spa-backend')].name" -o tsv | head -1)
-FUNCTION_RG=$(az functionapp list --query "[?contains(name, 'ai-foundry-spa-backend')].resourceGroup" -o tsv | head -1)
-STATIC_APP_NAME=$(az staticwebapp list --query "[?contains(name, 'ai-foundry-spa-frontend')].name" -o tsv | head -1)
-STATIC_RG=$(az staticwebapp list --query "[?contains(name, 'ai-foundry-spa-frontend')].resourceGroup" -o tsv | head -1)
-
-echo "Function App: $FUNCTION_APP_NAME (RG: $FUNCTION_RG)"
-echo "Static App: $STATIC_APP_NAME (RG: $STATIC_RG)"
-
-# Test backend health
-echo "=== Backend Health ==="
-BACKEND_URL=$(az functionapp show --name "$FUNCTION_APP_NAME" --resource-group "$FUNCTION_RG" --query "defaultHostName" -o tsv)
-curl -s "https://$BACKEND_URL/api/health" | jq .
-
-# Test frontend
-echo "=== Frontend Status ==="
-FRONTEND_URL=$(az staticwebapp show --name "$STATIC_APP_NAME" --resource-group "$STATIC_RG" --query "defaultHostname" -o tsv)
-curl -s -o /dev/null -w "%{http_code}" "https://$FRONTEND_URL"
-echo " - Frontend HTTP Status"
-
-# Check managed identity
-echo "=== Managed Identity ==="
-PRINCIPAL_ID=$(az functionapp identity show --name "$FUNCTION_APP_NAME" --resource-group "$FUNCTION_RG" --query principalId -o tsv)
-echo "Principal ID: $PRINCIPAL_ID"
-
-# Check role assignments
-echo "=== Role Assignments ==="
-az role assignment list --assignee "$PRINCIPAL_ID" --query "[].{Role:roleDefinitionName, Scope:scope}" -o table
-
-echo "=== Diagnostics Complete ==="
-```
-
-## 📞 When to Seek Help
-
-### Create a GitHub Issue When:
-- You've tried the solutions above
-- Error persists after following troubleshooting steps
-- You found a potential bug in the codebase
-- Documentation needs clarification
-
-### Include in Your Issue:
-- **Error messages** (full text)
-- **Steps to reproduce** the problem
-- **Your environment** (Azure region, resource names)
-- **Diagnostic output** from commands above
-- **What you've already tried**
-
----
-
-## 🔗 Related Documentation
-
-- **[Configuration Guide](../configuration/environment-variables.md)** - Fix configuration issues
-- **[Deployment Guide](../deployment/deployment-guide.md)** - Deployment troubleshooting
-- **[Local Development](../development/local-development.md)** - Development environment issues
-- **[GitHub Issues](https://github.com/JFolberth/ai-in-a-box/issues)** - Report new problems
-
----
-
-**Still having issues?** Create a detailed [GitHub Issue](https://github.com/JFolberth/ai-in-a-box/issues/new) with the diagnostic information above.
+**Required Permissions:**

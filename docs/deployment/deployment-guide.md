@@ -590,3 +590,55 @@ echo "🎉 All deployment tests passed!"
 ---
 
 **Ready for your first deployment?** → Return to [Quick Start](../getting-started/03-quick-start.md) for a simplified 15-minute deployment.
+
+## 🖥️ Development Environment Considerations
+
+### GitHub Codespaces Limitations
+
+**⚠️ IMPORTANT**: GitHub Codespaces has authentication limitations that affect AI Foundry agent deployment:
+
+**What Works in Codespaces:**
+- ✅ Infrastructure deployment (Bicep templates)
+- ✅ Frontend development and testing
+- ✅ Backend Function App development
+- ✅ Code editing and source control
+- ✅ Azure CLI commands for resource management
+
+**What Doesn't Work in Codespaces:**
+- ❌ **AI Foundry agent deployment** - Authentication issues with device code authentication
+- ❌ **AI agent creation/updates** - Limited token scopes
+- ❌ **AI Foundry API calls** - Authentication method compatibility issues
+
+**Recommended Approach:**
+1. **Use Codespaces for**: Infrastructure deployment, code development, testing
+2. **Use Local Environment for**: Agent deployment, AI Foundry operations
+3. **Use Azure DevBox for**: Full cloud-based development with proper authentication
+
+**Example Hybrid Workflow:**
+```bash
+# In GitHub Codespaces: Deploy infrastructure
+.\deploy-scripts\deploy.ps1 -Location "eastus2" -EnvironmentName "dev"
+
+# Locally: Deploy agent with proper authentication  
+.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint"
+
+# In Codespaces: Continue with frontend/backend development
+npm run dev  # Frontend development
+func start   # Backend development
+```
+
+### Azure DevBox (Recommended for Cloud Development)
+
+Azure DevBox provides a cloud-based development environment with proper Azure authentication:
+
+- ✅ **Full AI Foundry support** - Native Azure authentication
+- ✅ **Pre-configured tools** - All required tools pre-installed
+- ✅ **Consistent environment** - Same setup across team members
+- ✅ **Enterprise security** - Managed by your organization
+
+**Setup Azure DevBox:**
+1. Use the provided `devbox/imageDefinition.yaml` configuration
+2. Follow the DevBox setup guide in the `devbox/README.md`
+3. All tools and extensions are pre-configured for AI Foundry SPA development
+
+---

@@ -1,6 +1,16 @@
 $schema: "1.0"
 name: "ai-foundry-spa-devbox"
 image: microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2
+
+# Enable DevDrive for improved development performance
+# DevDrive provides faster file I/O, better caching, and reduced antivirus scanning overhead
+# for development workloads on Windows 11
+devDrive:
+  - driveLetter: "Z"
+    sizeInGB: 100
+    label: "DevDrive"
+    fileSystem: "NTFS"
+
 tasks:
   - name: winget
     description: Install Node.js LTS for frontend development
@@ -108,18 +118,28 @@ userTasks:
             Write-Host "   It may be installed but not in PATH, or you may need to install it" -ForegroundColor Gray
         }
         
-        # Create user workspace directories
-        $workspaceDir = "$env:USERPROFILE\Workspaces"
-        $azuriteDir = "$env:USERPROFILE\.azurite"
+        # Create user workspace directories on DevDrive (Z:) for optimal performance
+        $workspaceDir = "Z:\Workspaces"
+        $azuriteDir = "Z:\Azurite"
+        $npmCacheDir = "Z:\npm-cache"
+        $nugetCacheDir = "Z:\nuget-cache"
         
+        # Create directories on DevDrive Z:
         New-Item -ItemType Directory -Force -Path $workspaceDir
         New-Item -ItemType Directory -Force -Path $azuriteDir
+        New-Item -ItemType Directory -Force -Path $npmCacheDir
+        New-Item -ItemType Directory -Force -Path $nugetCacheDir
         
-        # Set up user-specific environment variables
+        # Set up user-specific environment variables to use DevDrive
         [Environment]::SetEnvironmentVariable("AZURE_STORAGE_EMULATOR_LOCATION", $azuriteDir, "User")
+        [Environment]::SetEnvironmentVariable("WORKSPACES_DIR", $workspaceDir, "User")
         
-        # Configure npm registry for user
+        # Configure npm to use DevDrive cache for better performance
+        npm config set cache $npmCacheDir
         npm config set registry https://registry.npmjs.org/
+        
+        # Configure NuGet to use DevDrive cache
+        [Environment]::SetEnvironmentVariable("NUGET_PACKAGES", $nugetCacheDir, "User")
         
         # Configure Python for user development
         python -m pip install --user --upgrade pip
