@@ -110,8 +110,9 @@ userTasks:
         # Install npm global packages for the current user
         npm install -g azurite@latest
         
-        # Note: @azure/static-web-apps-cli and azure-functions-core-tools are installed on-demand by deployment scripts
-        # This avoids duplication and ensures tools are available when needed
+
+        $workspaceDir = Join-Path $env:USERPROFILE "Workspaces"
+        $azuriteDir = Join-Path $env:USERPROFILE ".azurite"
         
         # Verify Azure Functions Core Tools is available
         if (Get-Command func -ErrorAction SilentlyContinue) {
@@ -150,7 +151,7 @@ userTasks:
         python -m pip install --user virtualenv
         
         # Verify Docker Desktop installation and setup
-        $dockerPath = "${env:ProgramFiles}\Docker\Docker\Docker Desktop.exe"
+        $dockerPath = Join-Path ${env:ProgramFiles} "Docker\Docker\Docker Desktop.exe"
         if (Test-Path $dockerPath) {
             Write-Host "✅ Docker Desktop installed successfully!" -ForegroundColor Green
             Write-Host "📋 Docker will be available after DevBox restart and Docker Desktop startup" -ForegroundColor Yellow
