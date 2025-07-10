@@ -21,10 +21,14 @@ param targetResourceId string
 @description('Description of the role assignment purpose')
 param roleDescription string = ''
 
+@description('Unique suffix to append to GUID generation for role assignment naming (optional)')
+param uniqueSuffix string = ''
+
 // =========== VARIABLES ===========
 
 // Generate a deterministic GUID for the role assignment name to avoid conflicts
-var roleAssignmentName = guid(targetResourceId, principalId, roleDefinitionId)
+// Include uniqueSuffix to ensure uniqueness when multiple assignments might conflict
+var roleAssignmentName = guid(targetResourceId, principalId, roleDefinitionId, uniqueSuffix)
 
 // =========== RESOURCES ===========
 

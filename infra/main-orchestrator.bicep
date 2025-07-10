@@ -355,7 +355,7 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
     logAnalyticsWorkspaceName: effectiveLogAnalyticsWorkspaceName
     logAnalyticsResourceGroupName: effectiveLogAnalyticsResourceGroupName
     aiFoundryInstanceName: effectiveCognitiveServicesAccount
-    aiFoundryResourceGroupName: aiFoundryResourceGroupName
+    aiFoundryResourceGroupName: effectiveAiFoundryResourceGroupName
     aiFoundryEndpoint: effectiveAiFoundryEndpoint
     aiFoundryAgentId: aiFoundryAgentId
     aiFoundryAgentName: aiFoundryAgentName
@@ -363,39 +363,6 @@ module backendInfrastructure 'environments/backend/main.bicep' = {
     tags: union(tags, {
       Component: 'Backend'
     })
-  }
-}
-
-// =========== RBAC ASSIGNMENT ===========
-
-// Deploy RBAC assignments for Function App to access AI Foundry (always runs regardless of new/existing)
-// Azure AI User role - Required for reading and calling AI Foundry agents at the project level
-module aiFoundryUserRbac 'modules/rbac-assignment.bicep' = {
-  name: 'aifoundry-user-rbac-assignment-${regionReference[location]}'
-  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
-  params: {
-    principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
-    roleDefinitionId: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User role
-    principalType: 'ServicePrincipal'
-    targetResourceId: createAiFoundryResourceGroup
-      ? aiFoundryInfrastructure.?outputs.cognitiveServicesId ?? ''
-      : existingCognitiveServices.?id ?? ''
-    roleDescription: 'Grants Function App access to read and call AI Foundry agents'
-  }
-}
-
-// Cognitive Services OpenAI User role - Required for creating threads, sending messages, and reading responses
-module aiFoundryOpenAIRbac 'modules/rbac-assignment.bicep' = {
-  name: 'aifoundry-openai-rbac-assignment-${regionReference[location]}'
-  scope: resourceGroup(effectiveAiFoundryResourceGroupName)
-  params: {
-    principalId: backendInfrastructure.outputs.functionAppSystemAssignedIdentityPrincipalId
-    roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908' // Cognitive Services OpenAI User role
-    principalType: 'ServicePrincipal'
-    targetResourceId: createAiFoundryResourceGroup
-      ? aiFoundryInfrastructure.?outputs.cognitiveServicesId ?? ''
-      : existingCognitiveServices.?id ?? ''
-    roleDescription: 'Grants Function App access to AI Foundry chat completion service'
   }
 }
 
