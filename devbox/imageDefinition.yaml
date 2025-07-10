@@ -13,9 +13,13 @@ devDrive:
 
 tasks:
   - name: winget
-    description: Install Node.js LTS for frontend development
+    description: Install Windows Package Manager Client (winget) updates
     parameters:
-      package: OpenJS.NodeJS.LTS
+      package: Microsoft.AppInstaller
+  - name: winget
+    description: Install Node.js 20 LTS for frontend development (compatible with SWA CLI)
+    parameters:
+      package: OpenJS.NodeJS
   - name: winget
     description: Install Visual Studio Code for development
     parameters:
