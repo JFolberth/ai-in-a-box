@@ -321,7 +321,7 @@ For greenfield deployments or when infrastructure changes are needed:
 
 ```powershell
 # Deploy everything (infrastructure + code)
-./deploy-scripts/deploy.ps1
+./deploy-scripts/deploy-quickstart.ps1
 ```
 
 ### 🔍 Finding Resource Names for ADE Environments
@@ -354,7 +354,7 @@ az resource list --resource-type "Microsoft.Web/staticSites" --query "[].{name:n
 | **Local Backend Development** | `func start` or VS Code tasks | Function testing | Azurite (local storage) |
 | **Frontend Code Deployment** | `deploy-frontend-spa-code.ps1` | Deploy SPA to existing Azure Static Web App | ✅ Static Web App must exist |
 | **Backend Code Deployment** | `deploy-backend-func-code.ps1` | Deploy Function App to existing Azure infrastructure | ✅ Function App must exist |
-| **Complete Deployment** | `deploy.ps1` | Infrastructure + code (legacy/greenfield) | Creates infrastructure |
+| **Complete Deployment** | `deploy-quickstart.ps1` | Infrastructure + code (automated deployment) | Creates infrastructure |
 | **Infrastructure Only** | Azure CLI + Bicep or ADE | Resource provisioning | Creates all resources |
 
 ### ⚠️ Important Deployment Notes

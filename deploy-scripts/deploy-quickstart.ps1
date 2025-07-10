@@ -175,6 +175,13 @@ if (-not (Test-Path $workspaceRoot)) {
 Write-ColorOutput "Workspace root: $workspaceRoot" "Cyan"
 Set-Location $workspaceRoot
 
+# Early Azure CLI check (even if validation is skipped)
+if (-not (Test-Command "az")) {
+    Write-ColorOutput "❌ Azure CLI is required but not found." "Red"
+    Write-ColorOutput "   Please install Azure CLI first: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli" "Cyan"
+    exit 1
+}
+
 # Step 1: Validate Prerequisites
 if (-not $SkipValidation) {
     Write-ColorOutput "`n📋 Step 1: Validating Prerequisites..." "Green"
@@ -188,20 +195,61 @@ if (-not $SkipValidation) {
     }
     
     # Check Azure login
+    Write-ColorOutput "Checking Azure authentication..." "Yellow"
     try {
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
-            Write-ColorOutput "❌ Not logged into Azure. Please run 'az login' first." "Red"
-            exit 1
+            Write-ColorOutput "❌ Not logged into Azure." "Red"
+            Write-ColorOutput "" # Empty line for readability
+            
+            if ($InteractiveMode) {
+                $loginChoice = Get-UserInput "Would you like to login to Azure now? (y/n)" "y"
+                if ($loginChoice -eq "y" -or $loginChoice -eq "yes" -or $loginChoice -eq "Y") {
+                    Write-ColorOutput "🔐 Opening Azure login..." "Yellow"
+                    az login
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-ColorOutput "❌ Azure login failed. Please try again manually with 'az login'." "Red"
+                        exit 1
+                    }
+                    Write-ColorOutput "✅ Successfully logged into Azure" "Green"
+                } else {
+                    Write-ColorOutput "❌ Azure login is required. Please run 'az login' first." "Red"
+                    exit 1
+                }
+            } else {
+                Write-ColorOutput "❌ Not logged into Azure. Please run 'az login' first." "Red"
+                exit 1
+            }
+        } else {
+            Write-ColorOutput "✅ Azure CLI authenticated" "Green"
         }
-        Write-ColorOutput "✅ Azure CLI authenticated" "Green"
         
         $currentSubscription = az account show --query "name" -o tsv
+        $currentSubscriptionId = az account show --query "id" -o tsv
         Write-ColorOutput "   Current subscription: $currentSubscription" "Cyan"
+        Write-ColorOutput "   Subscription ID: $currentSubscriptionId" "Cyan"
     }
     catch {
-        Write-ColorOutput "❌ Azure authentication check failed. Please run 'az login' first." "Red"
-        exit 1
+        Write-ColorOutput "❌ Azure authentication check failed." "Red"
+        Write-ColorOutput "   Error: $($_.Exception.Message)" "Red"
+        if ($InteractiveMode) {
+            $loginChoice = Get-UserInput "Would you like to try logging in to Azure? (y/n)" "y"
+            if ($loginChoice -eq "y" -or $loginChoice -eq "yes" -or $loginChoice -eq "Y") {
+                Write-ColorOutput "🔐 Opening Azure login..." "Yellow"
+                az login
+                if ($LASTEXITCODE -ne 0) {
+                    Write-ColorOutput "❌ Azure login failed. Please try again manually with 'az login'." "Red"
+                    exit 1
+                }
+                Write-ColorOutput "✅ Successfully logged into Azure" "Green"
+            } else {
+                Write-ColorOutput "❌ Azure login is required. Please run 'az login' first." "Red"
+                exit 1
+            }
+        } else {
+            Write-ColorOutput "❌ Please run 'az login' first." "Red"
+            exit 1
+        }
     }
     
     # Check .NET SDK
@@ -327,6 +375,41 @@ if (-not $SkipValidation) {
 }
 else {
     Write-ColorOutput "⚠️  Skipping prerequisite validation (as requested)" "Yellow"
+    
+    # Even when skipping validation, we must check Azure login as it's required for deployment
+    Write-ColorOutput "Checking Azure authentication (required)..." "Yellow"
+    try {
+        $null = az account show 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-ColorOutput "❌ Not logged into Azure. Azure login is required for deployment." "Red"
+            if ($InteractiveMode) {
+                $loginChoice = Get-UserInput "Would you like to login to Azure now? (y/n)" "y"
+                if ($loginChoice -eq "y" -or $loginChoice -eq "yes" -or $loginChoice -eq "Y") {
+                    Write-ColorOutput "🔐 Opening Azure login..." "Yellow"
+                    az login
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-ColorOutput "❌ Azure login failed. Please try again manually with 'az login'." "Red"
+                        exit 1
+                    }
+                    Write-ColorOutput "✅ Successfully logged into Azure" "Green"
+                } else {
+                    Write-ColorOutput "❌ Azure login is required. Please run 'az login' first." "Red"
+                    exit 1
+                }
+            } else {
+                Write-ColorOutput "❌ Azure login is required. Please run 'az login' first." "Red"
+                exit 1
+            }
+        } else {
+            Write-ColorOutput "✅ Azure CLI authenticated" "Green"
+            $currentSubscription = az account show --query "name" -o tsv
+            Write-ColorOutput "   Current subscription: $currentSubscription" "Cyan"
+        }
+    }
+    catch {
+        Write-ColorOutput "❌ Azure authentication check failed. Please run 'az login' first." "Red"
+        exit 1
+    }
 }
 
 # Remove preflight checks from here - they will be moved after configuration setup

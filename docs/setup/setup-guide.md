@@ -138,7 +138,7 @@ npm run build:dev
 az login
 
 # Run deployment script
-./deploy-scripts/deploy.ps1
+./deploy-scripts/deploy-quickstart.ps1
 ```
 
 ### Method 3: Azure Deployment Environments (ADE)

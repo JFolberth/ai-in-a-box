@@ -62,7 +62,7 @@ npm run build:dev
 
 ### Using PowerShell Script
 ```powershell
-../deploy-scripts/deploy.ps1  # Uses default parameters from bicepparam file
+../deploy-scripts/deploy-quickstart.ps1  # Automated deployment with validation and configuration options
 ```
 
 ## Key Changes from Previous Architecture

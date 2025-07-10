@@ -212,10 +212,20 @@ if (-not $deploymentSuccess) {
         
         # Check if SWA CLI is already installed
         Write-Host "🔍 Checking for SWA CLI..." -ForegroundColor Cyan
-        $swaVersion = swa --version 2>$null
-        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
-            Write-Host "✅ SWA CLI already installed (version: $swaVersion)" -ForegroundColor Green
-        } else {
+        
+        $swaInstalled = $false
+        try {
+            $swaVersion = swa --version 2>$null
+            if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
+                Write-Host "✅ SWA CLI already installed (version: $swaVersion)" -ForegroundColor Green
+                $swaInstalled = $true
+            }
+        }
+        catch {
+            # SWA CLI not found, will install below
+        }
+        
+        if (-not $swaInstalled) {
             # Install SWA CLI if not found
             Write-Host "📦 Installing SWA CLI..." -ForegroundColor Cyan
             npm install -g @azure/static-web-apps-cli
@@ -226,10 +236,16 @@ if (-not $deploymentSuccess) {
             }
             
             # Verify SWA CLI is accessible after installation
-            $swaVersion = swa --version 2>$null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "✅ SWA CLI installed successfully (version: $swaVersion)" -ForegroundColor Green
-            } else {
+            try {
+                $swaVersion = swa --version 2>$null
+                if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
+                    Write-Host "✅ SWA CLI installed successfully (version: $swaVersion)" -ForegroundColor Green
+                } else {
+                    Write-Error "❌ SWA CLI installed but not accessible!"
+                    exit 1
+                }
+            }
+            catch {
                 Write-Error "❌ SWA CLI installed but not accessible!"
                 exit 1
             }
