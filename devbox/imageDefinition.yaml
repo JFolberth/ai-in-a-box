@@ -96,6 +96,18 @@ userTasks:
         # Install npm global packages for the current user
         npm install -g azurite@latest
         
+        # Note: @azure/static-web-apps-cli and azure-functions-core-tools are installed on-demand by deployment scripts
+        # This avoids duplication and ensures tools are available when needed
+        
+        # Verify Azure Functions Core Tools is available
+        if (Get-Command func -ErrorAction SilentlyContinue) {
+            $funcVersion = func --version
+            Write-Host "✅ Azure Functions Core Tools found: $funcVersion" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Azure Functions Core Tools not found via PATH" -ForegroundColor Yellow
+            Write-Host "   It may be installed but not in PATH, or you may need to install it" -ForegroundColor Gray
+        }
+        
         # Create user workspace directories
         $workspaceDir = "$env:USERPROFILE\Workspaces"
         $azuriteDir = "$env:USERPROFILE\.azurite"
