@@ -97,8 +97,8 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   scope: resourceGroup(logAnalyticsResourceGroupName)
 }
 
-// Reference to existing AI Foundry hub/project instance
-resource aiFoundryInstance 'Microsoft.MachineLearningServices/workspaces@2024-04-01' existing = {
+// Reference to existing AI Foundry Cognitive Services instance
+resource aiFoundryInstance 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
   name: aiFoundryInstanceName
   scope: resourceGroup(aiFoundryResourceGroupName)
 }
@@ -321,41 +321,33 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
   }
 }
 
-// Cognitive Services OpenAI User role for Function App managed identity to access AI Foundry
-// Required for creating threads, sending messages, and reading responses from AI Foundry agents
-// This role provides the necessary permissions for AI Foundry API access with least privilege
-// Using a separate module deployment to handle cross-resource group RBAC assignment
-// NOTE: The deploying identity must have User Access Administrator or Owner role on the AI Foundry resource group
-module functionAppAiFoundryRoleAssignment 'rbac.bicep' = {
-  name: 'functionApp-aiFoundry-rbac-${regionReference[location]}-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+// Azure AI User role assignment for Function App to access AI Foundry
+// Required for reading and calling AI Foundry agents at the project level
+module aiFoundryUserRbac 'rbac.bicep' = {
+  name: 'backend-aifoundry-user-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      'a97b65f3-24c7-4388-baec-2e87135dc908'
-    ) // Cognitive Services OpenAI User
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
     targetResourceId: aiFoundryInstance.id
     principalType: 'ServicePrincipal'
   }
 }
 
-// Azure AI User role for Function App managed identity to access AI Foundry Project
-// Required for reading and calling the AI Foundry agent, accessing project-level resources
-// This complements the Cognitive Services OpenAI User role for complete agent access
-module functionAppAiFoundryProjectRoleAssignment 'rbac.bicep' = {
-  name: 'functionApp-aiproject-rbac-${regionReference[location]}-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
+// Cognitive Services OpenAI User role assignment for Function App to access AI Foundry
+// Required for creating threads, sending messages, and reading responses
+module aiFoundryOpenAIRbac 'rbac.bicep' = {
+  name: 'backend-aifoundry-openai-rbac-${uniqueString(resourceGroup().id)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      '53ca6127-db72-4b80-b1b0-d745d6d5456d'
-    ) // Azure AI User
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')
     targetResourceId: aiFoundryInstance.id
     principalType: 'ServicePrincipal'
   }
 }
+
+// NOTE: AI Foundry RBAC assignments are now handled locally in the backend environment
 
 // =========== OUTPUTS ===========
 
