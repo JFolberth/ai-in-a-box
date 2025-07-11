@@ -2,22 +2,13 @@ $schema: "1.0"
 name: "ai-foundry-spa-devbox"
 image: microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2
 
-# Enable DevDrive for improved development performance
-# DevDrive provides faster file I/O, better caching, and reduced antivirus scanning overhead
-# for development workloads on Windows 11
-devDrive:
-  - driveLetter: "Z"
-    sizeInGB: 100
-    label: "DevDrive"
-    fileSystem: "NTFS"
-
 tasks:
-  # Clone AI in a Box repository to DevDrive for optimal performance
+  # Clone AI in a Box repository for development
   - name: git-clone
-    description: Clone the AI in a Box repository to DevDrive
+    description: Clone the AI in a Box repository for development
     parameters:
       repositoryUrl: https://github.com/JFolberth/ai-in-a-box
-      directory: Z:\Workspaces
+      directory: C:\Workspaces
       
   # Core Development Tools
   - name: winget
@@ -107,14 +98,14 @@ userTasks:
         Write-Host "VS Code extensions installed successfully!" -ForegroundColor Green
   
   - name: powershell
-    description: Configure user-specific development environment with DevDrive optimization
+    description: Configure user-specific development environment
     parameters:
       command: >
         npm install -g azurite@latest;
-        $workspaceDir = "Z:\Workspaces";
-        $azuriteDir = "Z:\Azurite";
-        $npmCacheDir = "Z:\npm-cache";
-        $nugetCacheDir = "Z:\nuget-cache";
+        $workspaceDir = "C:\Workspaces";
+        $azuriteDir = "C:\Azurite";
+        $npmCacheDir = "C:\npm-cache";
+        $nugetCacheDir = "C:\nuget-cache";
         New-Item -ItemType Directory -Force -Path $workspaceDir;
         New-Item -ItemType Directory -Force -Path $azuriteDir;
         New-Item -ItemType Directory -Force -Path $npmCacheDir;
