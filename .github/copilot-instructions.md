@@ -43,6 +43,79 @@ dotnet build "src/backend/AIFoundryProxy.csproj"
 
 ---
 
+## 🚨 CRITICAL REQUIREMENT - CROSS-PLATFORM POWERSHELL COMPATIBILITY 🚨
+
+**🔴 ALL POWERSHELL SCRIPTS MUST WORK ON BOTH WINDOWS AND LINUX/MACOS 🔴**
+
+### MANDATORY CROSS-PLATFORM PATTERNS:
+
+#### 1. PATH Environment Variable Handling
+```powershell
+# ❌ WRONG - Windows-only PATH manipulation:
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+
+# ✅ CORRECT - Cross-platform PATH handling:
+if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+    # Windows: Merge Machine and User PATH variables
+    $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+    $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    $pathSeparator = [System.IO.Path]::PathSeparator
+    if ($machinePath -and $userPath) {
+        $env:PATH = $machinePath + $pathSeparator + $userPath
+    } elseif ($machinePath) {
+        $env:PATH = $machinePath
+    } elseif ($userPath) {
+        $env:PATH = $userPath
+    }
+}
+# On Linux/macOS, $env:PATH is already properly set by the shell
+```
+
+#### 2. PATH Separator Usage
+```powershell
+# ❌ WRONG - Hardcoded Windows separator:
+$env:PATH = "$newPath;" + $env:PATH
+
+# ✅ CORRECT - Cross-platform separator:
+$pathSeparator = [System.IO.Path]::PathSeparator
+$env:PATH = "$newPath$pathSeparator" + $env:PATH
+```
+
+#### 3. Platform Detection
+```powershell
+# ✅ ALWAYS use built-in platform detection:
+if ($IsWindows) {
+    # Windows-specific code
+} elseif ($IsLinux) {
+    # Linux-specific code  
+} elseif ($IsMacOS) {
+    # macOS-specific code
+}
+```
+
+#### 4. Command Existence Checking
+```powershell
+# ✅ ALWAYS use this pattern for command detection:
+function Test-Command {
+    param([string]$Command)
+    return [bool](Get-Command $Command -ErrorAction SilentlyContinue)
+}
+```
+
+### CROSS-PLATFORM TESTING REQUIREMENTS:
+- **🧪 EVERY PowerShell script MUST be tested on both Windows and Linux**
+- **🚀 CI/CD MUST validate PowerShell scripts on both platforms**
+- **📝 Use `#!/usr/bin/env pwsh` shebang for cross-platform scripts**
+- **🔍 Test scripts in devcontainers (Linux) AND local Windows environments**
+
+### ANTI-PATTERNS TO AVOID:
+- ❌ **Windows-only environment variable access**: `[System.Environment]::GetEnvironmentVariable("PATH", "Machine")`
+- ❌ **Hardcoded path separators**: Using `;` instead of `[System.IO.Path]::PathSeparator`
+- ❌ **Platform-specific commands**: Without proper platform detection
+- ❌ **Untested cross-platform assumptions**: Always test on both Windows and Linux
+
+---
+
 ## Project Context
 
 - **Frontend Framework**: Vanilla JavaScript with Vite build system

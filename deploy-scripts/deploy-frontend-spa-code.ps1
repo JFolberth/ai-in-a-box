@@ -51,8 +51,21 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-# Refresh environment variables to ensure PATH is updated
-$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+# Refresh environment variables to ensure PATH is updated (cross-platform compatible)
+if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+    # Windows: Merge Machine and User PATH variables
+    $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+    $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    $pathSeparator = [System.IO.Path]::PathSeparator
+    if ($machinePath -and $userPath) {
+        $env:PATH = $machinePath + $pathSeparator + $userPath
+    } elseif ($machinePath) {
+        $env:PATH = $machinePath
+    } elseif ($userPath) {
+        $env:PATH = $userPath
+    }
+}
+# On Linux/macOS, $env:PATH is already properly set by the shell
 
 Write-Host "🚀 AI Foundry SPA - Frontend Deployment" -ForegroundColor Green -BackgroundColor Black
 Write-Host "=======================================" -ForegroundColor Green
@@ -183,8 +196,7 @@ try {
         Write-Host "ℹ️  az staticwebapp create failed (likely because app exists), trying deployment to existing app..." -ForegroundColor Yellow
         $deploymentSuccess = $false
     }
-}
-catch {
+} catch {
     Write-Host "ℹ️  az staticwebapp create failed, trying deployment to existing app..." -ForegroundColor Yellow
     $deploymentSuccess = $false
 }
@@ -203,10 +215,11 @@ if (-not $deploymentSuccess) {
     }
     
     try {
-        # Ensure npm global packages are in PATH
+        # Ensure npm global packages are in PATH (cross-platform compatible)
         $npmGlobalPath = npm config get prefix
         if ($npmGlobalPath -and -not $env:PATH.Contains($npmGlobalPath)) {
-            $env:PATH = "$npmGlobalPath;" + $env:PATH
+            $pathSeparator = [System.IO.Path]::PathSeparator
+            $env:PATH = "$npmGlobalPath$pathSeparator" + $env:PATH
             Write-Host "✅ Added npm global path to PATH: $npmGlobalPath" -ForegroundColor Green
         }
         
@@ -220,8 +233,7 @@ if (-not $deploymentSuccess) {
                 Write-Host "✅ SWA CLI already installed (version: $swaVersion)" -ForegroundColor Green
                 $swaInstalled = $true
             }
-        }
-        catch {
+        } catch {
             # SWA CLI not found, will install below
         }
         
@@ -244,8 +256,7 @@ if (-not $deploymentSuccess) {
                     Write-Error "❌ SWA CLI installed but not accessible!"
                     exit 1
                 }
-            }
-            catch {
+            } catch {
                 Write-Error "❌ SWA CLI installed but not accessible!"
                 exit 1
             }
@@ -262,8 +273,7 @@ if (-not $deploymentSuccess) {
             Write-Error "❌ SWA CLI deployment failed!"
             $deploymentSuccess = $false
         }
-    }
-    catch {
+    } catch {
         Write-Host "❌ SWA CLI deployment failed" -ForegroundColor Red
         Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Gray
         $deploymentSuccess = $false

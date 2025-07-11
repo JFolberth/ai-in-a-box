@@ -145,8 +145,7 @@ function Get-UserInput {
             if ([string]::IsNullOrEmpty($input)) {
                 $input = $Default
             }
-        }
-        else {
+        } else {
             $input = Read-Host $Prompt
         }
         
@@ -228,8 +227,7 @@ if (-not $SkipValidation) {
         $currentSubscriptionId = az account show --query "id" -o tsv
         Write-ColorOutput "   Current subscription: $currentSubscription" "Cyan"
         Write-ColorOutput "   Subscription ID: $currentSubscriptionId" "Cyan"
-    }
-    catch {
+    } catch {
         Write-ColorOutput "❌ Azure authentication check failed." "Red"
         Write-ColorOutput "   Error: $($_.Exception.Message)" "Red"
         if ($InteractiveMode) {
@@ -263,14 +261,26 @@ if (-not $SkipValidation) {
     try {
         $dotnetVersion = dotnet --version
         Write-ColorOutput "✅ .NET SDK found: $dotnetVersion" "Green"
-    }
-    catch {
+    } catch {
         Write-ColorOutput "❌ Failed to get .NET version." "Red"
         exit 1
     }
     
-    # Refresh environment variables to ensure PATH is updated
-    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    # Refresh environment variables to ensure PATH is updated (cross-platform compatible)
+    if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+        # Windows: Merge Machine and User PATH variables
+        $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+        $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+        $pathSeparator = [System.IO.Path]::PathSeparator
+        if ($machinePath -and $userPath) {
+            $env:PATH = $machinePath + $pathSeparator + $userPath
+        } elseif ($machinePath) {
+            $env:PATH = $machinePath
+        } elseif ($userPath) {
+            $env:PATH = $userPath
+        }
+    }
+    # On Linux/macOS, $env:PATH is already properly set by the shell
     
     # Check Node.js
     Write-ColorOutput "Checking Node.js..." "Yellow"
@@ -290,8 +300,7 @@ if (-not $SkipValidation) {
             Write-ColorOutput "⚠️  Warning: Node.js 22 may have compatibility issues with SWA CLI." "Yellow"
             Write-ColorOutput "   Consider using Node.js 20 LTS for better compatibility." "Yellow"
         }
-    }
-    catch {
+    } catch {
         Write-ColorOutput "❌ Failed to get Node.js version." "Red"
         exit 1
     }
@@ -307,8 +316,7 @@ if (-not $SkipValidation) {
     try {
         $npmVersion = npm --version
         Write-ColorOutput "✅ npm found: $npmVersion" "Green"
-    }
-    catch {
+    } catch {
         Write-ColorOutput "❌ Failed to get npm version." "Red"
         exit 1
     }
@@ -316,10 +324,11 @@ if (-not $SkipValidation) {
     # Azure Static Web Apps CLI - Check and install if needed
     Write-ColorOutput "Checking Azure Static Web Apps CLI (SWA CLI)..." "Yellow"
     try {
-        # Ensure npm global packages are in PATH
+        # Ensure npm global packages are in PATH (cross-platform compatible)
         $npmGlobalPath = npm config get prefix 2>$null
         if ($npmGlobalPath -and -not $env:PATH.Contains($npmGlobalPath)) {
-            $env:PATH = "$npmGlobalPath;" + $env:PATH
+            $pathSeparator = [System.IO.Path]::PathSeparator
+            $env:PATH = "$npmGlobalPath$pathSeparator" + $env:PATH
             Write-ColorOutput "✅ Added npm global path to PATH: $npmGlobalPath" "Green"
         }
         
@@ -327,8 +336,7 @@ if (-not $SkipValidation) {
         $swaVersion = swa --version 2>$null
         if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
             Write-ColorOutput "✅ SWA CLI found: $swaVersion" "Green"
-        }
-        else {
+        } else {
             Write-ColorOutput "📦 SWA CLI not found, installing..." "Yellow"
             npm install -g @azure/static-web-apps-cli
             if ($LASTEXITCODE -eq 0) {
@@ -345,8 +353,7 @@ if (-not $SkipValidation) {
                 Write-ColorOutput "   � Manual install: npm install -g @azure/static-web-apps-cli" "Cyan"
             }
         }
-    }
-    catch {
+    } catch {
         Write-ColorOutput "⚠️  Could not check SWA CLI status" "Yellow"
         Write-ColorOutput "   SWA CLI will be installed during frontend deployment if needed" "Cyan"
         Write-ColorOutput "   💡 For local development: npm install -g @azure/static-web-apps-cli" "Cyan"
@@ -359,12 +366,10 @@ if (-not $SkipValidation) {
         $funcVersion = func --version 2>$null
         if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($funcVersion)) {
             Write-ColorOutput "✅ Azure Functions Core Tools found: $funcVersion" "Green"
-        }
-        else {
+        } else {
             throw "Azure Functions Core Tools not found"
         }
-    }
-    catch {
+    } catch {
         Write-ColorOutput "⚠️  Azure Functions Core Tools not found" "Yellow"
         Write-ColorOutput "   This is optional for deployment (backend uses Azure CLI directly)" "Cyan"
         Write-ColorOutput "   For local development: npm install -g azure-functions-core-tools@4 --unsafe-perm true" "Cyan"
@@ -372,8 +377,7 @@ if (-not $SkipValidation) {
     }
     
     Write-ColorOutput "✅ All prerequisites validated successfully!" "Green"
-}
-else {
+} else {
     Write-ColorOutput "⚠️  Skipping prerequisite validation (as requested)" "Yellow"
     
     # Even when skipping validation, we must check Azure login as it's required for deployment
@@ -405,8 +409,7 @@ else {
             $currentSubscription = az account show --query "name" -o tsv
             Write-ColorOutput "   Current subscription: $currentSubscription" "Cyan"
         }
-    }
-    catch {
+    } catch {
         Write-ColorOutput "❌ Azure authentication check failed. Please run 'az login' first." "Red"
         exit 1
     }
@@ -541,16 +544,13 @@ function Test-AzureOpenAIQuota {
                             return $false
                         }
                         
-                    }
-                    else {
+                    } else {
                         Write-ColorOutput "   ⚠️  Unable to retrieve quota usage data from Azure API" "Yellow"
                     }
-                }
-                else {
+                } else {
                     Write-ColorOutput "   ⚠️  Unable to get access token for quota API calls" "Yellow"
                 }
-            }
-            catch {
+            } catch {
                 Write-ColorOutput "   ⚠️  Error checking model quota: $($_.Exception.Message)" "Yellow"
                 
                 # Fallback to the existing quota check script
@@ -567,14 +567,12 @@ function Test-AzureOpenAIQuota {
                             $quotaFound = $true
                             $sufficientQuota = $false  # Conservative approach
                         }
-                    }
-                    catch {
+                    } catch {
                         Write-ColorOutput "   ⚠️  Fallback quota check also failed: $($_.Exception.Message)" "Yellow"
                     }
                 }
             }
-        }
-        else {
+        } else {
             Write-ColorOutput "   ⚠️  Unable to get subscription ID for quota checks" "Yellow"
         }
         
@@ -588,14 +586,12 @@ function Test-AzureOpenAIQuota {
         if ($quotaFound -and $sufficientQuota) {
             Write-ColorOutput "   ✅ Quota check passed - deployment can proceed" "Green"
             return $true
-        }
-        else {
+        } else {
             Write-ColorOutput "   ❌ Quota check failed - deployment cannot proceed" "Red"
             return $false
         }
         
-    }
-    catch {
+    } catch {
         Write-ColorOutput "   ⚠️  Error during quota check: $($_.Exception.Message)" "Yellow"
         Write-ColorOutput "   🛑 Stopping deployment due to quota check failure" "Red"
         return $false
@@ -632,25 +628,21 @@ function Test-CognitiveServicesAvailability {
                     $s0Available = $skus | Where-Object { $_.name -eq 'S0' }
                     if ($s0Available) {
                         Write-ColorOutput "   ✅ S0 pricing tier available (required for deployment)" "Green"
-                    }
-                    else {
+                    } else {
                         Write-ColorOutput "   ⚠️  S0 pricing tier not found. Will attempt deployment with available tiers." "Yellow"
                     }
                     
                     return $true
-                }
-                else {
+                } else {
                     # Empty array means no SKUs available in this region
                     Write-ColorOutput "   ❌ No Cognitive Services AIServices available in $Location" "Red"
                 }
-            }
-            catch {
+            } catch {
                 Write-ColorOutput "   ⚠️  Failed to parse Cognitive Services availability response." "Yellow"
                 Write-ColorOutput "   💡 Deployment will validate service availability during creation" "Cyan"
                 return $true
             }
-        }
-        else {
+        } else {
             Write-ColorOutput "   ❌ Empty response from Cognitive Services availability check for $Location" "Red"
         }
         
@@ -666,8 +658,7 @@ function Test-CognitiveServicesAvailability {
         
         return $false
         
-    }
-    catch {
+    } catch {
         Write-ColorOutput "   ⚠️  Cognitive Services availability check failed: $($_.Exception.Message)" "Yellow"
         Write-ColorOutput "   💡 Deployment will validate service availability during creation" "Cyan"
         return $true
@@ -707,16 +698,13 @@ function Test-AzurePermissions {
             if ($hasOwner) {
                 Write-ColorOutput "      ✅ Owner role detected - sufficient for all operations" "Green"
                 $generalPermsSufficient = $true
-            }
-            elseif ($hasContributor -and $hasRoleBasedAccess) {
+            } elseif ($hasContributor -and $hasRoleBasedAccess) {
                 Write-ColorOutput "      ✅ Contributor + RBAC admin roles detected - sufficient for deployment" "Green"
                 $generalPermsSufficient = $true
-            }
-            elseif ($hasCognitiveServicesContrib) {
+            } elseif ($hasCognitiveServicesContrib) {
                 Write-ColorOutput "      ✅ Cognitive Services Contributor role detected" "Green"
                 $generalPermsSufficient = $true
-            }
-            else {
+            } else {
                 Write-ColorOutput "      ⚠️  Limited permissions detected" "Yellow"
                 Write-ColorOutput "      📋 Required: Owner, Contributor+RBAC, or Cognitive Services Contributor" "Cyan"
                 $generalPermsSufficient = $false
@@ -739,14 +727,12 @@ function Test-AzurePermissions {
                 if ($hasSubscriptionOwner -or $hasAiAccountOwner -or $hasSubscriptionContributor) {
                     Write-ColorOutput "      ✅ Sufficient permissions for creating AI Foundry resources" "Green"
                     $aiFoundryPermsSufficient = $true
-                }
-                else {
+                } else {
                     Write-ColorOutput "      ❌ Insufficient permissions for creating AI Foundry resources" "Red"
                     Write-ColorOutput "      📋 Required: Owner, Contributor, or Azure AI Account Owner at subscription level" "Cyan"
                     $aiFoundryPermsSufficient = $false
                 }
-            }
-            else {
+            } else {
                 Write-ColorOutput "      Using existing AI Foundry resources..." "Yellow"
                 
                 # For existing AI Foundry resources, check project-level permissions
@@ -766,20 +752,17 @@ function Test-AzurePermissions {
                             }
                             
                             $aiFoundryPermsSufficient = $true
-                        }
-                        else {
+                        } else {
                             Write-ColorOutput "      ❌ Cannot access AI Foundry resource: $AiFoundryResourceName" "Red"
                             Write-ColorOutput "      📋 Required: Azure AI User or Azure AI Project Manager role on the project" "Cyan"
                             $aiFoundryPermsSufficient = $false
                         }
-                    }
-                    catch {
+                    } catch {
                         Write-ColorOutput "      ⚠️  Error checking AI Foundry resource access: $($_.Exception.Message)" "Yellow"
                         Write-ColorOutput "      💡 Permissions will be validated during deployment" "Cyan"
                         $aiFoundryPermsSufficient = $true
                     }
-                }
-                else {
+                } else {
                     Write-ColorOutput "      ⚠️  AI Foundry resource details not provided for permission check" "Yellow"
                     $aiFoundryPermsSufficient = $true
                 }
@@ -801,26 +784,22 @@ function Test-AzurePermissions {
             if ($generalPermsSufficient -and $aiFoundryPermsSufficient) {
                 Write-ColorOutput "   ✅ All permission checks passed" "Green"
                 return $true
-            }
-            elseif ($generalPermsSufficient) {
+            } elseif ($generalPermsSufficient) {
                 Write-ColorOutput "   ⚠️  General Azure permissions sufficient, but AI Foundry permissions may be limited" "Yellow"
                 Write-ColorOutput "   💡 Deployment will continue but may fail during AI Foundry operations" "Cyan"
                 return $true
-            }
-            else {
+            } else {
                 Write-ColorOutput "   ❌ Insufficient permissions detected" "Red"
                 Write-ColorOutput "   💡 Deployment may fail - contact your Azure administrator" "Cyan"
                 return $false
             }
-        }
-        else {
+        } else {
             Write-ColorOutput "   ⚠️  Could not retrieve role assignments" "Yellow"
             Write-ColorOutput "   💡 Continuing - deployment will validate permissions" "Cyan"
             return $true
         }
         
-    }
-    catch {
+    } catch {
         Write-ColorOutput "   ⚠️  Permission check failed: $($_.Exception.Message)" "Yellow"
         Write-ColorOutput "   💡 Continuing - deployment will validate permissions" "Cyan"
         return $true
@@ -846,17 +825,14 @@ function Test-ResourceProviders {
             
             if ($providerStatus -eq "Registered") {
                 Write-ColorOutput "   ✅ ${provider}: Registered" "Green"
-            }
-            elseif ($providerStatus -eq "Registering") {
+            } elseif ($providerStatus -eq "Registering") {
                 Write-ColorOutput "   🔄 ${provider}: Currently registering..." "Yellow"
-            }
-            else {
+            } else {
                 Write-ColorOutput "   ❌ ${provider}: Not registered ($providerStatus)" "Red"
                 Write-ColorOutput "   💡 Run: az provider register --namespace $provider" "Cyan"
                 $allRegistered = $false
             }
-        }
-        catch {
+        } catch {
             Write-ColorOutput "   ⚠️  Could not check $provider registration status" "Yellow"
         }
     }
@@ -876,13 +852,11 @@ $deployApplicationName = Get-UserInput "Application name for resource naming" $A
 if ($UseExistingAiFoundry) {
     $createAiFoundry = $false
     Write-ColorOutput "Using existing AI Foundry resources (as requested)" "Cyan"
-}
-else {
+} else {
     if ($InteractiveMode) {
         $createAiFoundryInput = Get-UserInput "Create new AI Foundry resources? (y/n)" "y"
         $createAiFoundry = $createAiFoundryInput.ToLower() -eq "y"
-    }
-    else {
+    } else {
         $createAiFoundry = $true
         Write-ColorOutput "Will create new AI Foundry resources (default)" "Cyan"
     }
@@ -907,13 +881,11 @@ if (-not $createAiFoundry) {
 if ($UseExistingLogAnalytics) {
     $createLogAnalytics = $false
     Write-ColorOutput "Using existing Log Analytics workspace (as requested)" "Cyan"
-}
-else {
+} else {
     if ($InteractiveMode) {
         $createLogAnalyticsInput = Get-UserInput "Create new Log Analytics workspace? (y/n)" "y"
         $createLogAnalytics = $createLogAnalyticsInput.ToLower() -eq "y"
-    }
-    else {
+    } else {
         $createLogAnalytics = $true
         Write-ColorOutput "Will create new Log Analytics workspace (default)" "Cyan"
     }
@@ -945,8 +917,7 @@ if (-not (Test-ResourceProviders)) {
 # Check permissions with AI Foundry context
 if ($createAiFoundry) {
     $permissionResult = Test-AzurePermissions -CreateAiFoundry $true
-}
-else {
+} else {
     $permissionResult = Test-AzurePermissions -CreateAiFoundry $false -AiFoundryResourceGroupName $aiFoundryResourceGroupName -AiFoundryResourceName $aiFoundryResourceName -AiFoundryProjectName $aiFoundryProjectName
 }
 
@@ -1000,8 +971,7 @@ if ($createAiFoundry) {
         Write-ColorOutput "Stopping deployment to prevent service availability failures." "Red"
         $preflightPassed = $false
     }
-}
-else {
+} else {
     Write-ColorOutput "Skipping quota check (using existing AI Foundry resources)" "Cyan"
     Write-ColorOutput "Skipping Cognitive Services availability check (using existing AI Foundry resources)" "Cyan"
 }
@@ -1130,8 +1100,7 @@ try {
         $deploymentJson = $deploymentDetails | ConvertFrom-Json
         $deploymentStatus = $deploymentJson.properties.provisioningState
         $outputs = $deploymentJson.properties.outputs
-    }
-    catch {
+    } catch {
         Write-ColorOutput "❌ Failed to parse deployment details!" "Red"
         Write-ColorOutput "   Error: $($_.Exception.Message)" "Red"
         exit 1
@@ -1167,40 +1136,35 @@ try {
     # Extract individual output values with error checking
     if ($outputs.PSObject.Properties['backendFunctionAppName']) {
         $functionAppName = $outputs.backendFunctionAppName.value
-    }
-    else {
+    } else {
         Write-ColorOutput "⚠️  backendFunctionAppName output not found in deployment" "Yellow"
         $functionAppName = ""
     }
     
     if ($outputs.PSObject.Properties['backendResourceGroupName']) {
         $functionAppResourceGroup = $outputs.backendResourceGroupName.value
-    }
-    else {
+    } else {
         Write-ColorOutput "⚠️  backendResourceGroupName output not found in deployment" "Yellow"
         $functionAppResourceGroup = ""
     }
     
     if ($outputs.PSObject.Properties['frontendStaticWebAppName']) {
         $staticWebAppName = $outputs.frontendStaticWebAppName.value
-    }
-    else {
+    } else {
         Write-ColorOutput "⚠️  frontendStaticWebAppName output not found in deployment" "Yellow"
         $staticWebAppName = ""
     }
     
     if ($outputs.PSObject.Properties['frontendResourceGroupName']) {
         $staticWebAppResourceGroup = $outputs.frontendResourceGroupName.value
-    }
-    else {
+    } else {
         Write-ColorOutput "⚠️  frontendResourceGroupName output not found in deployment" "Yellow"
         $staticWebAppResourceGroup = ""
     }
     
     if ($outputs.PSObject.Properties['aiFoundryEndpoint']) {
         $aiFoundryEndpoint = $outputs.aiFoundryEndpoint.value
-    }
-    else {
+    } else {
         Write-ColorOutput "⚠️  aiFoundryEndpoint output not found in deployment" "Yellow"
         $aiFoundryEndpoint = ""
     }
@@ -1231,8 +1195,7 @@ try {
     Write-ColorOutput "   Static Web App: $staticWebAppName in $staticWebAppResourceGroup" "Cyan"
     Write-ColorOutput "   AI Foundry Endpoint: $aiFoundryEndpoint" "Cyan"
     
-}
-catch {
+} catch {
     Write-ColorOutput "❌ Infrastructure deployment failed: $($_.Exception.Message)" "Red"
     exit 1
 }
@@ -1271,21 +1234,18 @@ try {
                 Write-ColorOutput "✅ Agent $operationType successfully!" "Green"
                 Write-ColorOutput "   Agent ID: $agentId" "Cyan"
                 Write-ColorOutput "   Agent Name: $agentName" "Cyan"
-            }
-            catch {
+            } catch {
                 Write-ColorOutput "⚠️  JSON parsing failed: $($_.Exception.Message)" "Yellow"
                 Write-ColorOutput "   JSON content: $jsonPart" "Cyan"
             }
-        }
-        else {
+        } else {
             Write-ColorOutput "⚠️  Could not find AGENT_DEPLOYMENT_RESULT line" "Yellow"
             Write-ColorOutput "   Raw output lines:" "Cyan"
             for ($i = 0; $i -lt $resultLines.Count; $i++) {
                 Write-ColorOutput "   [$i]: $($resultLines[$i])" "Cyan"
             }
         }
-    }
-    else {
+    } else {
         Write-ColorOutput "❌ CRITICAL: Agent deployment failed!" "Red"
         Write-ColorOutput "   The backend Function App requires a valid AI agent to function properly." "Red"
         Write-ColorOutput "   Without an agent, the application will not work." "Yellow"
@@ -1299,8 +1259,7 @@ try {
         Write-ColorOutput "Stopping deployment due to agent deployment failure." "Red"
         exit 1
     }
-}
-catch {
+} catch {
     Write-ColorOutput "❌ CRITICAL: Agent deployment error: $($_.Exception.Message)" "Red"
     Write-ColorOutput "   The backend Function App requires a valid AI agent to function properly." "Red"
     Write-ColorOutput "" "White"
@@ -1327,8 +1286,7 @@ try {
             -AgentId $agentId `
             -AgentName "AI in A Box" `
             -AiFoundryEndpoint $aiFoundryEndpoint
-    }
-    else {
+    } else {
         Write-ColorOutput "Deploying backend without agent configuration..." "Yellow"
         & $backendScript `
             -FunctionAppName $functionAppName `
@@ -1337,14 +1295,12 @@ try {
     
     if ($LASTEXITCODE -eq 0) {
         Write-ColorOutput "✅ Backend deployment completed!" "Green"
-    }
-    else {
+    } else {
         Write-ColorOutput "❌ Backend deployment failed!" "Red"
         exit 1
     }
     
-}
-catch {
+} catch {
     Write-ColorOutput "❌ Backend deployment error: $($_.Exception.Message)" "Red"
     exit 1
 }
@@ -1366,14 +1322,12 @@ try {
     
     if ($LASTEXITCODE -eq 0) {
         Write-ColorOutput "✅ Frontend deployment completed!" "Green"
-    }
-    else {
+    } else {
         Write-ColorOutput "❌ Frontend deployment failed!" "Red"
         exit 1
     }
     
-}
-catch {
+} catch {
     Write-ColorOutput "❌ Frontend deployment error: $($_.Exception.Message)" "Red"
     exit 1
 }
@@ -1425,12 +1379,10 @@ try {
             if ($healthResponse.aiFoundryConnection) {
                 Write-ColorOutput "✅ AI Foundry connection: $($healthResponse.aiFoundryConnection.status)" "Green"
             }
-        }
-        else {
+        } else {
             Write-ColorOutput "⚠️  Backend health check returned non-healthy status" "Yellow"
         }
-    }
-    catch {
+    } catch {
         Write-ColorOutput "⚠️  Health check failed (Function App may still be starting)" "Yellow"
         Write-ColorOutput "   Manual test: https://$backendUrl/api/health" "Cyan"
     }
@@ -1450,8 +1402,7 @@ try {
     Write-ColorOutput "⚠️  Remember: This is a development deployment." "Yellow"
     Write-ColorOutput "   For production, use GitHub Actions CI/CD pipeline." "Yellow"
     
-}
-catch {
+} catch {
     Write-ColorOutput "⚠️  Error retrieving final URLs: $($_.Exception.Message)" "Yellow"
     Write-ColorOutput "   Check Azure Portal for resource details" "Cyan"
 }
