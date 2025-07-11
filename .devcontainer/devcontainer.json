@@ -47,7 +47,8 @@
         "ms-vscode.vscode-dev-containers",
         "ms-azuretools.vscode-docker",
         "ms-vscode.vscode-docker",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "ms-vscode.vscode-dev-box"
       ],
 
       "settings": {
@@ -90,7 +91,7 @@
     }
   },
 
-  "postCreateCommand": "cd ${workspaceFolder}/src/frontend && npm install && cd ${workspaceFolder}/src/backend && dotnet restore && cd ${workspaceFolder} && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install --no-warn-script-location virtualenv black pylint && az extension add --name devcenter --only-show-errors && docker --version",
+  "postCreateCommand": "cd ${workspaceFolder}/src/frontend && npm install && cd ${workspaceFolder}/src/backend && dotnet restore && cd ${workspaceFolder} && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install --no-warn-script-location virtualenv black pylint && az extension add --name devcenter --only-show-errors && az extension add --name bicep --only-show-errors && docker --version && echo '=== DevContainer Setup Complete ===' && echo 'Azure CLI devcenter extension installed for DevBox validation'",
 
   "remoteUser": "node",
   
