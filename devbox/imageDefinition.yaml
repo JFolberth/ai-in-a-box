@@ -12,7 +12,7 @@ devDrive:
     fileSystem: "NTFS"
 
 tasks:
-  # Clone AI in a Box repository to DevDrive for optimal performance.
+  # Clone AI in a Box repository to DevDrive for optimal performance
   - name: git-clone
     description: Clone the AI in a Box repository to DevDrive
     parameters:
@@ -25,29 +25,25 @@ tasks:
     parameters:
       package: Microsoft.AppInstaller
   - name: winget
-    description: Install Node.js 20 LTS for frontend development (compatible with SWA CLI)
-    parameters:
-      package: OpenJS.NodeJS
-  - name: winget
     description: Install Visual Studio Code for development
     parameters:
       package: Microsoft.VisualStudioCode
-  - name: winget
-    description: Install Azure CLI for infrastructure deployment
-    parameters:
-      package: Microsoft.AzureCLI
   - name: winget
     description: Install Git for source control
     parameters:
       package: Git.Git
   - name: winget
+    description: Install Azure CLI for infrastructure deployment
+    parameters:
+      package: Microsoft.AzureCLI
+  - name: winget
     description: Install .NET 8 SDK for Azure Functions backend
     parameters:
       package: Microsoft.DotNet.SDK.8
   - name: winget
-    description: Install Python for development scripting and tooling
+    description: Install Node.js 20 LTS for frontend development
     parameters:
-      package: Python.Python.3.12
+      package: OpenJS.NodeJS
   - name: winget
     description: Install PowerShell Core for cross-platform scripting
     parameters:
@@ -56,6 +52,10 @@ tasks:
     description: Install Docker Desktop for containerized development
     parameters:
       package: Docker.DockerDesktop
+  - name: winget
+    description: Install Python for development scripting and tooling
+    parameters:
+      package: Python.Python.3.12
       
   # System Configuration
   - name: powershell
@@ -130,10 +130,10 @@ userTasks:
         
         # DevBox Support
         code --install-extension ms-vscode.vscode-dev-containers
+        code --install-extension ms-vscode.vscode-dev-box
         
         # Docker Development
         code --install-extension ms-azuretools.vscode-docker
-        code --install-extension ms-vscode.vscode-docker
         
         # Source Control
         code --install-extension github.vscode-github-actions
@@ -141,24 +141,11 @@ userTasks:
         Write-Host "VS Code extensions installed successfully!" -ForegroundColor Green
   
   - name: powershell
-    description: Configure user-specific development environment and tools
+    description: Configure user-specific development environment with DevDrive optimization
     parameters:
       command: |
         # Install npm global packages for the current user
         npm install -g azurite@latest
-        
-
-        $workspaceDir = Join-Path $env:USERPROFILE "Workspaces"
-        $azuriteDir = Join-Path $env:USERPROFILE ".azurite"
-        
-        # Verify Azure Functions Core Tools is available
-        if (Get-Command func -ErrorAction SilentlyContinue) {
-            $funcVersion = func --version
-            Write-Host "✅ Azure Functions Core Tools found: $funcVersion" -ForegroundColor Green
-        } else {
-            Write-Host "⚠️  Azure Functions Core Tools not found via PATH" -ForegroundColor Yellow
-            Write-Host "   It may be installed but not in PATH, or you may need to install it" -ForegroundColor Gray
-        }
         
         # Create user workspace directories on DevDrive (Z:) for optimal performance
         $workspaceDir = "Z:\Workspaces"
@@ -187,23 +174,26 @@ userTasks:
         python -m pip install --user --upgrade pip
         python -m pip install --user virtualenv
         
-        # Verify Docker Desktop installation and setup
+        # Verify installations
+        if (Get-Command func -ErrorAction SilentlyContinue) {
+            $funcVersion = func --version
+            Write-Host "✅ Azure Functions Core Tools found: $funcVersion" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Azure Functions Core Tools not found via PATH" -ForegroundColor Yellow
+        }
+        
         $dockerPath = Join-Path ${env:ProgramFiles} "Docker\Docker\Docker Desktop.exe"
         if (Test-Path $dockerPath) {
             Write-Host "✅ Docker Desktop installed successfully!" -ForegroundColor Green
-            Write-Host "📋 Docker will be available after DevBox restart and Docker Desktop startup" -ForegroundColor Yellow
         } else {
             Write-Host "⚠️  Docker Desktop installation may need completion" -ForegroundColor Yellow
         }
         
-        Write-Host "=== User Development Environment Setup Complete ===" -ForegroundColor Green
+        Write-Host "=== DevBox Setup Complete ===" -ForegroundColor Green
         Write-Host "Next steps:" -ForegroundColor Yellow
-        Write-Host "1. Configure Git with your credentials:" -ForegroundColor Gray
-        Write-Host "   git config --global user.name 'Your Name'" -ForegroundColor Gray
-        Write-Host "   git config --global user.email 'your.email@example.com'" -ForegroundColor Gray
-        Write-Host "2. Sign in to Azure: az login" -ForegroundColor Gray
-        Write-Host "3. Clone repository to: $workspaceDir" -ForegroundColor Gray
-        Write-Host "4. Azurite data will be stored in: $azuriteDir" -ForegroundColor Gray
-        Write-Host "5. Python and pip are available for development tooling" -ForegroundColor Gray
+        Write-Host "1. Configure Git: git config --global user.name 'Your Name'" -ForegroundColor Gray
+        Write-Host "2. Configure Git: git config --global user.email 'your.email@example.com'" -ForegroundColor Gray
+        Write-Host "3. Sign in to Azure: az login" -ForegroundColor Gray
+        Write-Host "4. Repository cloned to: $workspaceDir" -ForegroundColor Gray
+        Write-Host "5. Azurite data stored in: $azuriteDir" -ForegroundColor Gray
         Write-Host "6. Start Docker Desktop for containerized development" -ForegroundColor Gray
-        Write-Host "7. Docker will be available for Azurite, Function App testing, and more" -ForegroundColor Gray
