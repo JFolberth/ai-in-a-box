@@ -257,6 +257,21 @@ echo "AI Foundry Endpoint: $aiFoundryEndpoint"
 - 🤖 Creates or updates the "AI in A Box" agent in AI Foundry
 - 🆔 Returns the agent ID for backend configuration
 
+### 🎯 Want to Customize Your AI Agent?
+
+The deployed agent uses the configuration in `src/agent/ai_in_a_box.yaml`. To customize the agent's personality, expertise, or behavior:
+
+**Quick Customization:**
+1. Edit `src/agent/ai_in_a_box.yaml` - update the `instructions` field
+2. Re-run: `.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "$aiFoundryEndpoint" -Force`
+3. Test the changes in your deployed SPA
+
+**📖 Complete Customization Guide:** See **[AI Agent Customization Guide](../configuration/customization.md)** for:
+- YAML schema reference and all available properties
+- Prompt engineering best practices and examples
+- 5 ready-to-use agent templates (DevOps, Customer Support, Security, etc.)
+- Advanced configuration options and troubleshooting
+
 ### Capture Agent ID
 
 ```bash
