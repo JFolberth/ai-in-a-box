@@ -2,6 +2,8 @@ name: Manual Build and Test
 
 # Manual workflow for building and testing without ADE deployment
 # This workflow can be triggered manually and does not include ADE deployment steps
+permissions:
+  contents: read
 on:
   workflow_dispatch:
     inputs:
