@@ -293,7 +293,7 @@ jobs:
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
-      validation-status: ${{ steps.validate-deployment.outputs.status }}
+      validation-status: ${{ steps.test-deployed-backend.outputs.status }}
     
     steps:
     - name: Checkout repository
@@ -382,31 +382,26 @@ jobs:
           exit 1
         fi
     
-    - name: Validate Backend Deployment
-      id: validate-deployment
+    - name: Validate Backend Infrastructure
+      id: validate-infrastructure
       run: |
-        echo "🔍 Validating backend deployment in ADE environment..."
+        echo "🔍 Validating backend infrastructure in ADE environment..."
         
-        # Get ADE environment name from previous step output or environment variable
-        ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
+        # Get resource group name from previous step output
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
         
-        # Construct Function App URL based on ADE naming convention
-        FUNCTION_APP_URL="https://func-ai-foundry-${ADE_ENV_NAME}.azurewebsites.net"
-        echo "🔗 Function App URL: $FUNCTION_APP_URL"
+        # Find Function App by resource type (infrastructure validation only)
+        FUNCTION_APP_NAME=$(az functionapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
         
-        # Wait a moment for the deployment to fully complete
-        sleep 30
-        
-        # Test comprehensive endpoints using PowerShell script
-        echo "🧪 Running comprehensive endpoint tests..."
-        pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$FUNCTION_APP_URL" -Comprehensive
-        
-        if [ $? -eq 0 ]; then
-          echo "✅ Backend infrastructure validation passed - Function App endpoints are healthy"
-        else
-          echo "❌ Backend infrastructure validation failed - Function App endpoints not responding correctly"
+        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
+          echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
           exit 1
         fi
+        
+        echo "✅ Backend infrastructure validation passed - Function App created: $FUNCTION_APP_NAME"
 
     - name: Deploy Backend Code to ADE Function App
       run: |
@@ -447,6 +442,7 @@ jobs:
         echo "✅ Backend code deployed successfully to ADE environment!"
 
     - name: Test Deployed Backend Application
+      id: test-deployed-backend
       run: |
         echo "🧪 Testing deployed backend application..."
         

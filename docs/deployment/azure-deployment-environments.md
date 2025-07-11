@@ -424,8 +424,9 @@ The CI/CD pipeline automatically performs full end-to-end validation on every pu
 - Uses the same deployment methods as production
 
 #### 4. **Comprehensive Testing**
-- **Health Endpoints**: Tests Function App health with retry logic
-- **Functional Testing**: Validates AI integration and API responses
+- **Infrastructure Validation**: Tests that Azure resources were created properly
+- **Post-Deployment Testing**: Tests Function App health and functionality after code deployment
+- **AI Integration**: Validates AI Foundry agent connectivity and responses
 - **Application Testing**: Tests complete user workflow end-to-end
 - **Integration Testing**: Validates frontend-backend communication
 
@@ -463,11 +464,13 @@ jobs:
     steps:
       - name: Create ADE Backend Environment
         # Creates ADE environment with 8-hour expiration
+      - name: Validate Backend Infrastructure
+        # Validates that Function App was created properly
       - name: Deploy Backend Code to ADE Function App
         # Downloads backend-publish artifact
         # Deploys ZIP to ADE-created Function App
       - name: Test Deployed Backend Application
-        # Comprehensive endpoint testing with retry logic
+        # Comprehensive endpoint testing with retry logic after deployment
 
   ade-validation-summary:
     needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation]
