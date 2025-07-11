@@ -166,7 +166,7 @@ function Test-AiFoundryIntegration {
 # Test chat endpoint with different message types
 $chatEndpoint = "$functionUrl/api/chat"
 $messageTypes = @(
-    "Is Gigfoot real?",
+    "Is Bigfoot real?",
     "Who says so?"
 )
 

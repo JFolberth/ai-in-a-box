@@ -70,7 +70,7 @@ jobs:
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
-      validation-status: ${{ steps.validate-deployment.outputs.status }}
+      validation-status: ${{ steps.test-frontend-application.outputs.status }}
     
     steps:
     - name: Checkout repository
@@ -224,6 +224,7 @@ jobs:
         echo "✅ Frontend code deployed successfully to ADE environment!"
 
     - name: Test Frontend Application
+      id: test-frontend-application
       run: |
         echo "🧪 Testing deployed frontend application..."
         
