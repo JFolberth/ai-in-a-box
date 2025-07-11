@@ -51,11 +51,513 @@ jobs:
       artifact-name: backend-publish
     secrets: inherit
 
+  # ============================================================================
+  # ADE END-TO-END VALIDATION JOBS
+  # ============================================================================
+  # Deploy ADE environments AND application code for complete validation
+  # This provides true end-to-end testing of the deployment pipeline
+  # - Creates ADE infrastructure environments
+  # - Deploys frontend code to Static Web App
+  # - Deploys backend code to Function App
+  # - Tests deployed applications for functionality
+  # - Validates complete deployment pipeline before main branch deployment
+  
+  deploy-ade-frontend-validation:
+    name: ADE Frontend E2E Validation
+    runs-on: ubuntu-latest
+    needs: [bicep-validation, frontend-build]
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    outputs:
+      ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
+      resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
+      validation-status: ${{ steps.test-frontend-application.outputs.status }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: ./src/frontend/dist/
+        
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Create ADE Frontend Environment
+      id: create-ade
+      run: |
+        echo "🚀 Creating ADE frontend environment for validation..."
+        
+        # Generate unique environment name based on event type (includes run attempt for reruns)
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          ADE_ENV_NAME="pr-fd-${{ github.event.number }}-${{ github.run_number }}-${{ github.run_attempt }}"
+        else
+          ADE_ENV_NAME="main-fd-${{ github.run_number }}-${{ github.run_attempt }}"
+        fi
+        
+        echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
+        echo "ade-environment-name=$ADE_ENV_NAME" >> $GITHUB_OUTPUT
+        
+        # Construct resource group name using ADE naming convention
+        RESOURCE_GROUP="ai-foundry-$ADE_ENV_NAME"
+        echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
+        echo "resource-group-name=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+        
+        # Update static ADE parameters file with dynamic environment name
+        jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/frontend/ade.parameters.json > /tmp/ade-frontend-params.json
+        
+        # Calculate expiration time (8 hours from now)
+        EXPIRATION_TIME=$(date -u -d "+8 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        echo "🕒 Setting environment expiration to: $EXPIRATION_TIME"
+        
+        # Create ADE environment with 8-hour expiration
+        echo "📦 Deploying ADE frontend environment: $ADE_ENV_NAME (expires in 8 hours)"
+        az devcenter dev environment create \
+          --dev-center-name "devcenter-eus-dev" \
+          --project-name "ai-foundry" \
+          --catalog-name "ai-in-abox-infrastructure" \
+          --environment-definition-name "AI_Foundry_SPA_Frontend" \
+          --environment-type "dev" \
+          --name "$ADE_ENV_NAME" \
+          --parameters /tmp/ade-frontend-params.json \
+          --expiration "$EXPIRATION_TIME" \
+          --no-wait
+        
+        echo "⏳ Waiting for ADE frontend environment deployment to complete..."
+        
+        # Wait for deployment to complete (timeout after 10 minutes)
+        timeout=600
+        elapsed=0
+        while [ $elapsed -lt $timeout ]; do
+          status=$(az devcenter dev environment show \
+            --dev-center-name "devcenter-eus-dev" \
+            --project-name "ai-foundry" \
+            --name "$ADE_ENV_NAME" \
+            --query "provisioningState" \
+            --output tsv || echo "NotFound")
+          
+          echo "🔍 Frontend environment status: $status (${elapsed}s elapsed)"
+          
+          if [ "$status" = "Succeeded" ]; then
+            echo "✅ ADE frontend environment deployed successfully!"
+            break
+          elif [ "$status" = "Failed" ]; then
+            echo "❌ ADE frontend environment deployment failed!"
+            exit 1
+          fi
+          
+          sleep 30
+          elapsed=$((elapsed + 30))
+        done
+        
+        if [ $elapsed -ge $timeout ]; then
+          echo "❌ ADE frontend environment deployment timed out after 10 minutes!"
+          exit 1
+        fi
+    
+    - name: Validate Frontend Deployment
+      id: validate-deployment
+      run: |
+        echo "🔍 Validating frontend deployment in ADE environment..."
+        
+        # Get resource group name from previous step output
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
+        
+        # Find Static Web App by resource type
+        STATIC_WEB_APP_NAME=$(az staticwebapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
+        
+        if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
+          echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
+          exit 1
+        fi
+        
+        echo "✅ Frontend infrastructure validation passed - Static Web App: $STATIC_WEB_APP_NAME"
+
+    - name: Install SWA CLI
+      run: |
+        echo "📦 Installing Azure Static Web Apps CLI..."
+        npm install -g @azure/static-web-apps-cli
+
+    - name: Deploy Frontend Code to ADE Static Web App
+      run: |
+        echo "🚀 Deploying frontend code to ADE Static Web App..."
+        
+        # Get resource group and Static Web App name from previous steps
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
+        STATIC_WEB_APP_NAME=$(az staticwebapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
+        
+        if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
+          echo "❌ Static Web App not found for deployment"
+          exit 1
+        fi
+        
+        echo "📦 Deploying to Static Web App: $STATIC_WEB_APP_NAME"
+        
+        # Get deployment token for the Static Web App
+        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+          --name "$STATIC_WEB_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "properties.apiKey" \
+          --output tsv)
+        
+        if [ -z "$DEPLOYMENT_TOKEN" ] || [ "$DEPLOYMENT_TOKEN" = "null" ]; then
+          echo "❌ Failed to get deployment token for Static Web App"
+          exit 1
+        fi
+        
+        # Deploy using SWA CLI
+        swa deploy \
+          --app-location "./src/frontend/dist" \
+          --deployment-token "$DEPLOYMENT_TOKEN" \
+          --env "default"
+        
+        echo "✅ Frontend code deployed successfully to ADE environment!"
+
+    - name: Test Frontend Application
+      id: test-frontend-application
+      run: |
+        echo "🧪 Testing deployed frontend application..."
+        
+        # Get resource group and Static Web App details
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
+        STATIC_WEB_APP_NAME=$(az staticwebapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
+        
+        # Get Static Web App URL
+        STATIC_WEB_APP_HOSTNAME=$(az staticwebapp show \
+          --name "$STATIC_WEB_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "defaultHostname" \
+          --output tsv)
+        
+        if [ -z "$STATIC_WEB_APP_HOSTNAME" ] || [ "$STATIC_WEB_APP_HOSTNAME" = "null" ]; then
+          echo "❌ Failed to get Static Web App hostname"
+          exit 1
+        fi
+        
+        STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_HOSTNAME"
+        echo "🔗 Testing application at: $STATIC_WEB_APP_URL"
+        
+        # Wait for deployment to propagate
+        sleep 30
+        
+        # Test that the application loads
+        echo "🏥 Testing application accessibility..."
+        max_attempts=10
+        attempt=1
+        app_accessible=false
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "🔍 Accessibility test attempt $attempt/$max_attempts..."
+          
+          if curl -f -s "$STATIC_WEB_APP_URL" -o /dev/null; then
+            echo "✅ Frontend application is accessible!"
+            app_accessible=true
+            break
+          else
+            echo "⏳ Application not ready yet (attempt $attempt/$max_attempts)..."
+            if [ $attempt -lt $max_attempts ]; then
+              sleep 30
+            fi
+          fi
+          
+          attempt=$((attempt + 1))
+        done
+        
+        if [ "$app_accessible" = false ]; then
+          echo "❌ Frontend application failed accessibility test after $max_attempts attempts"
+          exit 1
+        fi
+        
+        echo "✅ Frontend application deployment and testing completed successfully!"
+        
+        # Set final validation status
+        echo "status=success" >> $GITHUB_OUTPUT
+
+  deploy-ade-backend-validation:
+    name: ADE Backend E2E Validation
+    runs-on: ubuntu-latest
+    needs: [bicep-validation, backend-build]
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
+      resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
+      validation-status: ${{ steps.test-deployed-backend.outputs.status }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-publish
+        path: ./src/backend/publish/
+        
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Create ADE Backend Environment
+      id: create-ade
+      run: |
+        echo "🚀 Creating ADE backend environment for validation..."
+        
+        # Generate unique environment name based on event type (includes run attempt for reruns)
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          ADE_ENV_NAME="pr-be-${{ github.event.number }}-${{ github.run_number }}-${{ github.run_attempt }}"
+        else
+          ADE_ENV_NAME="main-be-${{ github.run_number }}-${{ github.run_attempt }}"
+        fi
+        
+        echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
+        echo "ade-environment-name=$ADE_ENV_NAME" >> $GITHUB_OUTPUT
+        
+        # Construct resource group name using ADE naming convention
+        RESOURCE_GROUP="ai-foundry-$ADE_ENV_NAME"
+        echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
+        echo "resource-group-name=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+        
+        # Update static ADE parameters file with dynamic environment name
+        jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/backend/ade.parameters.json > /tmp/ade-backend-params.json
+        
+        # Calculate expiration time (8 hours from now)
+        EXPIRATION_TIME=$(date -u -d "+8 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        echo "🕒 Setting environment expiration to: $EXPIRATION_TIME"
+        
+        # Create ADE environment with 8-hour expiration
+        echo "📦 Deploying ADE backend environment: $ADE_ENV_NAME (expires in 8 hours)"
+        az devcenter dev environment create \
+          --dev-center-name "devcenter-eus-dev" \
+          --project-name "ai-foundry" \
+          --catalog-name "ai-in-abox-infrastructure" \
+          --environment-definition-name "AI_Foundry_SPA_Backend" \
+          --environment-type "dev" \
+          --name "$ADE_ENV_NAME" \
+          --parameters /tmp/ade-backend-params.json \
+          --expiration "$EXPIRATION_TIME" \
+          --no-wait
+        
+        echo "⏳ Waiting for ADE backend environment deployment to complete..."
+        
+        # Wait for deployment to complete (timeout after 15 minutes for backend)
+        timeout=900
+        elapsed=0
+        while [ $elapsed -lt $timeout ]; do
+          status=$(az devcenter dev environment show \
+            --dev-center-name "devcenter-eus-dev" \
+            --project-name "ai-foundry" \
+            --name "$ADE_ENV_NAME" \
+            --query "provisioningState" \
+            --output tsv || echo "NotFound")
+          
+          echo "🔍 Backend environment status: $status (${elapsed}s elapsed)"
+          
+          if [ "$status" = "Succeeded" ]; then
+            echo "✅ ADE backend environment deployed successfully!"
+            break
+          elif [ "$status" = "Failed" ]; then
+            echo "❌ ADE backend environment deployment failed!"
+            exit 1
+          fi
+          
+          sleep 30
+          elapsed=$((elapsed + 30))
+        done
+        
+        if [ $elapsed -ge $timeout ]; then
+          echo "❌ ADE backend environment deployment timed out after 15 minutes!"
+          exit 1
+        fi
+    
+    - name: Validate Backend Infrastructure
+      id: validate-infrastructure
+      run: |
+        echo "🔍 Validating backend infrastructure in ADE environment..."
+        
+        # Get resource group name from previous step output
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
+        
+        # Find Function App by resource type (infrastructure validation only)
+        FUNCTION_APP_NAME=$(az functionapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
+        
+        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
+          echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
+          exit 1
+        fi
+        
+        echo "✅ Backend infrastructure validation passed - Function App created: $FUNCTION_APP_NAME"
+
+    - name: Deploy Backend Code to ADE Function App
+      run: |
+        echo "🚀 Deploying backend code to ADE Function App..."
+        
+        # Get ADE environment name and construct Function App details
+        ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
+        
+        # Find Function App by resource type
+        FUNCTION_APP_NAME=$(az functionapp list \
+          --resource-group "$RESOURCE_GROUP" \
+          --query "[0].name" \
+          --output tsv)
+        
+        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
+          echo "❌ Function App not found for deployment"
+          exit 1
+        fi
+        
+        echo "📦 Deploying to Function App: $FUNCTION_APP_NAME"
+        
+        # Verify the deployment zip exists (from downloaded artifacts)
+        if [ ! -f "./src/backend/publish/backend-deployment.zip" ]; then
+          echo "❌ Backend deployment zip not found!"
+          echo "Contents of backend publish directory:"
+          ls -la ./src/backend/publish/
+          exit 1
+        fi
+        
+        # Deploy using Azure CLI
+        echo "📋 Deploying backend code to $FUNCTION_APP_NAME..."
+        az functionapp deployment source config-zip \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$FUNCTION_APP_NAME" \
+          --src "./src/backend/publish/backend-deployment.zip"
+        
+        echo "✅ Backend code deployed successfully to ADE environment!"
+
+    - name: Test Deployed Backend Application
+      id: test-deployed-backend
+      run: |
+        echo "🧪 Testing deployed backend application..."
+        
+        # Get ADE environment name and construct Function App URL
+        ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
+        FUNCTION_APP_URL="https://func-ai-foundry-${ADE_ENV_NAME}.azurewebsites.net"
+        
+        echo "🔗 Testing Function App at: $FUNCTION_APP_URL"
+        
+        # Wait for deployment to fully complete
+        echo "⏳ Waiting for deployment to complete..."
+        sleep 60
+        
+        # Test health endpoint with retry logic
+        echo "🏥 Testing Health Endpoint with retry logic..."
+        max_attempts=15
+        attempt=1
+        health_passed=false
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "🔍 Health check attempt $attempt/$max_attempts..."
+          
+          if curl -f -s "$FUNCTION_APP_URL/api/health" -o /dev/null; then
+            echo "✅ Health endpoint responding!"
+            health_passed=true
+            break
+          else
+            echo "⏳ Health endpoint not ready yet (attempt $attempt/$max_attempts)..."
+            if [ $attempt -lt $max_attempts ]; then
+              sleep 30
+            fi
+          fi
+          
+          attempt=$((attempt + 1))
+        done
+        
+        if [ "$health_passed" = false ]; then
+          echo "❌ Health endpoint failed after $max_attempts attempts"
+          exit 1
+        fi
+        
+        # Test comprehensive endpoints using PowerShell script
+        echo "🧪 Running comprehensive endpoint tests on deployed application..."
+        pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$FUNCTION_APP_URL" -Comprehensive
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ Backend application deployment and testing completed successfully!"
+          # Set final validation status
+          echo "status=success" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Backend application tests failed after deployment"
+          echo "status=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+  ade-validation-summary:
+    name: ADE E2E Validation Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation]
+    if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    outputs:
+      validation-status: ${{ steps.summary.outputs.status }}
+    
+    steps:
+    - name: Validation Summary
+      id: summary
+      run: |
+        echo "📋 ADE End-to-End Validation Summary"
+        echo "===================================="
+        
+        FRONTEND_STATUS="${{ needs.deploy-ade-frontend-validation.outputs.validation-status }}"
+        BACKEND_STATUS="${{ needs.deploy-ade-backend-validation.outputs.validation-status }}"
+        
+        echo "Frontend Deployment & Testing: $FRONTEND_STATUS"
+        echo "Backend Deployment & Testing: $BACKEND_STATUS"
+        
+        if [ "$FRONTEND_STATUS" = "success" ] && [ "$BACKEND_STATUS" = "success" ]; then
+          echo "✅ All ADE end-to-end validations passed!"
+          echo "   - Infrastructure deployed successfully"
+          echo "   - Application code deployed successfully" 
+          echo "   - Applications tested and functional"
+          echo "status=success" >> $GITHUB_OUTPUT
+        else
+          echo "❌ ADE end-to-end validation failed!"
+          echo "status=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+    
+    - name: ADE Environment Information
+      run: |
+        echo "## 🏗️ ADE End-to-End Validation Environments" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Environment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Environment**: \`${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
+        echo "- **Infrastructure Deployment**: ADE environments created successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Code Deployment**: Static Web App deployed and tested" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Code Deployment**: Function App deployed and tested" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application Testing**: End-to-end functionality verified" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🕒 Automatic Cleanup" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Note**: ADE environments are configured with 8-hour expiration and will be automatically deleted." >> $GITHUB_STEP_SUMMARY
+        echo "No manual cleanup required." >> $GITHUB_STEP_SUMMARY
+
   deploy-dev-infrastructure:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
-    needs: [bicep-validation]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [bicep-validation, ade-validation-summary]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ade-validation-summary.outputs.validation-status == 'success'
     with:
       environment: 'dev'
       bicep-template: 'infra/main-orchestrator.bicep'

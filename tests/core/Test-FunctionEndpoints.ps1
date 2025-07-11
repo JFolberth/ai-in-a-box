@@ -166,8 +166,8 @@ function Test-AiFoundryIntegration {
 # Test chat endpoint with different message types
 $chatEndpoint = "$functionUrl/api/chat"
 $messageTypes = @(
-    "What are my survival rates?",
-    "What treatment options are available?"
+    "Is Bigfoot real?",
+    "Who says so?"
 )
 
 # Function to test a chat message
@@ -285,9 +285,9 @@ if ($HealthOnly) {
             Write-Host "`n=== CONVERSATION THREADING TESTING ===" -ForegroundColor Cyan
             
             $conversationMessages = @(
-                "Hello, I'm new to cancer treatment.",
-                "What should I know about chemotherapy?",
-                "Are there any dietary recommendations?",
+                "Hello, I'm naive",
+                "What should I know to open my eyes?",
+                "Who should I ask for adivce?",
                 "Thank you for the information."
             )
             

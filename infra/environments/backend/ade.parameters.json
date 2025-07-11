@@ -8,5 +8,13 @@
   "logAnalyticsWorkspaceName": "la-logging-dev-eus",
   "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
   "adeName": "cicd-backend",
-  "devCenterProjectName": "ai-foundry"
+  "devCenterProjectName": "ai-foundry",
+  "tags": {
+    "Purpose": "CI-CD-Validation",
+    "Component": "Backend",
+    "Environment": "Temporary",
+    "CreatedBy": "GitHub-Actions",
+    "Repository": "ai-in-a-box",
+    "AutoDelete": "true"
+  }
 }

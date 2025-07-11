@@ -400,57 +400,178 @@ graph TD
     H --> E
 ```
 
-### ⚠️ Important Notes for ADE Workflows
+## 🔄 CI/CD End-to-End Validation
 
-1. **No Auto-Detection**: Deployment scripts require explicit resource names - they don't auto-detect ADE resources
-2. **Environment-Specific**: Each ADE environment creates unique resource names
-3. **Code-Only Focus**: Scripts are designed for code deployment after infrastructure exists
-4. **DEV Configuration**: Frontend script includes hardcoded DEV environment AI Foundry settings
-5. **Repeatable**: Code deployments can be run multiple times for updates
+The project includes **comprehensive CI/CD integration** with Azure Deployment Environments that provides true end-to-end validation of the complete deployment pipeline.
 
-### 📝 Example: Complete ADE to Running App
+### Complete Validation Workflow
 
-```powershell
-# 1. After ADE deployment, discover resources
-az functionapp list --query "[?contains(name, 'func-ai-foundry-spa-backend')].{name:name,resourceGroup:resourceGroup}" --output table
-az staticwebapp list --query "[?contains(name, 'stapp-aibox-fd')].{name:name,resourceGroup:resourceGroup}" --output table
+The CI/CD pipeline automatically performs full end-to-end validation on every push to main branch and pull requests:
 
-# 2. Deploy backend (replace with actual names from step 1)
-./deploy-scripts/deploy-backend-func-code.ps1 `
-    -FunctionAppName "func-ai-foundry-spa-backend-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-backend-dev-eus2"
+#### 1. **ADE Environment Creation**
+- Creates temporary ADE environments for both frontend and backend
+- Uses unique naming with run attempt support for re-runs: `pr-fd-123-45-2` or `main-be-67-89-1`
+- Automatically expires after 8 hours (no manual cleanup needed)
 
-# 3. Deploy frontend (replace with actual names from step 1)  
-./deploy-scripts/deploy-frontend-spa-code.ps1 `
-    -StaticWebAppName "stapp-aibox-fd-dev-eus2" `
-    -ResourceGroupName "rg-ai-foundry-spa-frontend-dev-eus2" `
-    -BackendUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net/api"
+#### 2. **Infrastructure Deployment**
+- Deploys Bicep templates through ADE catalog
+- Validates DevCenter catalog compatibility
+- Tests complete Azure resource provisioning
 
-# 4. Test the deployment
-./tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"
+#### 3. **Application Code Deployment**
+- **Frontend**: Deploys actual application code to ADE-created Static Web App
+- **Backend**: Deploys actual Function App code to ADE-created Function App
+- Uses the same deployment methods as production
+
+#### 4. **Comprehensive Testing**
+- **Infrastructure Validation**: Tests that Azure resources were created properly
+- **Post-Deployment Testing**: Tests Function App health and functionality after code deployment
+- **AI Integration**: Validates AI Foundry agent connectivity and responses
+- **Application Testing**: Tests complete user workflow end-to-end
+- **Integration Testing**: Validates frontend-backend communication
+
+#### 5. **Automatic Cleanup**
+- 8-hour automatic expiration eliminates manual cleanup
+- Cost-effective temporary environment validation
+- No resource accumulation or orphaned environments
+
+### CI Workflow Integration
+
+```yaml
+# .github/workflows/ci.yml (simplified view)
+jobs:
+  # Build artifacts first
+  frontend-build:
+    # Creates frontend-dist artifact
+  backend-build:
+    # Creates backend-publish artifact
+
+  # ADE End-to-End Validation
+  deploy-ade-frontend-validation:
+    needs: [bicep-validation, frontend-build]
+    steps:
+      - name: Create ADE Frontend Environment
+        # Uses jq to inject dynamic environment name into parameters
+        # Creates ADE environment with 8-hour expiration
+      - name: Deploy Frontend Code to ADE Static Web App
+        # Downloads frontend-dist artifact
+        # Deploys to ADE-created Static Web App
+      - name: Test Frontend Application
+        # Tests application accessibility and functionality
+
+  deploy-ade-backend-validation:
+    needs: [bicep-validation, backend-build]
+    steps:
+      - name: Create ADE Backend Environment
+        # Creates ADE environment with 8-hour expiration
+      - name: Validate Backend Infrastructure
+        # Validates that Function App was created properly
+      - name: Deploy Backend Code to ADE Function App
+        # Downloads backend-publish artifact
+        # Deploys ZIP to ADE-created Function App
+      - name: Test Deployed Backend Application
+        # Comprehensive endpoint testing with retry logic after deployment
+
+  ade-validation-summary:
+    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation]
+    # Gates main branch deployment - only proceeds if ADE validation passes
 ```
 
-Your AI Foundry SPA is now live! 🎉
+### Key Benefits
 
-## 📚 References
+#### For Development Teams
+- **Early Problem Detection**: Catches deployment issues before production
+- **Real Environment Testing**: Uses actual Azure resources, not mocks or stubs
+- **Complete Pipeline Validation**: Tests the entire deployment workflow
+- **Zero Maintenance**: Automatic cleanup eliminates resource management overhead
 
-- [Azure Deployment Environments Documentation](https://learn.microsoft.com/en-us/azure/deployment-environments/)
-- [Environment.yaml Schema Reference](https://learn.microsoft.com/en-us/azure/deployment-environments/concept-environment-yaml)
-- [Environment Definition Configuration](https://learn.microsoft.com/en-us/azure/deployment-environments/configure-environment-definition)
-- [ADE Schema JSON](https://github.com/Azure/deployment-environments/releases/download/2022-11-11-preview/manifest.schema.json)
+#### For Enterprise Organizations
+- **DevCenter Validation**: Confirms ADE catalog compatibility in real environments
+- **Governance Testing**: Validates policy compliance and resource naming
+- **Cost Control**: Temporary environments with automatic expiration
+- **Compliance**: Tests complete deployment pipeline in governed environments
 
-## 🎯 Next Steps
+#### For DevOps Teams
+- **Pipeline Confidence**: Validates entire CI/CD pipeline before production deployment
+- **Infrastructure Validation**: Tests Bicep templates in ADE context
+- **Deployment Validation**: Tests actual application deployment procedures
+- **Regression Prevention**: Catches breaking changes early in the development cycle
 
-1. **Backend Environment**: Create similar environment.yaml for backend infrastructure
-2. **Testing**: Validate deployment through ADE portal  
-3. **CI/CD Integration**: Automate code deployment in pipelines
-4. **Governance**: Implement environment policies and controls
+### Configuration Files
 
-## Related Documentation
+The ADE validation uses these configuration files:
 
-- [Multi-Resource Group Architecture](../architecture/multi-rg-architecture.md) - Infrastructure design patterns
-- [Deployment Guide](deployment-guide.md) - Complete deployment instructions
-- [Infrastructure Overview](infrastructure.md) - High-level infrastructure documentation
+```
+infra/environments/
+├── frontend/
+│   └── ade.parameters.json    # Frontend ADE parameters with CI tags
+└── backend/
+    └── ade.parameters.json    # Backend ADE parameters with CI tags
+```
+
+**Resource Tagging for CI/CD:**
+```json
+{
+  "resourceTags": {
+    "value": {
+      "Purpose": "CI/CD-ADE-Validation",
+      "Component": "Frontend",
+      "WorkflowRun": "Injected by CI",
+      "Branch": "Injected by CI", 
+      "DeleteAfter": "Injected by CI"
+    }
+  }
+}
+```
+
+### Troubleshooting ADE Validation
+
+#### Common Issues and Solutions
+
+**Environment Creation Timeout:**
+- ADE environments have 10-15 minute creation timeouts
+- Check DevCenter catalog availability
+- Verify ADE project permissions
+
+**Application Deployment Failures:**
+- Verify build artifacts are properly created
+- Check Function App deployment package format
+- Validate Static Web App token generation
+
+**Test Failures:**
+- Health endpoints may need warm-up time (60 seconds)
+- Network propagation delays for Static Web Apps (30 seconds)
+- AI Foundry connectivity requires proper RBAC assignments
+
+#### Monitoring and Debugging
+
+**GitHub Actions Logs:**
+- Each step provides detailed deployment logs
+- Failed deployments include resource error details
+- Test results show specific endpoint failures
+
+**Azure Portal:**
+- Temporary resource groups: `ai-foundry-{environment-name}`
+- Resource deployment status in ADE portal
+- Application Insights for runtime errors
+
+### Extending ADE Validation
+
+To add additional validation steps:
+
+1. **Modify CI Workflow**: Add new test steps to existing jobs
+2. **Create New Test Scripts**: Add to `tests/core/` directory
+3. **Update Artifacts**: Ensure required build outputs are available
+4. **Configure Timeouts**: Account for additional deployment time
+
+**Example: Adding Database Tests**
+```yaml
+- name: Test Database Connectivity
+  run: |
+    echo "🔍 Testing database connectivity..."
+    # Your database test logic here
+    pwsh -File tests/core/Test-DatabaseEndpoints.ps1 -ConnectionString "$DB_CONNECTION"
+```
 
 ## 🔧 Parameter Extraction for CI/CD
 
