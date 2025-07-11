@@ -86,11 +86,11 @@ jobs:
       run: |
         echo "🚀 Creating ADE frontend environment for validation..."
         
-        # Generate unique environment name based on event type
+        # Generate unique environment name based on event type (includes run attempt for reruns)
         if [ "${{ github.event_name }}" = "pull_request" ]; then
-          ADE_ENV_NAME="pr-fd-${{ github.event.number }}-${{ github.run_number }}"
+          ADE_ENV_NAME="pr-fd-${{ github.event.number }}-${{ github.run_number }}-${{ github.run_attempt }}"
         else
-          ADE_ENV_NAME="main-fd-${{ github.run_number }}"
+          ADE_ENV_NAME="main-fd-${{ github.run_number }}-${{ github.run_attempt }}"
         fi
         
         echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
@@ -104,12 +104,12 @@ jobs:
         # Update static ADE parameters file with dynamic environment name
         jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/frontend/ade.parameters.json > /tmp/ade-frontend-params.json
         
-        # Calculate expiration time (24 hours from now)
-        EXPIRATION_TIME=$(date -u -d "+24 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        # Calculate expiration time (8 hours from now)
+        EXPIRATION_TIME=$(date -u -d "+8 hours" '+%Y-%m-%dT%H:%M:%SZ')
         echo "🕒 Setting environment expiration to: $EXPIRATION_TIME"
         
-        # Create ADE environment with 24-hour expiration
-        echo "📦 Deploying ADE frontend environment: $ADE_ENV_NAME (expires in 24 hours)"
+        # Create ADE environment with 8-hour expiration
+        echo "📦 Deploying ADE frontend environment: $ADE_ENV_NAME (expires in 8 hours)"
         az devcenter dev environment create \
           --dev-center-name "devcenter-eus-dev" \
           --project-name "ai-foundry" \
@@ -203,11 +203,11 @@ jobs:
       run: |
         echo "🚀 Creating ADE backend environment for validation..."
         
-        # Generate unique environment name based on event type
+        # Generate unique environment name based on event type (includes run attempt for reruns)
         if [ "${{ github.event_name }}" = "pull_request" ]; then
-          ADE_ENV_NAME="pr-be-${{ github.event.number }}-${{ github.run_number }}"
+          ADE_ENV_NAME="pr-be-${{ github.event.number }}-${{ github.run_number }}-${{ github.run_attempt }}"
         else
-          ADE_ENV_NAME="main-be-${{ github.run_number }}"
+          ADE_ENV_NAME="main-be-${{ github.run_number }}-${{ github.run_attempt }}"
         fi
         
         echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
@@ -221,12 +221,12 @@ jobs:
         # Update static ADE parameters file with dynamic environment name
         jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/backend/ade.parameters.json > /tmp/ade-backend-params.json
         
-        # Calculate expiration time (24 hours from now)
-        EXPIRATION_TIME=$(date -u -d "+24 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        # Calculate expiration time (8 hours from now)
+        EXPIRATION_TIME=$(date -u -d "+8 hours" '+%Y-%m-%dT%H:%M:%SZ')
         echo "🕒 Setting environment expiration to: $EXPIRATION_TIME"
         
-        # Create ADE environment with 24-hour expiration
-        echo "📦 Deploying ADE backend environment: $ADE_ENV_NAME (expires in 24 hours)"
+        # Create ADE environment with 8-hour expiration
+        echo "📦 Deploying ADE backend environment: $ADE_ENV_NAME (expires in 8 hours)"
         az devcenter dev environment create \
           --dev-center-name "devcenter-eus-dev" \
           --project-name "ai-foundry" \
@@ -275,31 +275,24 @@ jobs:
       run: |
         echo "🔍 Validating backend deployment in ADE environment..."
         
-        # Find Function App by resource type
-        FUNCTION_APP_NAME=$(az functionapp list \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
-          --output tsv)
+        # Construct Function App URL based on ADE naming convention
+        FUNCTION_APP_URL="https://func-ai-foundry-${ADE_ENV_NAME}.azurewebsites.net"
+        echo "🔗 Function App URL: $FUNCTION_APP_URL"
         
-        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
-          echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
-          echo "status=failed" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+        # Wait a moment for the deployment to fully complete
+        sleep 30
         
-        # Check if Function App can connect to AI Foundry (basic connectivity test)
-        echo "🔗 Testing Function App connectivity..."
-        FUNCTION_APP_URL="https://$FUNCTION_APP_NAME.azurewebsites.net"
+        # Test comprehensive endpoints using PowerShell script
+        echo "🧪 Running comprehensive endpoint tests..."
+        pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$FUNCTION_APP_URL" -Comprehensive
         
-        # Test health endpoint (if it exists)
-        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FUNCTION_APP_URL/api/health" || echo "000")
-        
-        if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "404" ]; then
-          echo "✅ Backend validation passed - Function App: $FUNCTION_APP_NAME (HTTP: $HTTP_STATUS)"
+        if [ $? -eq 0 ]; then
+          echo "✅ Backend validation passed - Function App endpoints are healthy"
           echo "status=success" >> $GITHUB_OUTPUT
         else
-          echo "⚠️ Backend validation completed with warnings - Function App: $FUNCTION_APP_NAME (HTTP: $HTTP_STATUS)"
-          echo "status=success" >> $GITHUB_OUTPUT
+          echo "❌ Backend validation failed - Function App endpoints not responding correctly"
+          echo "status=failed" >> $GITHUB_OUTPUT
+          exit 1
         fi
 
   ade-validation-summary:
@@ -341,7 +334,7 @@ jobs:
         echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🕒 Automatic Cleanup" >> $GITHUB_STEP_SUMMARY
-        echo "✅ **Note**: ADE environments are configured with 24-hour expiration and will be automatically deleted." >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Note**: ADE environments are configured with 8-hour expiration and will be automatically deleted." >> $GITHUB_STEP_SUMMARY
         echo "No manual cleanup required." >> $GITHUB_STEP_SUMMARY
 
   deploy-dev-infrastructure:
