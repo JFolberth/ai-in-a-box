@@ -101,21 +101,15 @@ jobs:
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         echo "resource-group-name=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
         
-        # Create dynamic ADE parameters file
-        cat > /tmp/ade-frontend-params.json << EOF
-        {
-          "applicationName": "aiboxcicd",
-          "logAnalyticsWorkspaceName": "la-logging-dev-eus",
-          "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
-          "adeName": "$ADE_ENV_NAME",
-          "devCenterProjectName": "ai-foundry",
-          "environmentName": "dev",
-          "location": "eastus2"
-        }
-        EOF
+        # Update static ADE parameters file with dynamic environment name
+        jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/frontend/ade.parameters.json > /tmp/ade-frontend-params.json
         
-        # Create ADE environment
-        echo "📦 Deploying ADE frontend environment: $ADE_ENV_NAME"
+        # Calculate expiration time (24 hours from now)
+        EXPIRATION_TIME=$(date -u -d "+24 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        echo "🕒 Setting environment expiration to: $EXPIRATION_TIME"
+        
+        # Create ADE environment with 24-hour expiration
+        echo "📦 Deploying ADE frontend environment: $ADE_ENV_NAME (expires in 24 hours)"
         az devcenter dev environment create \
           --dev-center-name "devcenter-eus-dev" \
           --project-name "ai-foundry" \
@@ -124,6 +118,7 @@ jobs:
           --environment-type "dev" \
           --name "$ADE_ENV_NAME" \
           --parameters /tmp/ade-frontend-params.json \
+          --expiration "$EXPIRATION_TIME" \
           --no-wait
         
         echo "⏳ Waiting for ADE frontend environment deployment to complete..."
@@ -223,24 +218,15 @@ jobs:
         echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
         echo "resource-group-name=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
         
-        # Create dynamic ADE parameters file
-        cat > /tmp/ade-backend-params.json << EOF
-        {
-          "applicationName": "aiboxcicd",
-          "aiFoundryInstanceName": "cs-ai-foundry-dev-eus2",
-          "aiFoundryResourceGroupName": "rg-ai-foundry-spa-aifoundry-dev-eus2",
-          "aiFoundryEndpoint": "https://cs-ai-foundry-dev-eus2.services.ai.azure.com/api/projects/aiproj-ai-foundry-dev-eus2",
-          "aiFoundryAgentId": "",
-          "aiFoundryAgentName": "AI in A Box",
-          "logAnalyticsWorkspaceName": "la-logging-dev-eus",
-          "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
-          "adeName": "$ADE_ENV_NAME",
-          "devCenterProjectName": "ai-foundry"
-        }
-        EOF
+        # Update static ADE parameters file with dynamic environment name
+        jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/backend/ade.parameters.json > /tmp/ade-backend-params.json
         
-        # Create ADE environment
-        echo "📦 Deploying ADE backend environment: $ADE_ENV_NAME"
+        # Calculate expiration time (24 hours from now)
+        EXPIRATION_TIME=$(date -u -d "+24 hours" '+%Y-%m-%dT%H:%M:%SZ')
+        echo "🕒 Setting environment expiration to: $EXPIRATION_TIME"
+        
+        # Create ADE environment with 24-hour expiration
+        echo "📦 Deploying ADE backend environment: $ADE_ENV_NAME (expires in 24 hours)"
         az devcenter dev environment create \
           --dev-center-name "devcenter-eus-dev" \
           --project-name "ai-foundry" \
@@ -249,6 +235,7 @@ jobs:
           --environment-type "dev" \
           --name "$ADE_ENV_NAME" \
           --parameters /tmp/ade-backend-params.json \
+          --expiration "$EXPIRATION_TIME" \
           --no-wait
         
         echo "⏳ Waiting for ADE backend environment deployment to complete..."
@@ -345,32 +332,17 @@ jobs:
           exit 1
         fi
     
-    - name: Cleanup ADE Environments (Optional)
-      if: github.event_name == 'pull_request' && steps.summary.outputs.status == 'success'
+    - name: ADE Environment Information
       run: |
-        echo "🧹 Cleaning up ADE environments for PR validation..."
-        
-        # Cleanup frontend environment
-        if [ -n "${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}" ]; then
-          echo "Deleting frontend ADE environment: ${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}"
-          az devcenter dev environment delete \
-            --dev-center-name "devcenter-eus-dev" \
-            --project-name "ai-foundry" \
-            --name "${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}" \
-            --yes --no-wait || echo "Failed to delete frontend environment (may not exist)"
-        fi
-        
-        # Cleanup backend environment
-        if [ -n "${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}" ]; then
-          echo "Deleting backend ADE environment: ${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}"
-          az devcenter dev environment delete \
-            --dev-center-name "devcenter-eus-dev" \
-            --project-name "ai-foundry" \
-            --name "${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}" \
-            --yes --no-wait || echo "Failed to delete backend environment (may not exist)"
-        fi
-        
-        echo "✅ Cleanup initiated (environments will be deleted asynchronously)"
+        echo "## 🏗️ ADE Validation Environments" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Environment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Environment**: \`${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🕒 Automatic Cleanup" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Note**: ADE environments are configured with 24-hour expiration and will be automatically deleted." >> $GITHUB_STEP_SUMMARY
+        echo "No manual cleanup required." >> $GITHUB_STEP_SUMMARY
 
   deploy-dev-infrastructure:
     name: Deploy Dev Infrastructure

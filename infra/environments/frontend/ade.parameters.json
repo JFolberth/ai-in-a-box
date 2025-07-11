@@ -5,5 +5,13 @@
   "adeName": "cicd-fd",
   "devCenterProjectName": "ai-foundry",
   "environmentName": "dev",
-  "location": "eastus2"
+  "location": "eastus2",
+  "tags": {
+    "Purpose": "CI-CD-Validation",
+    "Component": "Frontend",
+    "Environment": "Temporary",
+    "CreatedBy": "GitHub-Actions",
+    "Repository": "ai-in-a-box",
+    "AutoDelete": "true"
+  }
 }
