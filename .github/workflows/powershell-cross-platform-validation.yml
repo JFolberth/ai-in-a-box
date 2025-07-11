@@ -1,18 +1,28 @@
 name: PowerShell Cross-Platform Validation
 
-permissions:
-  contents: read
-
 on:
   pull_request:
     paths:
       - '**/*.ps1'
+      - 'deploy-scripts/**'
+      - 'tests/**/*.ps1'
+      - 'scripts/**/*.ps1'
+      - 'infra/**/*.ps1'
     branches: [ main, develop ]
   push:
     paths:
       - '**/*.ps1'
+      - 'deploy-scripts/**'
+      - 'tests/**/*.ps1'
+      - 'scripts/**/*.ps1'
+      - 'infra/**/*.ps1'
     branches: [ main, develop ]
   workflow_dispatch:
+
+# Prevent conflicts with main CI workflow
+concurrency:
+  group: powershell-validation-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate-powershell-windows:
@@ -56,14 +66,17 @@ jobs:
             
             try {
               # Parse the script to check for syntax errors
+              $parseErrors = @()
+              $tokens = @()
               $null = [System.Management.Automation.Language.Parser]::ParseFile(
                 $script.FullName, 
-                [ref]$null, 
+                [ref]$tokens, 
                 [ref]$parseErrors
               )
               
-              if ($parseErrors) {
-                $errors += "❌ $($script.FullName): $($parseErrors -join '; ')"
+              if ($parseErrors.Count -gt 0) {
+                $errorMessages = $parseErrors | ForEach-Object { $_.Message }
+                $errors += "❌ $($script.FullName): $($errorMessages -join '; ')"
               } else {
                 Write-Host "✅ $($script.Name) - Syntax OK" -ForegroundColor Green
               }
@@ -73,7 +86,7 @@ jobs:
             }
           }
           
-          if ($errors) {
+          if ($errors.Count -gt 0) {
             Write-Host "`n🚨 PowerShell Syntax Errors Found:" -ForegroundColor Red
             $errors | ForEach-Object { Write-Host $_ -ForegroundColor Red }
             exit 1
@@ -90,7 +103,8 @@ jobs:
           $scripts = Get-ChildItem -Path . -Recurse -Filter "*.ps1" -File
           
           foreach ($script in $scripts) {
-            $content = Get-Content $script.FullName -Raw
+            $content = Get-Content $script.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
             
             # Check for Windows-only PATH manipulation
             if ($content -match '\[System\.Environment\]::GetEnvironmentVariable\("PATH", "Machine"\).*\+.*";"') {
@@ -112,7 +126,7 @@ jobs:
             }
           }
           
-          if ($issues) {
+          if ($issues.Count -gt 0) {
             Write-Host "`n⚠️  Potential Cross-Platform Issues Found:" -ForegroundColor Yellow
             $issues | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
             # Don't fail the build for warnings, but report them
@@ -161,14 +175,17 @@ jobs:
             
             try {
               # Parse the script to check for syntax errors
+              $parseErrors = @()
+              $tokens = @()
               $null = [System.Management.Automation.Language.Parser]::ParseFile(
                 $script.FullName, 
-                [ref]$null, 
+                [ref]$tokens, 
                 [ref]$parseErrors
               )
               
-              if ($parseErrors) {
-                $errors += "❌ $($script.FullName): $($parseErrors -join '; ')"
+              if ($parseErrors.Count -gt 0) {
+                $errorMessages = $parseErrors | ForEach-Object { $_.Message }
+                $errors += "❌ $($script.FullName): $($errorMessages -join '; ')"
               } else {
                 Write-Host "✅ $($script.Name) - Syntax OK" -ForegroundColor Green
               }
@@ -178,7 +195,7 @@ jobs:
             }
           }
           
-          if ($errors) {
+          if ($errors.Count -gt 0) {
             Write-Host "`n🚨 PowerShell Syntax Errors Found:" -ForegroundColor Red
             $errors | ForEach-Object { Write-Host $_ -ForegroundColor Red }
             exit 1
