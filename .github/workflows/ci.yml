@@ -158,6 +158,9 @@ jobs:
       run: |
         echo "🔍 Validating frontend deployment in ADE environment..."
         
+        # Get resource group name from previous step output
+        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
+        
         # Find Static Web App by resource type
         STATIC_WEB_APP_NAME=$(az staticwebapp list \
           --resource-group "$RESOURCE_GROUP" \
@@ -274,6 +277,9 @@ jobs:
       id: validate-deployment
       run: |
         echo "🔍 Validating backend deployment in ADE environment..."
+        
+        # Get ADE environment name from previous step output or environment variable
+        ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
         
         # Construct Function App URL based on ADE naming convention
         FUNCTION_APP_URL="https://func-ai-foundry-${ADE_ENV_NAME}.azurewebsites.net"
