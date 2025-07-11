@@ -12,6 +12,14 @@ devDrive:
     fileSystem: "NTFS"
 
 tasks:
+  # Clone AI in a Box repository to DevDrive for optimal performance
+  - name: git-clone
+    description: Clone the AI in a Box repository to DevDrive
+    parameters:
+      repositoryUrl: https://github.com/JFolberth/ai-in-a-box
+      directory: 'Z:\Workspaces'
+      
+  # Core Development Tools
   - name: winget
     description: Install Windows Package Manager Client (winget) updates
     parameters:
@@ -37,10 +45,6 @@ tasks:
     parameters:
       package: Microsoft.DotNet.SDK.8
   - name: winget
-    description: Install Azure Functions Core Tools for local development
-    parameters:
-      package: Microsoft.AzureFunctionsCoreTools
-  - name: winget
     description: Install Python for development scripting and tooling
     parameters:
       package: Python.Python.3.12
@@ -52,15 +56,48 @@ tasks:
     description: Install Docker Desktop for containerized development
     parameters:
       package: Docker.DockerDesktop
+      
+  # System Configuration
   - name: powershell
-    description: Install Azure CLI extensions system-wide
+    description: Install Azure CLI extensions and configure system
     parameters:
       command: |
         # Install Azure CLI Bicep extension (system-wide)
         az extension add --name bicep --only-show-errors
         # Install Azure CLI DevCenter extension (system-wide)
         az extension add --name devcenter --only-show-errors
+        
+        # Install Azure Functions Core Tools manually (winget package not found)
+        $functionsUrl = "https://github.com/Azure/azure-functions-core-tools/releases/latest/download/Azure.Functions.Cli.win-x64.3.0.3477.zip"
+        $downloadPath = "$env:TEMP\azure-functions-core-tools.zip"
+        $installPath = "C:\Program Files\Azure Functions Core Tools"
+        
+        try {
+            Write-Host "Downloading Azure Functions Core Tools..." -ForegroundColor Yellow
+            Invoke-WebRequest -Uri $functionsUrl -OutFile $downloadPath
+            
+            if (Test-Path $installPath) {
+                Remove-Item -Path $installPath -Recurse -Force
+            }
+            New-Item -ItemType Directory -Path $installPath -Force
+            
+            Expand-Archive -Path $downloadPath -DestinationPath $installPath
+            
+            # Add to system PATH
+            $pathEntry = $installPath
+            $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+            if ($currentPath -notlike "*$pathEntry*") {
+                [Environment]::SetEnvironmentVariable("PATH", "$currentPath;$pathEntry", "Machine")
+            }
+            
+            Write-Host "✅ Azure Functions Core Tools installed successfully!" -ForegroundColor Green
+        } catch {
+            Write-Host "⚠️ Azure Functions Core Tools installation failed: $_" -ForegroundColor Yellow
+            Write-Host "You may need to install it manually later" -ForegroundColor Gray
+        }
+        
         Write-Host "System-level setup complete!" -ForegroundColor Green
+
 userTasks:
   - name: powershell
     description: Install VS Code extensions for AI Foundry SPA development
