@@ -72,6 +72,8 @@ az deployment sub create \
 - **Infrastructure**: [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) Azure Bicep templates
 - **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
 
+**📋 What gets deployed?** See the complete [Resource Deployment Reference](docs/deployment/resource-deployment-reference.md) for all Azure resources, naming conventions, and deployment scenarios.
+
 ## 🔄 CI/CD Pipeline
 
 **Fully automated** build, validation, and deployment pipeline for main branch:
@@ -127,6 +129,7 @@ The CI pipeline includes comprehensive Azure Bicep template validation:
 |-------------------------|-------|
 | **First time using AI Foundry** | [Getting Started](docs/getting-started/) |
 | **Deploy the app quickly** | [Quick Start](docs/getting-started/03-quick-start.md) |
+| **See what Azure resources get deployed** | [Resource Deployment Reference](docs/deployment/resource-deployment-reference.md) |
 | **Set up local development** | [Local Development](docs/development/local-development.md) |
 | **Customize the AI or UI** | [Customization Guide](docs/configuration/customization.md) |
 | **Deploy to production** | [Deployment Guide](docs/deployment/deployment-guide.md) |
