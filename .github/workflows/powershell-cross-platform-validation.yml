@@ -1,5 +1,8 @@
 name: PowerShell Cross-Platform Validation
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
