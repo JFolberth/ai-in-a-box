@@ -453,9 +453,7 @@ __queuestorage__/
 __tablestorage__/
 AzuriteConfig
 
-# DevBox specific files
-.devbox/
-devbox-*.log
+
 
 # Additional project-specific exclusions
 *.bicep.corrupted
