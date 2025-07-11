@@ -63,7 +63,7 @@ Deep-dive into advanced concepts and customizations:
 ### Advanced Concepts
 - **[Architecture Decisions](advanced/architecture-decisions.md)** - Technical deep-dives
 - **[Multi-Resource Group Architecture](architecture/multi-rg-architecture.md)** - Multi-RG deployment patterns
-- **[Azure Deployment Environments](deployment/azure-deployment-environments.md)** - ADE integration
+- **[Azure Deployment Environments](deployment/azure-deployment-environments.md)** - ADE end-to-end validation
 - **[Security](advanced/security.md)** - Security considerations and best practices
 
 ### Technical Fixes & API Documentation

@@ -402,26 +402,48 @@ curl "https://$BACKEND_URL/api/health" | jq .
 
 ### Automatic CI/CD Pipeline (Current Implementation)
 
-The project includes a **fully automated CI/CD pipeline** that deploys both infrastructure and application code on main branch pushes:
+The project includes a **fully automated CI/CD pipeline** with comprehensive end-to-end validation that deploys both infrastructure and application code on main branch pushes:
 
 ```yaml
 # .github/workflows/ci.yml
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  # 1. Build and validate
-  bicep-validation: # Validates infrastructure templates
-  frontend-build:   # Builds JavaScript SPA
-  backend-build:    # Builds .NET Azure Functions
+  # 1. Build and validate (runs in parallel)
+  bicep-validation:     # Validates infrastructure templates
+  frontend-build:       # Builds JavaScript SPA and creates artifacts
+  backend-build:        # Builds .NET Azure Functions and creates artifacts
   
-  # 2. Deploy infrastructure
+  # 2. ADE End-to-End Validation (runs on PRs and main pushes)
+  deploy-ade-frontend-validation:
+    # - Creates temporary ADE environment
+    # - Deploys infrastructure via ADE catalog
+    # - Deploys frontend code to Static Web App
+    # - Tests deployed application functionality
+    # - 8-hour auto-expiration
+    
+  deploy-ade-backend-validation:
+    # - Creates temporary ADE environment  
+    # - Deploys infrastructure via ADE catalog
+    # - Deploys backend code to Function App
+    # - Tests comprehensive endpoint functionality
+    # - 8-hour auto-expiration
+    
+  ade-validation-summary:
+    # - Summarizes ADE validation results
+    # - Gates main branch deployment
+  
+  # 3. Deploy infrastructure to dev environment (main branch only)
   deploy-dev-infrastructure:
-    needs: [bicep-validation]
+    needs: [bicep-validation, ade-validation-summary]
+    # Only runs if ADE validation passes
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
     
-  # 3. Deploy application code automatically
+  # 4. Deploy application code automatically (main branch only)
   deploy-backend-code:
     needs: [backend-build, deploy-dev-infrastructure]
     # Uses deploy-backend-func-code.ps1 with infrastructure outputs
@@ -430,6 +452,13 @@ jobs:
     needs: [frontend-build, deploy-dev-infrastructure, deploy-backend-code]
     # Uses deploy-frontend-spa-code.ps1 with infrastructure outputs
 ```
+
+**Key Pipeline Features:**
+- **Parallel Builds**: Frontend, backend, and infrastructure validation run simultaneously
+- **ADE Validation**: Complete application deployment tested in temporary environments
+- **Gated Deployment**: Main branch deployment only proceeds if ADE validation passes
+- **Zero Manual Intervention**: Fully automated from code push to running application
+- **Cost Optimization**: Temporary ADE environments with 8-hour auto-expiration
 
 ### Configure GitHub Secrets
 
@@ -457,16 +486,30 @@ USER_PRINCIPAL_ID: "your-user-principal-id"
 2. **Review workflow** in GitHub Actions tab
 3. **Monitor deployment** progress in real-time
 
-### Automated ADE Testing
+### Automated ADE End-to-End Validation
 
-The repository includes automated ADE frontend deployment testing that runs on every push to the `main` branch:
+The repository includes **comprehensive ADE end-to-end validation** that runs on every push to the `main` branch and on pull requests:
 
-**How it works:**
-1. **Triggered automatically** on main branch pushes after successful builds
-2. **Creates ADE environment** using `az devcenter dev environment create`
-3. **Deploys frontend code** to the ADE-created Static Web App
-4. **Reports deployment status** in the CI summary
-5. **Cleans up automatically** to avoid resource accumulation
+**Complete Validation Process:**
+1. **Infrastructure Deployment** - Creates temporary ADE environments for frontend and backend
+2. **Application Code Deployment** - Deploys actual frontend and backend code to ADE resources
+3. **Functional Testing** - Tests deployed applications with comprehensive endpoint validation
+4. **Automatic Cleanup** - Environments expire automatically after 8 hours (no manual cleanup needed)
+
+**What Gets Tested:**
+- ✅ **ADE Environment Creation** - Validates DevCenter catalog compatibility
+- ✅ **Bicep Template Deployment** - Tests infrastructure deployment in ADE context
+- ✅ **Frontend Code Deployment** - Deploys and tests Static Web App deployment
+- ✅ **Backend Code Deployment** - Deploys and tests Function App with comprehensive endpoint testing
+- ✅ **AI Integration** - Validates AI Foundry agent connectivity and responses
+- ✅ **Cross-Component Integration** - Tests complete application workflow
+
+**Benefits:**
+- **Early Issue Detection**: Catches deployment problems before production
+- **Real Environment Testing**: Uses actual Azure resources, not mocks
+- **Cost Effective**: Temporary environments with automatic 8-hour expiration
+- **Enterprise Validation**: Confirms DevCenter catalog and ADE compatibility
+- **Zero Maintenance**: No manual cleanup required
 
 ## 🔁 Method 5: Code-Only Deployment
 
