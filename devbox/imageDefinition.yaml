@@ -92,6 +92,7 @@ userTasks:
         code --install-extension GitHub.copilot
         code --install-extension GitHub.copilot-chat
         code --install-extension ms-toolsai.vscode-ai-toolkit
+        code --install-extension ms-toolsai.vscode-ai-foundry
         code --install-extension ms-python.python
         code --install-extension ms-python.pylint
         code --install-extension ms-vscode.vscode-dev-containers
