@@ -79,16 +79,15 @@ instructions: |
 # Optional: Model configuration and behavior parameters
 model:
   # Model ID - common options: gpt-4, gpt-4-turbo, gpt-35-turbo, gpt-4o, gpt-4o-mini
-  id: gpt-4o-mini
+  id: gpt-4.1-mini
   
   # Model parameters that control response behavior
   options:
-    # Temperature: Controls creativity/randomness (0.0 = deterministic, 1.0 = very creative)
+    # Temperature controls creativity/randomness: 0.0 = deterministic, 1.0 = very creative
     # Recommended: 0.1-0.3 for factual responses, 0.7-0.9 for creative tasks
-    # Higher temperature for more creative conspiracy theories!
     temperature: 0.8
     
-    # Top-p: Controls diversity of word selection (0.1 = conservative, 1.0 = diverse)
+    # Top-p controls diversity of word selection: 0.1 = conservative, 1.0 = diverse
     # Recommended: 0.9-1.0 for most use cases
     top_p: 0.95
 
