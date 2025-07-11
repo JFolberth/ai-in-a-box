@@ -373,14 +373,25 @@ resource budget 'Microsoft.Consumption/budgets@2021-10-01' = {
 
 ## 🔗 Related Documentation
 
+### Infrastructure Documentation
+- **[Resource Deployment Reference](resource-deployment-reference.md)** - Complete resource inventory and deployment scenarios
+- **[Resource Naming Guide](resource-naming-guide.md)** - Comprehensive naming convention documentation
+- **[RBAC Assignment Reference](rbac-reference.md)** - Detailed RBAC configuration and security
+
+### Deployment & Operations
 - **[Deployment Guide](deployment-guide.md)** - Step-by-step deployment instructions
-- **[Multi-Environment Setup](multi-environment.md)** - Dev/staging/production patterns
-- **[Security Guide](../advanced/security.md)** - Advanced security considerations
-- **[Monitoring Setup](../operations/monitoring.md)** - Detailed monitoring configuration
+- **[Multi-RG Architecture](../architecture/multi-rg-architecture.md)** - Resource group separation strategy
+
+### Validation & Testing
+- **[Post-Deployment Validation](../../scripts/Test-DeploymentValidation.ps1)** - Automated deployment validation script
+- **[RBAC Validation](../../scripts/Test-RbacAssignments.ps1)** - RBAC assignment verification script
+- **[Naming Convention Validation](../../scripts/Test-NamingConventions.ps1)** - Resource naming validation script
 
 ---
 
 **Ready to deploy this infrastructure?** → Continue to [Deployment Guide](deployment-guide.md)
+
+**Need to validate your deployment?** → Use the [Resource Deployment Reference](resource-deployment-reference.md) and validation scripts
 
 ## 🏗️ Infrastructure as Code
 
