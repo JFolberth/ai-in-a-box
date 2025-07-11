@@ -4,29 +4,115 @@
 
 This is a JavaScript SPA project that integrates with a single AI Foundry endpoint and deploys to Azure Storage Static Websites using Azure CLI.
 
-## ⚠️ ⚠️ CRITICAL REQUIREMENT - ABSOLUTE PATHS ONLY ⚠️ ⚠️
+## ⚠️ ⚠️ CRITICAL REQUIREMENT - PATH MANAGEMENT ⚠️ ⚠️
 
-**🚨 ALL COMMANDS AND FILE OPERATIONS MUST USE ABSOLUTE PATHS 🚨**
+**🚨 ABSOLUTE PATHS FOR USER INSTRUCTIONS ONLY - RELATIVE PATHS IN SOURCE CONTROL 🚨**
 
-### MANDATORY ABSOLUTE PATH PATTERNS:
+### WHEN TO USE ABSOLUTE PATHS:
+**✅ USER INSTRUCTIONS & COPILOT CHAT RESPONSES:**
+- When providing commands for users to run manually
+- In troubleshooting guidance and examples
+- In documentation that references specific user scenarios
+
 ```powershell
-# ✅ CORRECT - Always use these patterns:
-az deployment sub create --template-file "C:\Users\BicepDeveloper\ai-in-a-box\infra\main-orchestrator.bicep"
-& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-backend-func-code.ps1"
-Set-Location "C:\Users\BicepDeveloper\ai-in-a-box\src\backend"
-dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
-
-# ❌ FORBIDDEN - Never use relative paths:
-az deployment sub create --template-file infra/main-orchestrator.bicep
-.\deploy-scripts\deploy-backend-func-code.ps1
-cd src/backend
+# ✅ CORRECT - In user instructions/chat responses:
+"Run this command: dotnet build /workspaces/ai-in-a-box/src/backend/AIFoundryProxy.csproj"
+"Navigate to: /workspaces/ai-in-a-box/deploy-scripts/"
+"Set-Location /workspaces/ai-in-a-box/src/backend"
 ```
 
-**WHY THIS MATTERS:**
-- ✅ Commands work from any directory
-- ✅ No ambiguity about file locations  
-- ✅ Consistent results across environments
-- ✅ Easier debugging and troubleshooting
+### WHEN TO USE RELATIVE PATHS:
+**✅ SOURCE CONTROL FILES (scripts, configs, etc.):**
+- All checked-in scripts and configuration files
+- Task definitions and workflow files
+- Any file that will be used across different environments
+
+```powershell
+# ✅ CORRECT - In source control files:
+az deployment sub create --template-file "infra/main-orchestrator.bicep"
+& "./deploy-scripts/deploy-backend-func-code.ps1"
+Set-Location "src/backend"
+dotnet build "src/backend/AIFoundryProxy.csproj"
+```
+
+**WHY THIS DISTINCTION MATTERS:**
+- ✅ **User instructions**: Work from any directory, clear and unambiguous
+- ✅ **Source control**: Portable across different workspace locations
+- ✅ **Flexibility**: Code works in devcontainers, DevBox, local machines, CI/CD
+- ✅ **Maintainability**: No hardcoded paths that break in different environments
+
+---
+
+## 🚨 CRITICAL REQUIREMENT - CROSS-PLATFORM POWERSHELL COMPATIBILITY 🚨
+
+**🔴 ALL POWERSHELL SCRIPTS MUST WORK ON BOTH WINDOWS AND LINUX/MACOS 🔴**
+
+### MANDATORY CROSS-PLATFORM PATTERNS:
+
+#### 1. PATH Environment Variable Handling
+```powershell
+# ❌ WRONG - Windows-only PATH manipulation:
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+
+# ✅ CORRECT - Cross-platform PATH handling:
+if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+    # Windows: Merge Machine and User PATH variables
+    $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+    $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    $pathSeparator = [System.IO.Path]::PathSeparator
+    if ($machinePath -and $userPath) {
+        $env:PATH = $machinePath + $pathSeparator + $userPath
+    } elseif ($machinePath) {
+        $env:PATH = $machinePath
+    } elseif ($userPath) {
+        $env:PATH = $userPath
+    }
+}
+# On Linux/macOS, $env:PATH is already properly set by the shell
+```
+
+#### 2. PATH Separator Usage
+```powershell
+# ❌ WRONG - Hardcoded Windows separator:
+$env:PATH = "$newPath;" + $env:PATH
+
+# ✅ CORRECT - Cross-platform separator:
+$pathSeparator = [System.IO.Path]::PathSeparator
+$env:PATH = "$newPath$pathSeparator" + $env:PATH
+```
+
+#### 3. Platform Detection
+```powershell
+# ✅ ALWAYS use built-in platform detection:
+if ($IsWindows) {
+    # Windows-specific code
+} elseif ($IsLinux) {
+    # Linux-specific code  
+} elseif ($IsMacOS) {
+    # macOS-specific code
+}
+```
+
+#### 4. Command Existence Checking
+```powershell
+# ✅ ALWAYS use this pattern for command detection:
+function Test-Command {
+    param([string]$Command)
+    return [bool](Get-Command $Command -ErrorAction SilentlyContinue)
+}
+```
+
+### CROSS-PLATFORM TESTING REQUIREMENTS:
+- **🧪 EVERY PowerShell script MUST be tested on both Windows and Linux**
+- **🚀 CI/CD MUST validate PowerShell scripts on both platforms**
+- **📝 Use `#!/usr/bin/env pwsh` shebang for cross-platform scripts**
+- **🔍 Test scripts in devcontainers (Linux) AND local Windows environments**
+
+### ANTI-PATTERNS TO AVOID:
+- ❌ **Windows-only environment variable access**: `[System.Environment]::GetEnvironmentVariable("PATH", "Machine")`
+- ❌ **Hardcoded path separators**: Using `;` instead of `[System.IO.Path]::PathSeparator`
+- ❌ **Platform-specific commands**: Without proper platform detection
+- ❌ **Untested cross-platform assumptions**: Always test on both Windows and Linux
 
 ---
 
@@ -89,13 +175,13 @@ cd src/backend
 
 ### ⚠️ CRITICAL - Path Management and Local Testing
 
-#### Absolute Paths - REQUIRED (REINFORCED)
-- **🚨 EVERY FILE OPERATION MUST USE ABSOLUTE PATHS 🚨**
-- **✅ ALWAYS**: `C:\Users\BicepDeveloper\ai-in-a-box\src\frontend\index.html`
-- **❌ NEVER**: `./src/frontend` or `../backend` or any relative path
+#### Absolute Paths for User Guidance - REQUIRED
+- **🚨 USER INSTRUCTIONS MUST USE CURRENT WORKSPACE ABSOLUTE PATHS 🚨**
+- **✅ ALWAYS for user commands**: `/workspaces/ai-in-a-box/src/frontend/index.html`
+- **✅ SOURCE CONTROL files**: Use relative paths like `src/frontend/index.html`
 - **✅ Tasks**: Use `${workspaceFolder}` when available in VS Code tasks
-- **✅ Scripts**: Always verify absolute paths exist before operations
-- **🎯 NO EXCEPTIONS**: This applies to ALL commands, file operations, and scripts
+- **✅ Scripts**: Validate paths exist before operations, use relative paths in checked-in files
+- **🎯 DISTINCTION**: Absolute for user guidance, relative for source control portability
 
 #### Local Testing - MANDATORY
 1. **Local Testing Sequence**:
@@ -129,6 +215,7 @@ cd src/backend
    - For Azure testing: `.\Test-FunctionEndpoints.ps1 -BaseUrl "https://func-ai-foundry-spa-backend-dev-eus2.azurewebsites.net"`
    - **Never assume default URLs** - always provide the specific endpoint being tested
    - Test scripts should validate the exact environment being tested (local vs Azure)
+   - **Note**: When providing user instructions, use absolute paths for clarity
 
 ### JavaScript/Frontend
 - Use modern ES6+ features

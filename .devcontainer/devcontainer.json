@@ -90,7 +90,7 @@
     }
   },
 
-  "postCreateCommand": "npm install && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install virtualenv black pylint && az extension add --name devcenter --only-show-errors && docker --version",
+  "postCreateCommand": "cd ${workspaceFolder}/src/frontend && npm install && cd ${workspaceFolder}/src/backend && dotnet restore && cd ${workspaceFolder} && npm install -g azure-functions-core-tools@4 --unsafe-perm true && npm install -g azurite && mkdir -p .azurite && python -m pip install --upgrade pip && python -m pip install --no-warn-script-location virtualenv black pylint && az extension add --name devcenter --only-show-errors && docker --version",
 
   "remoteUser": "node",
   

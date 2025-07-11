@@ -1,0 +1,272 @@
+name: PowerShell Cross-Platform Validation
+
+on:
+  pull_request:
+    paths:
+      - '**/*.ps1'
+      - 'deploy-scripts/**'
+      - 'tests/**/*.ps1'
+      - 'scripts/**/*.ps1'
+      - 'infra/**/*.ps1'
+    branches: [ main, develop ]
+  push:
+    paths:
+      - '**/*.ps1'
+      - 'deploy-scripts/**'
+      - 'tests/**/*.ps1'
+      - 'scripts/**/*.ps1'
+      - 'infra/**/*.ps1'
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# Prevent conflicts with main CI workflow
+concurrency:
+  group: powershell-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-powershell-windows:
+    name: Validate PowerShell Scripts on Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+          Write-Host "Platform: Windows" -ForegroundColor Green
+          Write-Host "PATH Separator: $([System.IO.Path]::PathSeparator)" -ForegroundColor Green
+      
+      - name: Test Cross-Platform Compatibility
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running Cross-Platform Compatibility Tests on Windows..." -ForegroundColor Green
+          
+          # Run the comprehensive cross-platform test
+          if (Test-Path "./tests/core/Test-CrossPlatformCompatibility.ps1") {
+            & "./tests/core/Test-CrossPlatformCompatibility.ps1" -Verbose
+          } else {
+            Write-Warning "Cross-platform test script not found"
+          }
+      
+      - name: Validate PowerShell Script Syntax
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating PowerShell Script Syntax on Windows..." -ForegroundColor Green
+          
+          $errors = @()
+          $scripts = Get-ChildItem -Path . -Recurse -Filter "*.ps1" -File
+          
+          foreach ($script in $scripts) {
+            Write-Host "Checking: $($script.FullName)" -ForegroundColor Cyan
+            
+            try {
+              # Parse the script to check for syntax errors
+              $parseErrors = @()
+              $tokens = @()
+              $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script.FullName, 
+                [ref]$tokens, 
+                [ref]$parseErrors
+              )
+              
+              if ($parseErrors.Count -gt 0) {
+                $errorMessages = $parseErrors | ForEach-Object { $_.Message }
+                $errors += "❌ $($script.FullName): $($errorMessages -join '; ')"
+              } else {
+                Write-Host "✅ $($script.Name) - Syntax OK" -ForegroundColor Green
+              }
+            }
+            catch {
+              $errors += "❌ $($script.FullName): $($_.Exception.Message)"
+            }
+          }
+          
+          if ($errors.Count -gt 0) {
+            Write-Host "`n🚨 PowerShell Syntax Errors Found:" -ForegroundColor Red
+            $errors | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+            exit 1
+          } else {
+            Write-Host "`n✅ All PowerShell scripts have valid syntax on Windows" -ForegroundColor Green
+          }
+      
+      - name: Check for Windows-Specific Patterns
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Checking for Windows-specific code patterns..." -ForegroundColor Green
+          
+          $issues = @()
+          $scripts = Get-ChildItem -Path . -Recurse -Filter "*.ps1" -File
+          
+          foreach ($script in $scripts) {
+            $content = Get-Content $script.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+            
+            # Check for Windows-only PATH manipulation
+            if ($content -match '\[System\.Environment\]::GetEnvironmentVariable\("PATH", "Machine"\).*\+.*";"') {
+              $issues += "❌ $($script.FullName): Uses Windows-only PATH manipulation with hardcoded semicolon"
+            }
+            
+            # Check for hardcoded semicolon path separators
+            if ($content -match '\$env:PATH.*=.*".*;".*\+.*\$env:PATH' -and $content -notmatch '\[System\.IO\.Path\]::PathSeparator') {
+              $issues += "⚠️  $($script.FullName): May use hardcoded semicolon instead of cross-platform PathSeparator"
+            }
+            
+            # Check if script uses cross-platform patterns
+            if ($content -match '\[System\.IO\.Path\]::PathSeparator') {
+              Write-Host "✅ $($script.Name) - Uses cross-platform PathSeparator" -ForegroundColor Green
+            }
+            
+            if ($content -match '\$IsWindows.*\$IsLinux.*\$IsMacOS') {
+              Write-Host "✅ $($script.Name) - Uses platform detection" -ForegroundColor Green
+            }
+          }
+          
+          if ($issues.Count -gt 0) {
+            Write-Host "`n⚠️  Potential Cross-Platform Issues Found:" -ForegroundColor Yellow
+            $issues | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+            # Don't fail the build for warnings, but report them
+          } else {
+            Write-Host "`n✅ No obvious cross-platform issues detected" -ForegroundColor Green
+          }
+
+  validate-powershell-linux:
+    name: Validate PowerShell Scripts on Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+          Write-Host "Platform: Linux" -ForegroundColor Green
+          Write-Host "PATH Separator: $([System.IO.Path]::PathSeparator)" -ForegroundColor Green
+      
+      - name: Test Cross-Platform Compatibility
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running Cross-Platform Compatibility Tests on Linux..." -ForegroundColor Green
+          
+          # Run the comprehensive cross-platform test
+          if (Test-Path "./tests/core/Test-CrossPlatformCompatibility.ps1") {
+            & "./tests/core/Test-CrossPlatformCompatibility.ps1" -Verbose
+          } else {
+            Write-Warning "Cross-platform test script not found"
+          }
+      
+      - name: Validate PowerShell Script Syntax
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating PowerShell Script Syntax on Linux..." -ForegroundColor Green
+          
+          $errors = @()
+          $scripts = Get-ChildItem -Path . -Recurse -Filter "*.ps1" -File
+          
+          foreach ($script in $scripts) {
+            Write-Host "Checking: $($script.FullName)" -ForegroundColor Cyan
+            
+            try {
+              # Parse the script to check for syntax errors
+              $parseErrors = @()
+              $tokens = @()
+              $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script.FullName, 
+                [ref]$tokens, 
+                [ref]$parseErrors
+              )
+              
+              if ($parseErrors.Count -gt 0) {
+                $errorMessages = $parseErrors | ForEach-Object { $_.Message }
+                $errors += "❌ $($script.FullName): $($errorMessages -join '; ')"
+              } else {
+                Write-Host "✅ $($script.Name) - Syntax OK" -ForegroundColor Green
+              }
+            }
+            catch {
+              $errors += "❌ $($script.FullName): $($_.Exception.Message)"
+            }
+          }
+          
+          if ($errors.Count -gt 0) {
+            Write-Host "`n🚨 PowerShell Syntax Errors Found:" -ForegroundColor Red
+            $errors | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+            exit 1
+          } else {
+            Write-Host "`n✅ All PowerShell scripts have valid syntax on Linux" -ForegroundColor Green
+          }
+      
+      - name: Test PowerShell Functions
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Testing PowerShell Functions on Linux..." -ForegroundColor Green
+          
+          # Test the Test-Command function that's used in deployment scripts
+          function Test-Command {
+            param([string]$Command)
+            return [bool](Get-Command $Command -ErrorAction SilentlyContinue)
+          }
+          
+          # Test common commands
+          $testCommands = @("pwsh", "bash", "ls", "cat")
+          foreach ($cmd in $testCommands) {
+            if (Test-Command $cmd) {
+              Write-Host "✅ Command '$cmd' found on Linux" -ForegroundColor Green
+            } else {
+              Write-Host "⚠️  Command '$cmd' not found on Linux" -ForegroundColor Yellow
+            }
+          }
+          
+          # Test PATH manipulation
+          $originalPath = $env:PATH
+          $testPath = "/test/cross/platform/path"
+          $pathSeparator = [System.IO.Path]::PathSeparator
+          
+          $env:PATH = "$testPath$pathSeparator" + $env:PATH
+          
+          if ($env:PATH.StartsWith($testPath)) {
+            Write-Host "✅ PATH manipulation works on Linux" -ForegroundColor Green
+          } else {
+            Write-Host "❌ PATH manipulation failed on Linux" -ForegroundColor Red
+            exit 1
+          }
+          
+          # Restore PATH
+          $env:PATH = $originalPath
+          
+          Write-Host "✅ PowerShell functions work correctly on Linux" -ForegroundColor Green
+
+  compare-results:
+    name: Compare Windows and Linux Results
+    runs-on: ubuntu-latest
+    needs: [validate-powershell-windows, validate-powershell-linux]
+    if: always()
+    
+    steps:
+      - name: Check Validation Results
+        shell: pwsh
+        run: |
+          Write-Host "📊 Cross-Platform PowerShell Validation Summary" -ForegroundColor Green
+          Write-Host "================================================" -ForegroundColor Green
+          
+          $windowsResult = "${{ needs.validate-powershell-windows.result }}"
+          $linuxResult = "${{ needs.validate-powershell-linux.result }}"
+          
+          Write-Host "Windows Validation: $windowsResult" -ForegroundColor $(if ($windowsResult -eq 'success') { 'Green' } else { 'Red' })
+          Write-Host "Linux Validation: $linuxResult" -ForegroundColor $(if ($linuxResult -eq 'success') { 'Green' } else { 'Red' })
+          
+          if ($windowsResult -eq 'success' -and $linuxResult -eq 'success') {
+            Write-Host "`n🎉 All PowerShell scripts are cross-platform compatible!" -ForegroundColor Green
+          } else {
+            Write-Host "`n🚨 Cross-platform validation failed!" -ForegroundColor Red
+            Write-Host "Please review the PowerShell scripts and fix any platform-specific issues." -ForegroundColor Yellow
+            Write-Host "See the coding guidelines in .github/copilot-instructions.md for help." -ForegroundColor Cyan
+            exit 1
+          }
