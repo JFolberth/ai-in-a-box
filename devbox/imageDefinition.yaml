@@ -66,7 +66,10 @@ tasks:
           Expand-Archive -Path $downloadPath -DestinationPath $installPath
           $pathEntry = $installPath
           $currentPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
-          if ($currentPath -notlike "*$pathEntry*") { [Environment]::SetEnvironmentVariable('PATH', "$currentPath;$pathEntry", 'Machine') }
+          if ($currentPath -notlike "*$pathEntry*") { 
+            $newPath = $currentPath + ';' + $pathEntry
+            [Environment]::SetEnvironmentVariable('PATH', $newPath, 'Machine') 
+          }
           Write-Host 'Azure Functions Core Tools installed successfully!' -ForegroundColor Green
         } catch {
           Write-Host 'Azure Functions Core Tools installation failed' -ForegroundColor Yellow
