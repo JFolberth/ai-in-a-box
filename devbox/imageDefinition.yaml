@@ -12,7 +12,7 @@ devDrive:
     fileSystem: "NTFS"
 
 tasks:
-  # Clone AI in a Box repository to DevDrive for optimal performance
+  # Clone AI in a Box repository to DevDrive for optimal performance.
   - name: git-clone
     description: Clone the AI in a Box repository to DevDrive
     parameters:
