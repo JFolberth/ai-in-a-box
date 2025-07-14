@@ -787,8 +787,8 @@ jobs:
             --name "$FUNCTION_APP_NAME" \
             --resource-group "$RESOURCE_GROUP_NAME" \
             --settings \
-              "AiFoundryAgentId=$AGENT_ID" \
-              "AiFoundryAgentName=$AGENT_NAME"
+              "AI_FOUNDRY_AGENT_ID=$AGENT_ID" \
+              "AI_FOUNDRY_AGENT_NAME=$AGENT_NAME"
           
           echo "✅ Function App settings updated successfully:"
           echo "  - Agent ID: $AGENT_ID"
