@@ -724,36 +724,9 @@ namespace AIFoundryProxy
             // Simulate processing delay
             await Task.Delay(Random.Shared.Next(500, 1500));
             
-            // Generate contextual responses based on keywords
-            var lowerMessage = message.ToLowerInvariant();
-            
-            if (lowerMessage.Contains("survival") || lowerMessage.Contains("prognosis"))
-            {
-                _logger.LogInformation("🎯 Generated contextual response");
-                return "Cancer survival rates vary significantly depending on the type, stage, and individual factors. I'd recommend discussing your specific situation with your oncologist who can provide personalized information based on your medical history and current condition.";
-            }
-            
-            if (lowerMessage.Contains("treatment") || lowerMessage.Contains("therapy"))
-            {
-                _logger.LogInformation("🎯 Generated contextual response");
-                return "Cancer treatments vary by type and stage. Common approaches include surgery, chemotherapy, radiation therapy, immunotherapy, and targeted therapy. What type of treatment information are you looking for?";
-            }
-            
-            if (lowerMessage.Contains("side effect"))
-            {
-                _logger.LogInformation("🎯 Generated contextual response");
-                return "Cancer treatment side effects can vary depending on the type of treatment. Common side effects may include fatigue, nausea, hair loss, and changes in appetite. It's important to discuss any side effects with your healthcare team.";
-            }
-            
-            if (lowerMessage.Contains("support") || lowerMessage.Contains("help"))
-            {
-                _logger.LogInformation("🎯 Generated contextual response");
-                return "There are many support resources available for cancer patients including support groups, counseling services, and patient advocacy organizations. Your healthcare team can help connect you with appropriate resources.";
-            }
-            
-            // Default response
-            _logger.LogInformation("🎯 Generated contextual response");
-            return $"Thank you for your question about '{message}'. As AI in A Box, I'm designed to provide helpful information. Could you provide more context so I can give you the most relevant response?";
+            // Return a generic response that doesn't include domain-specific content
+            _logger.LogInformation("🎯 Generated simulation response");
+            return $"Thank you for your question about '{message}'. I'm currently running in simulation mode. For accurate and helpful responses, please ensure the AI Foundry service is properly configured and accessible.";
         }
 
         /// <summary>

@@ -105,77 +105,18 @@ namespace AIFoundryProxy.Tests
         }
 
         [Theory]
-        [InlineData("What are the survival rates?")]
-        [InlineData("Tell me about prognosis")]
-        [InlineData("survival statistics")]
-        public async Task ProcessWithSimulationAsync_WithSurvivalKeywords_ReturnsContextualResponse(string message)
+        [InlineData("Hello there")]
+        [InlineData("What is AI in A Box?")]
+        [InlineData("How can you help me?")]
+        [InlineData("Tell me about this system")]
+        public async Task ProcessWithSimulationAsync_WithGenericMessage_ReturnsSimulationResponse(string message)
         {
             // Act
             var result = await InvokePrivateMethodAsync<string>("ProcessWithSimulationAsync", message, null);
 
             // Assert
             result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("survival");
-            result.Should().NotContain("Thank you for your question"); // Should not be default response
-        }
-
-        [Theory]
-        [InlineData("What treatment options are available?")]
-        [InlineData("Tell me about therapy")]
-        [InlineData("cancer treatment")]
-        public async Task ProcessWithSimulationAsync_WithTreatmentKeywords_ReturnsContextualResponse(string message)
-        {
-            // Act
-            var result = await InvokePrivateMethodAsync<string>("ProcessWithSimulationAsync", message, null);
-
-            // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("treatment");
-            result.Should().NotContain("Thank you for your question"); // Should not be default response
-        }
-
-        [Theory]
-        [InlineData("What are the side effects?")]
-        [InlineData("side effect concerns")]
-        public async Task ProcessWithSimulationAsync_WithSideEffectKeywords_ReturnsContextualResponse(string message)
-        {
-            // Act
-            var result = await InvokePrivateMethodAsync<string>("ProcessWithSimulationAsync", message, null);
-
-            // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("side effect");
-            result.Should().NotContain("Thank you for your question"); // Should not be default response
-        }
-
-        [Theory]
-        [InlineData("I need support")]
-        [InlineData("Can you help me?")]
-        [InlineData("support groups")]
-        public async Task ProcessWithSimulationAsync_WithSupportKeywords_ReturnsContextualResponse(string message)
-        {
-            // Act
-            var result = await InvokePrivateMethodAsync<string>("ProcessWithSimulationAsync", message, null);
-
-            // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("support");
-            result.Should().NotContain("Thank you for your question"); // Should not be default response
-        }
-
-        [Fact]
-        public async Task ProcessWithSimulationAsync_WithGenericMessage_ReturnsDefaultResponse()
-        {
-            // Arrange
-            var message = "Hello there";
-
-            // Act
-            var result = await InvokePrivateMethodAsync<string>("ProcessWithSimulationAsync", message, null);
-
-            // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("Thank you for your question");
-            result.Should().Contain("AI in A Box");
+            result.Should().Contain("simulation mode");
             result.Should().Contain(message);
         }
 
@@ -191,6 +132,7 @@ namespace AIFoundryProxy.Tests
 
             // Assert
             result.Should().NotBeNullOrEmpty();
+            result.Should().Contain("simulation mode");
             
             // Verify simulation mode was logged
             _mockLogger.Verify(
@@ -204,21 +146,21 @@ namespace AIFoundryProxy.Tests
         }
 
         [Fact]
-        public async Task ProcessWithSimulationAsync_LogsContextualResponse()
+        public async Task ProcessWithSimulationAsync_LogsSimulationResponse()
         {
             // Arrange
-            var message = "What are the survival rates?";
+            var message = "What can you do?";
 
             // Act
             await InvokePrivateMethodAsync<string>("ProcessWithSimulationAsync", message, null);
 
             // Assert
-            // Verify that contextual response was logged
+            // Verify that simulation response was logged
             _mockLogger.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated contextual response")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated simulation response")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.AtLeastOnce);

@@ -120,11 +120,11 @@ namespace AIFoundryProxy.Tests
         }
 
         [Theory]
-        [InlineData("What are survival rates for cancer?", "survival")]
-        [InlineData("Tell me about chemotherapy treatment", "treatment")]
-        [InlineData("I'm experiencing side effects", "side effect")]
-        [InlineData("I need emotional support", "support")]
-        [InlineData("Hello there", "Thank you for your question")]
+        [InlineData("Hello there", "simulation mode")]
+        [InlineData("What is AI in A Box?", "simulation mode")]
+        [InlineData("How can you help me?", "simulation mode")]
+        [InlineData("Tell me about this system", "simulation mode")]
+        [InlineData("General question", "simulation mode")]
         public async Task SimulationMode_MessageProcessingWorkflow_HandlesVariousInputs(string inputMessage, string expectedKeyword)
         {
             // Arrange
@@ -207,17 +207,17 @@ namespace AIFoundryProxy.Tests
         }
 
         [Fact]
-        public void MultipleRequests_SimulationMode_MaintainsConsistency()
+        public async Task MultipleRequests_SimulationMode_MaintainsConsistency()
         {
             // Arrange
             var function = new AIFoundryProxyFunction(_mockLoggerFactory.Object);
             var requests = new[]
             {
-                "What are survival rates?",
-                "Tell me about treatment options",
-                "I need support",
-                "What are side effects?",
-                "General question about cancer"
+                "Hello there",
+                "What is AI in A Box?",
+                "How can you help me?",
+                "Tell me about this system",
+                "General question"
             };
 
             // Act & Assert - Process multiple requests
@@ -230,11 +230,9 @@ namespace AIFoundryProxy.Tests
                 var task = (Task<string>)result!;
                 
                 // Wait for completion and validate
-                task.Wait(TimeSpan.FromSeconds(5)); // Should complete quickly in simulation mode
-                task.IsCompletedSuccessfully.Should().BeTrue();
-                
-                var responseMessage = task.Result;
+                var responseMessage = await task;
                 responseMessage.Should().NotBeNullOrEmpty();
+                responseMessage.Should().Contain("simulation mode");
                 responseMessage.Should().NotContain("error", "Response should not contain error messages");
             }
 
