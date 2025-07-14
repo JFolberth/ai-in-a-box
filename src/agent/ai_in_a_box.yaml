@@ -16,7 +16,7 @@ version: 1.0.0
 
 # Required: Display name for your AI agent
 # This appears in the AI Foundry interface and API responses
-name: AI in A Box Assistant
+name: AI in A Box Agent
 
 # Required: Array of tools/functions available to the agent
 # Common options: [], ["file_search"], ["code_interpreter"], ["file_search", "code_interpreter"]

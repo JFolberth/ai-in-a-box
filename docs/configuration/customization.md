@@ -1351,14 +1351,14 @@ az cognitiveservices account show \
 
 **Problem**: Agent deployment script not found
 ```bash
-# Error: "Agent deployment script not found: infra/agent_deploy.ps1"
+# Error: "Agent deployment script not found: deploy-scripts/deploy-agent.ps1"
 
 # Solution: Verify script exists and is executable
-ls -la infra/agent_deploy.ps1
-chmod +x infra/agent_deploy.ps1
+ls -la deploy-scripts/deploy-agent.ps1
+chmod +x deploy-scripts/deploy-agent.ps1
 
 # Or check project structure
-find . -name "*agent*" -type f
+find . -name "*Deploy-Agent*" -type f
 ```
 
 #### Model and Configuration Issues

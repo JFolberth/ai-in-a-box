@@ -1,80 +1,64 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-Deploy AI Foundry Agent from YAML configuration
+AI Foundry Agent Deployment Script
 
 .DESCRIPTION
-This script deploys an AI Foundry agent using YAML configuration and REST API calls.
-It models the current GitHub Actions CI workflow steps for agent deployment and can be used
-for local development, testing, or manual deployment scenarios.
-
-The script:
-1. Reads agent configuration from YAML file
-2. Authenticates with Azure (CLI or managed identity)
-3. Calls AI Foundry REST API to create/update the agent
-4. Returns deployment results in JSON format
+This script deploys an AI agent to Azure AI Foundry using configuration from a YAML file.
+It handles authentication via managed identity or Azure CLI and provides detailed logging 
+and error handling for the deployment process.
 
 .PARAMETER AiFoundryEndpoint
-The AI Foundry endpoint URL for API calls. Required.
-Example: "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject"
+The AI Foundry endpoint URL for API calls.
+
+.PARAMETER OutputFormat
+Output format for results (default: "human", options: "human", "json").
 
 .PARAMETER AgentYamlPath
-Path to the agent YAML configuration file. Defaults to "src/agent/ai_in_a_box.yaml"
+Path to the agent YAML configuration file (default: "src/agent/ai_in_a_box.yaml").
+
+.PARAMETER LogLevel
+Logging level (default: "Information", options: "Error", "Warning", "Information", "Verbose").
 
 .PARAMETER AgentName
 Override the agent name from YAML. Optional.
 
-.PARAMETER OutputFormat
-Output format: 'json' for machine parsing, 'human' for human-readable. Default: 'human'
-
 .PARAMETER Force
-Force update if agent already exists. Default: false
+Force update if agent already exists. Default: false.
 
 .EXAMPLE
-./deploy-agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject"
+./Deploy-Agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev.services.ai.azure.com/api/projects/myproject"
 
 .EXAMPLE
-./deploy-agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject" -AgentYamlPath "custom/agent.yaml" -OutputFormat "json"
-
-.EXAMPLE
-& "C:\Users\BicepDeveloper\repo\ai-in-a-box\deploy-scripts\deploy-agent.ps1" -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject" -Force
-
-.PREREQUISITES
-- Azure CLI installed and authenticated OR running in Azure environment with managed identity
-- User/Service Principal must have appropriate permissions to AI Foundry resources
-- Agent YAML configuration file must exist
-
-.EXPECTED_OUTPUT
-Human format:
-- Deployment status messages
-- Agent details (ID, name, endpoint)
-- Success/failure status with error details
-
-JSON format:
-- {"success": true, "agentId": "asst_...", "agentName": "...", "endpoint": "..."}
-- {"success": false, "error": "Error message"}
+./Deploy-Agent.ps1 -AiFoundryEndpoint "https://ai-foundry.services.ai.azure.com/api/projects/prod" -OutputFormat "json"
 
 .NOTES
-This script is designed to be used independently or called from other deployment scripts.
-It follows the same pattern as the GitHub Actions CI workflow for consistency.
+Author: AI Foundry SPA Project
+Version: 4.0 (Unified)
+Last Modified: 2025-07-13
 
-For CI/CD integration, use OutputFormat 'json' and parse the result.
-For local development and testing, use OutputFormat 'human' for better readability.
+This script is designed to work both locally and in CI/CD environments.
+For CI/CD integration, use OutputFormat 'json' and parse the AGENT_DEPLOYMENT_RESULT line.
 #>
 
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$AiFoundryEndpoint,
     
     [Parameter(Mandatory = $false)]
+    [ValidateSet("human", "json")]
+    [string]$OutputFormat = "human",
+    
+    [Parameter(Mandatory = $false)]
     [string]$AgentYamlPath = "src/agent/ai_in_a_box.yaml",
     
     [Parameter(Mandatory = $false)]
-    [string]$AgentName = "",
+    [ValidateSet("Error", "Warning", "Information", "Verbose")]
+    [string]$LogLevel = "Information",
     
     [Parameter(Mandatory = $false)]
-    [ValidateSet('json', 'human')]
-    [string]$OutputFormat = 'human',
+    [string]$AgentName = "",
     
     [Parameter(Mandatory = $false)]
     [switch]$Force
@@ -83,19 +67,47 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-# Function to write output based on format
-function Write-Output-Message {
+# Determine the workspace root (project root directory)
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$workspaceRoot = Split-Path -Parent $scriptDir
+
+# Resolve agent YAML path relative to workspace root
+$agentYamlFullPath = Join-Path $workspaceRoot $AgentYamlPath
+
+# Configuration constants
+$DefaultModelName = "gpt-4o-mini"
+
+# Initialize logging
+function Write-Log {
     param(
         [string]$Message,
-        [string]$Level = "Info"
+        [ValidateSet("Error", "Warning", "Information", "Verbose")]
+        [string]$Level = "Information"
     )
     
-    if ($OutputFormat -eq 'human') {
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logMessage = "[$timestamp] [$Level] $Message"
+    
+    if ($OutputFormat -eq "human") {
         switch ($Level) {
-            "Info" { Write-Host $Message -ForegroundColor Green }
-            "Warning" { Write-Host $Message -ForegroundColor Yellow }
-            "Error" { Write-Host $Message -ForegroundColor Red }
-            "Success" { Write-Host $Message -ForegroundColor Green -BackgroundColor Black }
+            "Error" { 
+                Write-Error $logMessage
+            }
+            "Warning" { 
+                if ($LogLevel -in @("Warning", "Information", "Verbose")) {
+                    Write-Warning $logMessage
+                }
+            }
+            "Information" { 
+                if ($LogLevel -in @("Information", "Verbose")) {
+                    Write-Host $logMessage -ForegroundColor Green
+                }
+            }
+            "Verbose" { 
+                if ($LogLevel -eq "Verbose") {
+                    Write-Verbose $logMessage
+                }
+            }
         }
     }
 }
@@ -107,22 +119,28 @@ function Write-Final-Result {
         [string]$AgentId = "",
         [string]$AgentName = "",
         [string]$Endpoint = "",
-        [string]$Error = ""
+        [string]$ErrorMessage = "",
+        [string]$Model = "",
+        [string]$OperationType = ""
     )
     
-    if ($OutputFormat -eq 'json') {
+    if ($OutputFormat -eq "json") {
         if ($Success) {
             $result = @{
-                success   = $true
-                agentId   = $AgentId
-                agentName = $AgentName
-                endpoint  = $Endpoint
+                success          = $true
+                agentId          = $AgentId
+                agentName        = $AgentName
+                endpoint         = $Endpoint
+                model            = $Model
+                operationType    = $OperationType
+                wasExistingAgent = ($OperationType -eq "updated")
             }
         }
         else {
             $result = @{
                 success = $false
-                error   = $Error
+                error   = "Deployment script failed: $ErrorMessage"
+                timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
             }
         }
         
@@ -131,126 +149,346 @@ function Write-Final-Result {
     }
     else {
         if ($Success) {
-            Write-Output-Message "🎉 Agent deployment completed successfully! 🎉" "Success"
-            Write-Output-Message ""
-            Write-Output-Message "📋 Agent Details:" "Info"
-            Write-Output-Message "   Agent ID: $AgentId" "Info"
-            Write-Output-Message "   Agent Name: $AgentName" "Info"
-            Write-Output-Message "   Endpoint: $Endpoint" "Info"
+            Write-Log "🎉 Agent deployment completed successfully!" -Level "Information"
+            Write-Log "   Agent ID: $AgentId" -Level "Information"
+            Write-Log "   Operation: $OperationType" -Level "Information"
         }
         else {
-            Write-Output-Message "❌ Agent deployment failed: $Error" "Error"
+            Write-Log "💥 Agent deployment failed: $ErrorMessage" -Level "Error"
         }
     }
 }
 
+Write-Log "🚀 Starting AI Foundry agent deployment" -Level "Information"
+
 try {
-    Write-Output-Message "🤖 AI Foundry Agent Deployment" "Info"
-    Write-Output-Message "===============================" "Info"
+    # =========== VALIDATION ===========
     
-    # Change to project root (go up from deploy-scripts to project root)
-    $projectRoot = Split-Path $PSScriptRoot -Parent
-    Set-Location $projectRoot
+    Write-Log "🔍 Validating prerequisites..." -Level "Information"
     
-    Write-Output-Message "📁 Project root: $projectRoot" "Info"
-    Write-Output-Message "🎯 AI Foundry endpoint: $AiFoundryEndpoint" "Info"
-    Write-Output-Message "📄 Agent YAML path: $AgentYamlPath" "Info"
-    
-    # Verify YAML file exists
-    if (-not (Test-Path $AgentYamlPath)) {
-        Write-Final-Result -Success $false -Error "Agent YAML file not found: $AgentYamlPath"
-        exit 1
+    # Validate YAML file exists
+    if (-not (Test-Path $agentYamlFullPath)) {
+        throw "Agent YAML file not found: $agentYamlFullPath"
     }
     
     # Read YAML content
-    Write-Output-Message "📖 Reading agent configuration from YAML..." "Info"
-    $yamlContent = Get-Content -Path $AgentYamlPath -Raw
-    
-    if ([string]::IsNullOrEmpty($yamlContent)) {
-        Write-Final-Result -Success $false -Error "Agent YAML file is empty or could not be read"
-        exit 1
-    }
-    
-    Write-Output-Message "✅ YAML content loaded successfully" "Info"
-    
-    # Check Azure CLI authentication
-    Write-Output-Message "🔐 Checking Azure authentication..." "Info"
     try {
-        $account = az account show --output json 2>$null | ConvertFrom-Json
-        Write-Output-Message "✅ Azure CLI authenticated as: $($account.user.name)" "Info"
-        Write-Output-Message "📋 Subscription: $($account.name) ($($account.id))" "Info"
+        $yamlContent = Get-Content -Path $agentYamlFullPath -Raw
+        if ([string]::IsNullOrEmpty($yamlContent)) {
+            throw "YAML file is empty"
+        }
+        Write-Log "✅ YAML file loaded successfully" -Level "Information"
     }
     catch {
-        Write-Final-Result -Success $false -Error "Azure CLI not authenticated. Please run 'az login' first."
-        exit 1
+        throw "Failed to read YAML file: $($_.Exception.Message)"
     }
     
-    # Set environment variables for the agent deployment script
-    Write-Output-Message "🔧 Configuring deployment environment..." "Info"
-    $env:AI_FOUNDRY_ENDPOINT = $AiFoundryEndpoint
-    $env:AGENT_YAML_CONTENT = $yamlContent
-    
-    if (-not [string]::IsNullOrEmpty($AgentName)) {
-        $env:AGENT_NAME = $AgentName
-        Write-Output-Message "🏷️ Using custom agent name: $AgentName" "Info"
-    }
-    else {
-        Write-Output-Message "🏷️ Using agent name from YAML configuration" "Info"
-    }
-    
-    if ($Force) {
-        Write-Output-Message "⚡ Force mode enabled - will update existing agent" "Warning"
-    }
-    
-    # Execute the infrastructure agent deployment script
-    Write-Output-Message "🚀 Executing agent deployment..." "Info"
-    $agentScriptPath = "infra/agent_deploy.ps1"
-    
-    if (-not (Test-Path $agentScriptPath)) {
-        Write-Final-Result -Success $false -Error "Agent deployment script not found: $agentScriptPath"
-        exit 1
-    }
-    
-    # Run the agent deployment script and capture output
-    $output = & $agentScriptPath 2>&1
-    
-    if ($OutputFormat -eq 'human') {
-        Write-Output-Message "📄 Agent deployment script output:" "Info"
-        Write-Host $output
-    }
-    
-    # Look for the AGENT_DEPLOYMENT_RESULT line in the output
-    $resultLine = $output | Where-Object { $_ -match "AGENT_DEPLOYMENT_RESULT:" }
-    
-    if ($resultLine) {
-        $jsonPart = $resultLine -replace ".*AGENT_DEPLOYMENT_RESULT:\s*", ""
-        
-        if ($OutputFormat -eq 'human') {
-            Write-Output-Message "🔍 Found deployment result: $jsonPart" "Info"
+    # Validate endpoint URL format
+    try {
+        $uri = [System.Uri]$AiFoundryEndpoint
+        if ($uri.Scheme -notin @('http', 'https')) {
+            throw "Invalid endpoint scheme. Must be http or https."
         }
+        Write-Log "✅ Endpoint URL format is valid" -Level "Information"
+    }
+    catch {
+        Write-Log "❌ Invalid AI Foundry endpoint URL: $AiFoundryEndpoint" -Level "Error"
+        throw "Invalid AI Foundry endpoint URL format: $($_.Exception.Message)"
+    }
+    
+    # Function to get access token for API calls
+    function Get-AccessToken {
+        try {
+            # Try managed identity first
+            $tokenUri = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://ai.azure.com/"
+            $headers = @{ 'Metadata' = 'true' }
+            $tokenResponse = Invoke-RestMethod -Uri $tokenUri -Headers $headers -Method Get -TimeoutSec 10
+            Write-Log "✅ Retrieved access token via managed identity" -Level "Verbose"
+            return $tokenResponse.access_token
+        }
+        catch {
+            Write-Log "⚠️ Managed identity token retrieval failed, trying Azure CLI..." -Level "Verbose"
+            
+            # Fallback to Azure CLI
+            try {
+                $token = az account get-access-token --scope "https://ai.azure.com/.default" --query "accessToken" -o tsv 2>$null
+                if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($token)) {
+                    Write-Log "✅ Retrieved access token via Azure CLI" -Level "Verbose"
+                    return $token
+                }
+                else {
+                    throw "Azure CLI token retrieval failed"
+                }
+            }
+            catch {
+                Write-Log "❌ Failed to get access token from Azure CLI: $($_.Exception.Message)" -Level "Error"
+                throw "Unable to retrieve access token. Ensure you're authenticated with Azure CLI or running with managed identity."
+            }
+        }
+    }
+    
+    # Function to parse YAML agent configuration
+    function Read-AgentYaml {
+        param([string]$YamlContent)
         
-        # Parse the JSON result
-        $result = $jsonPart | ConvertFrom-Json
+        try {
+            Write-Log "✅ Processing YAML content ($($YamlContent.Length) characters)" -Level "Information"
+            
+            # Parse YAML fields using regex
+            $name = if ($YamlContent -match 'name:\s*(.+)') { $matches[1].Trim() } else { "" }
+            $version = if ($YamlContent -match 'version:\s*(.+)') { $matches[1].Trim() } else { "1.0.0" }
+            
+            # Extract description (handle multiline literal scalar with |)
+            $description = ""
+            if ($YamlContent -match 'description:\s*\|\s*\r?\n((?:\s{2}.*\r?\n?)*?)(?=\r?\n\s*#|\r?\n\s*[a-zA-Z_]+:|$)') {
+                $description = $matches[1] -replace '^\s{2}', '' -replace '\r?\n\s{2}', "`n" -replace '\r?\n$', ''
+                $description = $description.Trim()
+            }
+            elseif ($YamlContent -match 'description:\s*"([^"]*(?:\\.[^"]*)*)"') {
+                $description = $matches[1] -replace '\\r\\n', "`r`n" -replace '\\n', "`n" -replace '\\"', '"'
+            }
+            elseif ($YamlContent -match 'description:\s*(.+)') {
+                $description = $matches[1].Trim()
+            }
+            
+            # Extract instructions (handle multiline literal scalar with |)
+            $instructions = ""
+            if ($YamlContent -match 'instructions:\s*\|\s*\r?\n((?:\s{2}(?!#).*\r?\n?)*?)(?=\r?\n\s*[a-zA-Z_]+:|$)') {
+                $instructions = $matches[1] -replace '^\s{2}', '' -replace '\r?\n\s{2}', "`n" -replace '\r?\n$', ''
+                $instructions = $instructions.Trim()
+            }
+            elseif ($YamlContent -match 'instructions:\s*"([^"]*(?:\\.[^"]*)*)"') {
+                $instructions = $matches[1] -replace '\\r\\n', "`r`n" -replace '\\n', "`n" -replace '\\"', '"'
+            }
+            elseif ($YamlContent -match 'instructions:\s*(.+)') {
+                $instructions = $matches[1].Trim()
+            }
+            
+            # Extract model configuration
+            $modelId = $DefaultModelName # Default fallback
+            if ($YamlContent -match 'model:\s*\n\s*#[^\n]*\n\s*id:\s*(.+)') {
+                $modelId = $matches[1].Trim()
+            }
+            elseif ($YamlContent -match 'model:\s*\n\s*id:\s*(.+)') {
+                $modelId = $matches[1].Trim()
+            }
+            
+            # Extract model options if present
+            $temperature = 1
+            $topP = 1
+            if ($YamlContent -match 'temperature:\s*(.+)') {
+                $temperature = [double]$matches[1].Trim()
+            }
+            if ($YamlContent -match 'top_p:\s*(.+)') {
+                $topP = [double]$matches[1].Trim()
+            }
+            
+            # Extract tools
+            $tools = @()
+            
+            $result = @{
+                name         = $name
+                description  = $description
+                instructions = $instructions
+                model        = $modelId
+                temperature  = $temperature
+                topP         = $topP
+                tools        = $tools
+                version      = $version
+            }
+            
+            Write-Log "✅ Parsed agent configuration:" -Level "Information"
+            Write-Log "   📝 Name: $name" -Level "Information"
+            Write-Log "   🤖 Model: $modelId" -Level "Information"
+            Write-Log "   📊 Temperature: $temperature" -Level "Verbose"
+            Write-Log "   📋 Instructions length: $($instructions.Length) characters" -Level "Information"
+            
+            return $result
+        }
+        catch {
+            throw "Failed to parse YAML content: $($_.Exception.Message)"
+        }
+    }
+    
+    # =========== READ AGENT CONFIGURATION FROM YAML ===========
+    
+    Write-Log "📖 Reading agent configuration from YAML..." -Level "Information"
+    
+    $agentConfig = Read-AgentYaml -YamlContent $yamlContent
+    
+    # Extract configuration values (allow override from parameter)
+    $finalAgentName = if (-not [string]::IsNullOrEmpty($AgentName)) { $AgentName } elseif (-not [string]::IsNullOrEmpty($agentConfig.name)) { $agentConfig.name } else { "AI in A Box Agent" }
+    $agentDescription = if (-not [string]::IsNullOrEmpty($agentConfig.description)) { $agentConfig.description } else { "AI in A Box intelligent assistant agent" }
+    $agentInstructions = $agentConfig.instructions
+    $modelName = if (-not [string]::IsNullOrEmpty($agentConfig.model)) { $agentConfig.model } else { $DefaultModelName }
+    
+    # Validate essential configuration
+    if ([string]::IsNullOrEmpty($agentInstructions)) {
+        throw "Agent instructions are empty in YAML file"
+    }
+    
+    if ([string]::IsNullOrEmpty($finalAgentName)) {
+        throw "Agent name is empty in YAML file"
+    }
+    
+    Write-Log "✅ Agent configuration loaded successfully" -Level "Information"
+    Write-Log "   Agent Name: $finalAgentName" -Level "Information"
+    Write-Log "   Model: $modelName" -Level "Information"
+    
+    # =========== GET ACCESS TOKEN ===========
+    
+    Write-Log "🔑 Obtaining access token..." -Level "Information"
+    
+    $accessToken = Get-AccessToken
+    if ([string]::IsNullOrEmpty($accessToken)) {
+        throw "Failed to obtain access token"
+    }
+    
+    Write-Log "✅ Authentication successful" -Level "Information"
+    
+    # =========== PREPARE AGENT PAYLOAD ===========
+    
+    Write-Log "📦 Preparing agent payload..." -Level "Information"
+    
+    $agentPayload = @{
+        name         = $finalAgentName
+        description  = $agentDescription
+        instructions = $agentInstructions
+        model        = $modelName
+        tools        = $agentConfig.tools
+        metadata     = @{
+            created_by        = "deploy-agent-script"
+            created_date      = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            yaml_version      = $agentConfig.version
+            deployment_method = "unified-script"
+        }
+    }
+    
+    # Note: model_options (temperature, top_p) are not supported by the Azure AI Foundry API
+    # These settings from YAML are parsed but not included in the API payload
+    
+    $agentPayloadJson = $agentPayload | ConvertTo-Json -Depth 10
+    
+    Write-Log "✅ Agent payload prepared" -Level "Information"
+    if ($LogLevel -eq "Verbose") {
+        Write-Log "🔍 DEBUG: Full payload being sent:" -Level "Information"
+        Write-Log "$agentPayloadJson" -Level "Information"
+    }
+    
+    # =========== CHECK FOR EXISTING AGENT ===========
+    
+    Write-Log "🔍 Checking for existing agent..." -Level "Information"
+    
+    # Prepare headers
+    $headers = @{
+        'Authorization' = "Bearer $accessToken"
+        'Content-Type'  = 'application/json'
+        'User-Agent'    = 'AI-Foundry-Deploy-Agent-Unified/4.0'
+    }
+    
+    # Construct the assistants API endpoint
+    $cleanEndpoint = $AiFoundryEndpoint.TrimEnd('/')
+    $agentsEndpoint = "$cleanEndpoint/assistants?api-version=2025-05-01"
+    
+    Write-Log "📡 Final agents endpoint: '$agentsEndpoint'" -Level "Information"
+    
+    $existingAgent = $null
+    try {
+        Write-Log "🔍 Attempting to list existing assistants..." -Level "Information"
+        $existingAgents = Invoke-RestMethod -Uri $agentsEndpoint -Method Get -Headers $headers -ErrorAction Stop
         
-        if ($result.success) {
-            Write-Final-Result -Success $true -AgentId $result.agentId -AgentName $result.agentName -Endpoint $AiFoundryEndpoint
+        if ($existingAgents -and $existingAgents.data) {
+            $existingAgent = $existingAgents.data | Where-Object { $_.name -eq $finalAgentName } | Select-Object -First 1
+            
+            if ($existingAgent) {
+                Write-Log "✅ Found existing agent: $($existingAgent.id)" -Level "Information"
+            }
+            else {
+                Write-Log "ℹ️ No existing agent found with name '$finalAgentName'" -Level "Information"
+            }
+        }
+    }
+    catch {
+        Write-Log "⚠️ Could not check for existing assistants: $($_.Exception.Message)" -Level "Warning"
+        Write-Log "🔄 Proceeding with agent creation..." -Level "Information"
+    }
+    
+    # =========== CREATE OR UPDATE AGENT ===========
+    
+    $response = $null
+    $isUpdate = $false
+    
+    try {
+        if ($existingAgent) {
+            Write-Log "🔄 Updating existing AI Foundry agent..." -Level "Information"
+            
+            try {
+                # Update existing agent
+                $updateEndpoint = "$cleanEndpoint/assistants/$($existingAgent.id)?api-version=2025-05-01"
+                $webResponse = Invoke-WebRequest -Uri $updateEndpoint -Method Post -Body $agentPayloadJson -Headers $headers -ContentType "application/json" -ErrorAction Stop
+                $response = $webResponse.Content | ConvertFrom-Json
+                $isUpdate = $true
+                Write-Log "✅ Successfully updated existing agent" -Level "Information"
+            }
+            catch {
+                Write-Log "⚠️ Failed to update existing agent: $($_.Exception.Message)" -Level "Warning"
+                Write-Log "🔄 Attempting to create new agent instead..." -Level "Information"
+                
+                # If update fails, try to create new agent
+                $webResponse = Invoke-WebRequest -Uri $agentsEndpoint -Method Post -Body $agentPayloadJson -Headers $headers -ContentType "application/json" -ErrorAction Stop
+                $response = $webResponse.Content | ConvertFrom-Json
+                $isUpdate = $false
+            }
         }
         else {
-            Write-Final-Result -Success $false -Error $result.error
-            exit 1
+            Write-Log "🤖 Creating new AI Foundry agent..." -Level "Information"
+            
+            # Create new agent with detailed error handling
+            try {
+                $ProgressPreference = 'SilentlyContinue'  # Suppress progress bars
+                
+                $webResponse = Invoke-WebRequest -Uri $agentsEndpoint -Method Post -Body $agentPayloadJson -Headers $headers -ContentType "application/json" -ErrorAction Stop
+                $response = $webResponse.Content | ConvertFrom-Json
+                $isUpdate = $false
+                Write-Log "✅ Successfully created new agent" -Level "Information"
+            }
+            catch {
+                Write-Log "🔍 Full Exception Details:" -Level "Error"
+                Write-Log "  Type: $($_.Exception.GetType().FullName)" -Level "Error"
+                Write-Log "  Message: $($_.Exception.Message)" -Level "Error"
+                
+                if ($_.ErrorDetails) {
+                    Write-Log "🔍 PowerShell ErrorDetails: $($_.ErrorDetails)" -Level "Error"
+                }
+                
+                throw $_.Exception.Message
+            }
+        }
+        
+        if ($response -and $response.id) {
+            $agentId = $response.id
+            $operationType = if ($isUpdate) { "updated" } else { "created" }
+            Write-Log "✅ Successfully $operationType agent with ID: $agentId" -Level "Information"
+            Write-Log "🎯 Agent name: $($response.name)" -Level "Information"
+            
+            # Output results
+            Write-Final-Result -Success $true -AgentId $agentId -AgentName $response.name -Endpoint $AiFoundryEndpoint -Model $response.model -OperationType $operationType
+        }
+        else {
+            throw "Agent operation succeeded but no agent ID returned in response"
         }
     }
-    else {
-        Write-Final-Result -Success $false -Error "Could not find agent deployment result in script output"
-        exit 1
+    catch {
+        $errorDetails = $_.Exception.Message
+        Write-Log "❌ Failed to create agent: $errorDetails" -Level "Error"
+        throw $errorDetails
     }
-    
 }
 catch {
     $errorMessage = $_.Exception.Message
-    Write-Final-Result -Success $false -Error "Deployment script failed: $errorMessage"
+    Write-Final-Result -Success $false -ErrorMessage $errorMessage
     exit 1
 }
-
-Write-Output-Message ""
-Write-Output-Message "✨ Agent deployment script completed! ✨" "Success"
+finally {
+    Write-Log "🏁 Agent deployment script completed" -Level "Information"
+}
