@@ -16,23 +16,9 @@ on:
       - 'package*.json'
       - '*.csproj'
   
-  # Manual trigger
+  # Manual trigger (includes deployment to dev environment)
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: false
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - staging
-          - prod
-      skip_tests:
-        description: 'Skip tests (for debugging)'
-        required: false
-        default: false
-        type: boolean
       debug_mode:
         description: 'Enable debug logging'
         required: false
@@ -586,7 +572,7 @@ jobs:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
     needs: [bicep-validation, ade-validation-summary]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ade-validation-summary.outputs.validation-status == 'success'
+    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.ade-validation-summary.outputs.validation-status == 'success'
     with:
       environment: 'dev'
       bicep-template: 'infra/main-orchestrator.bicep'
@@ -599,7 +585,7 @@ jobs:
     name: Deploy AI Foundry Agent
     runs-on: ubuntu-latest
     needs: [deploy-dev-infrastructure]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
+    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
       actions: read
@@ -688,7 +674,7 @@ jobs:
     name: Deploy Backend Code
     runs-on: ubuntu-latest
     needs: [backend-build, deploy-dev-infrastructure, deploy-agent]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
+    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
       actions: read
@@ -803,7 +789,7 @@ jobs:
     name: Deploy Frontend Code
     runs-on: ubuntu-latest
     needs: [frontend-build, deploy-dev-infrastructure]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
+    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     
     steps:
     - name: Download frontend artifacts
@@ -946,8 +932,8 @@ jobs:
         
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        # Infrastructure deployment summary (only shows on main branch pushes)
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+        # Infrastructure deployment summary (shows on main branch pushes, manual triggers, and scheduled runs)
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
           if [ "${{ needs.deploy-dev-infrastructure.result }}" = "success" ]; then
             echo "### ✅ Dev Infrastructure Deployment Successful" >> $GITHUB_STEP_SUMMARY
             echo "- **Status**: Infrastructure deployed via Azure CLI + Bicep" >> $GITHUB_STEP_SUMMARY
@@ -961,7 +947,7 @@ jobs:
             echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-dev-infrastructure.result }}" = "skipped" ]; then
             echo "### ⏭️ Dev Infrastructure Deployment Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "- **Reason**: Infrastructure deployment only runs on main branch pushes" >> $GITHUB_STEP_SUMMARY
+            echo "- **Reason**: Infrastructure deployment runs on main branch pushes, manual triggers, and scheduled runs" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           
@@ -1001,12 +987,12 @@ jobs:
         echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
         echo "- Review build artifacts if needed" >> $GITHUB_STEP_SUMMARY
         echo "- Run local tests: \`npm test\` (frontend) and \`dotnet test\` (backend)" >> $GITHUB_STEP_SUMMARY
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
           echo "- **Automated Deployment**: Infrastructure and application code deployed automatically using native GitHub Actions (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
           echo "- **Local Development**: Use deployment scripts in \`deploy-scripts/\` for local testing only" >> $GITHUB_STEP_SUMMARY
         else
           echo "- **Local Development**: Use deployment scripts in \`deploy-scripts/\` for local testing only" >> $GITHUB_STEP_SUMMARY
-          echo "- **Note**: Automated deployment using native GitHub Actions only runs on main branch pushes (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Automated deployment using native GitHub Actions runs on main branch pushes, manual triggers, and scheduled runs (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
         fi
         
     - name: Check build status
@@ -1023,11 +1009,11 @@ jobs:
           base_success=false
         fi
         
-        # Infrastructure deployment check (only on main branch pushes)
+        # Infrastructure deployment check (on main branch pushes, manual triggers, and scheduled runs)
         infrastructure_success=true
         backend_deploy_success=true
         frontend_deploy_success=true
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
           if [ "${{ needs.deploy-dev-infrastructure.result }}" != "success" ]; then
             infrastructure_success=false
           fi
@@ -1047,7 +1033,7 @@ jobs:
           echo "Bicep Validation: ${{ needs.bicep-validation.result }}"
           echo "Frontend Build: ${{ needs.frontend-build.result }}"
           echo "Backend Build: ${{ needs.backend-build.result }}"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
             echo "Dev Infrastructure Deployment: ${{ needs.deploy-dev-infrastructure.result }}"
             echo "Backend Code Deployment: ${{ needs.deploy-backend-code.result }}"
             echo "Frontend Code Deployment: ${{ needs.deploy-frontend-code.result }}"
