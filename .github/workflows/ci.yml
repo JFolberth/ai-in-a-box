@@ -91,6 +91,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ vars.NODE_VERSION || '20' }}
+        cache: 'npm'
+        cache-dependency-path: src/frontend/package-lock.json
+      
     - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
@@ -217,6 +224,28 @@ jobs:
         fi
         
         echo "📦 Deploying to Static Web App: $STATIC_WEB_APP_NAME"
+        
+        # For ADE environments, rebuild frontend with demonstration/testing backend URL
+        echo "🔧 Rebuilding frontend for ADE environment..."
+        cd src/frontend
+        
+        # Set environment variables for ADE build (uses simulation mode for testing)
+        export VITE_BACKEND_URL="https://demo-backend.azure.com/api"
+        export VITE_USE_BACKEND=false
+        export VITE_PUBLIC_MODE=false
+        export VITE_AI_FOUNDRY_AGENT_NAME="AI in A Box (ADE Test)"
+        
+        echo "Building ADE frontend with demonstration settings:"
+        echo "  VITE_BACKEND_URL=$VITE_BACKEND_URL"
+        echo "  VITE_USE_BACKEND=$VITE_USE_BACKEND"
+        echo "  VITE_PUBLIC_MODE=$VITE_PUBLIC_MODE"
+        
+        # Install dependencies and rebuild
+        npm ci
+        npm run build:dev
+        
+        # Go back to root
+        cd ../..
         
         # Get deployment token for the Static Web App
         DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
@@ -792,6 +821,16 @@ jobs:
     if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ vars.NODE_VERSION || '20' }}
+        cache: 'npm'
+        cache-dependency-path: src/frontend/package-lock.json
+        
     - name: Download frontend artifacts
       uses: actions/download-artifact@v4
       with:
@@ -843,13 +882,29 @@ jobs:
         echo "📦 Deploying to Static Web App: $STATIC_WEB_APP_NAME"
         echo "🔗 Backend API URL: $BACKEND_URL"
         
-        # Update frontend configuration with backend URL
-        echo "🔧 Configuring backend URL in frontend..."
-        cat > ./src/frontend/dist/config.js << EOF
-        window.APP_CONFIG = {
-          backendUrl: '$BACKEND_URL'
-        };
-        EOF
+        # Install dependencies and rebuild with correct backend URL
+        echo "🔧 Rebuilding frontend with correct backend URL..."
+        cd src/frontend
+        
+        # Set environment variables for the build
+        export VITE_BACKEND_URL="$BACKEND_URL"
+        export VITE_USE_BACKEND=true
+        export VITE_PUBLIC_MODE=true
+        export VITE_AI_FOUNDRY_AGENT_NAME="AI in A Box"
+        
+        echo "Building with:"
+        echo "  VITE_BACKEND_URL=$VITE_BACKEND_URL"
+        echo "  VITE_USE_BACKEND=$VITE_USE_BACKEND"
+        echo "  VITE_PUBLIC_MODE=$VITE_PUBLIC_MODE"
+        
+        # Install dependencies (use cache if available)
+        npm ci
+        
+        # Build the frontend with the correct backend URL
+        npm run build:dev
+        
+        # Go back to root
+        cd ../..
         
         # Get deployment token for the Static Web App
         DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
@@ -883,8 +938,9 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Action Used**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
-        echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Artifacts**: Frontend rebuilt during deployment with correct backend URL" >> $GITHUB_STEP_SUMMARY
         echo "- **Deploy Method**: Native GitHub Actions with Azure CLI" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment Variables**: VITE_BACKEND_URL set from infrastructure outputs at build time" >> $GITHUB_STEP_SUMMARY
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
