@@ -300,7 +300,8 @@ try {
             Write-Log "✅ Parsed agent configuration:" -Level "Information"
             Write-Log "   📝 Name: $name" -Level "Information"
             Write-Log "   🤖 Model: $modelId" -Level "Information"
-            Write-Log "   📊 Temperature: $temperature" -Level "Verbose"
+            Write-Log "   🌡️ Temperature: $temperature" -Level "Information"
+            Write-Log "   🎯 Top_p: $topP" -Level "Information"
             Write-Log "   📋 Instructions length: $($instructions.Length) characters" -Level "Information"
             
             return $result
@@ -355,6 +356,8 @@ try {
         description  = $agentDescription
         instructions = $agentInstructions
         model        = $modelName
+        temperature  = $agentConfig.temperature
+        top_p        = $agentConfig.topP
         tools        = $agentConfig.tools
         metadata     = @{
             created_by        = "deploy-agent-script"
@@ -364,8 +367,8 @@ try {
         }
     }
     
-    # Note: model_options (temperature, top_p) are not supported by the Azure AI Foundry API
-    # These settings from YAML are parsed but not included in the API payload
+    # Include model options (temperature, top_p) which are supported by the Azure AI Foundry API
+    # These parameters control response randomness and token selection behavior
     
     $agentPayloadJson = $agentPayload | ConvertTo-Json -Depth 10
     
@@ -388,7 +391,7 @@ try {
     
     # Construct the assistants API endpoint
     $cleanEndpoint = $AiFoundryEndpoint.TrimEnd('/')
-    $agentsEndpoint = "$cleanEndpoint/assistants?api-version=2025-05-01"
+    $agentsEndpoint = "$cleanEndpoint/assistants?api-version=2025-05-15-preview"
     
     Write-Log "📡 Final agents endpoint: '$agentsEndpoint'" -Level "Information"
     
