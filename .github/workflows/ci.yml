@@ -826,28 +826,50 @@ jobs:
         echo "  - Resource Group: $RESOURCE_GROUP_NAME"
         echo "  - Backend URL: $BACKEND_URL"
         
-    - name: Deploy Frontend Code to Static Web App  
-      shell: pwsh
+    - name: Install SWA CLI
       run: |
-        Write-Host "🚀 Deploying frontend code to Static Web App..."
+        echo "📦 Installing Azure Static Web Apps CLI..."
+        npm install -g @azure/static-web-apps-cli
+
+    - name: Deploy Frontend Code to Static Web App
+      run: |
+        echo "🚀 Deploying frontend code to Static Web App..."
         
-        # Use the deployment script to properly configure backend URL
-        $backendUrl = "${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api"
-        Write-Host "Backend API URL: $backendUrl"
+        # Get infrastructure outputs
+        STATIC_WEB_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}"
+        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}"
+        BACKEND_URL="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api"
         
-        # Execute the frontend deployment script with proper parameters
-        & "${{ github.workspace }}/deploy-scripts/deploy-frontend-spa-code.ps1" `
-          -StaticWebAppName "${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}" `
-          -ResourceGroupName "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" `
-          -BackendUrl $backendUrl `
-          -SkipBuild
+        echo "📦 Deploying to Static Web App: $STATIC_WEB_APP_NAME"
+        echo "🔗 Backend API URL: $BACKEND_URL"
         
-        if ($LASTEXITCODE -eq 0) {
-          Write-Host "✅ Frontend deployment completed successfully!" -ForegroundColor Green
-        } else {
-          Write-Host "❌ Frontend deployment failed!" -ForegroundColor Red
+        # Update frontend configuration with backend URL
+        echo "🔧 Configuring backend URL in frontend..."
+        cat > ./src/frontend/dist/config.js << EOF
+        window.APP_CONFIG = {
+          backendUrl: '$BACKEND_URL'
+        };
+        EOF
+        
+        # Get deployment token for the Static Web App
+        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+          --name "$STATIC_WEB_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP_NAME" \
+          --query "properties.apiKey" \
+          --output tsv)
+        
+        if [ -z "$DEPLOYMENT_TOKEN" ] || [ "$DEPLOYMENT_TOKEN" = "null" ]; then
+          echo "❌ Failed to get deployment token for Static Web App"
           exit 1
-        }
+        fi
+        
+        # Deploy using SWA CLI
+        swa deploy \
+          --app-location "./src/frontend/dist" \
+          --deployment-token "$DEPLOYMENT_TOKEN" \
+          --env "default"
+        
+        echo "✅ Frontend code deployed successfully!"
         
     - name: Frontend Deployment Summary
       run: |
@@ -860,9 +882,9 @@ jobs:
         echo "- **Backend Integration**: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Action Used**: PowerShell deployment script (deploy-frontend-spa-code.ps1)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Action Used**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deploy Method**: PowerShell Script with Backend URL Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deploy Method**: Native GitHub Actions with Azure CLI" >> $GITHUB_STEP_SUMMARY
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
