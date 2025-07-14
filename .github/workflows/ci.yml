@@ -623,7 +623,7 @@ jobs:
         Write-Host "🤖 Deploying AI Foundry agent..."
         
         # Execute the agent deployment script with proper parameters
-        $output = & "./deploy-scripts/deploy-agent.ps1" -AiFoundryEndpoint "${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}" -AgentName "AI in A Box" -OutputFormat "json" 2>&1
+        $output = & "${{ github.workspace }}/deploy-scripts/deploy-agent.ps1" -AiFoundryEndpoint "${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}" -AgentName "AI in A Box" -OutputFormat "json" 2>&1
         
         # Capture the script output
         Write-Host "Script output:"
@@ -836,7 +836,7 @@ jobs:
         Write-Host "Backend API URL: $backendUrl"
         
         # Execute the frontend deployment script with proper parameters
-        & "./deploy-scripts/deploy-frontend-spa-code.ps1" `
+        & "${{ github.workspace }}/deploy-scripts/deploy-frontend-spa-code.ps1" `
           -StaticWebAppName "${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}" `
           -ResourceGroupName "${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}" `
           -BackendUrl $backendUrl `
