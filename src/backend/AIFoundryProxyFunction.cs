@@ -725,7 +725,7 @@ namespace AIFoundryProxy
             await Task.Delay(Random.Shared.Next(500, 1500));
             
             // Return a generic response that doesn't include domain-specific content
-            _logger.LogInformation("🎯 Generated simulation response");
+            _logger.LogInformation("Generated simulation response");
             return $"Thank you for your question about '{message}'. I'm currently running in simulation mode. For accurate and helpful responses, please ensure the AI Foundry service is properly configured and accessible.";
         }
 
