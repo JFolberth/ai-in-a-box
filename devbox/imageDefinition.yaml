@@ -66,7 +66,8 @@ tasks:
           Expand-Archive -Path $downloadPath -DestinationPath $installPath
           $pathEntry = $installPath
           $currentPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
-          if ($currentPath -notlike "*$pathEntry*") { 
+          $pathPattern = '*' + $pathEntry + '*'
+          if ($currentPath -notlike $pathPattern) { 
             $newPath = $currentPath + ';' + $pathEntry
             [Environment]::SetEnvironmentVariable('PATH', $newPath, 'Machine') 
           }
