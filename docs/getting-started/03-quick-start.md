@@ -249,7 +249,7 @@ echo "AI Foundry Endpoint: $aiFoundryEndpoint"
 
 ```bash
 # Deploy the AI agent to your AI Foundry project
-.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "$aiFoundryEndpoint"
+.\deploy-scripts\deploy-agent.ps1 -AiFoundryEndpoint "$aiFoundryEndpoint"
 ```
 
 **What this step does:**
@@ -263,7 +263,7 @@ The deployed agent uses the configuration in `src/agent/ai_in_a_box.yaml`. To cu
 
 **Quick Customization:**
 1. Edit `src/agent/ai_in_a_box.yaml` - update the `instructions` field
-2. Re-run: `.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "$aiFoundryEndpoint" -Force`
+2. Re-run: `.\deploy-scripts\deploy-agent.ps1 -AiFoundryEndpoint "$aiFoundryEndpoint" -Force`
 3. Test the changes in your deployed SPA
 
 **📖 Complete Customization Guide:** See **[AI Agent Customization Guide](../configuration/customization.md)** for:
@@ -275,7 +275,7 @@ The deployed agent uses the configuration in `src/agent/ai_in_a_box.yaml`. To cu
 ### Capture Agent ID
 
 ```bash
-# The Deploy-Agent script will output the agent ID
+# The deploy-agent script will output the agent ID
 # Copy this ID for the next step
 $agentId = "asst_generated_agent_id_here"
 ```

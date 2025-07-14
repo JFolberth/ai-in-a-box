@@ -607,13 +607,8 @@ jobs:
       run: |
         Write-Host "🤖 Deploying AI Foundry agent..."
         
-        # Set environment variables for the script
-        $env:AI_FOUNDRY_ENDPOINT = "${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}"
-        $env:AGENT_NAME = "AI in A Box"
-        $env:AGENT_YAML_CONTENT = Get-Content -Path "src/agent/ai_in_a_box.yaml" -Raw
-        
-        # Execute the agent deployment script
-        $output = & "./infra/agent_deploy.ps1" 2>&1
+        # Execute the agent deployment script with proper parameters
+        $output = & "./deploy-scripts/deploy-agent.ps1" -AiFoundryEndpoint "${{ needs.deploy-dev-infrastructure.outputs.ai-foundry-endpoint }}" -AgentName "AI in A Box" -OutputFormat "json" 2>&1
         
         # Capture the script output
         Write-Host "Script output:"

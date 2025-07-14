@@ -440,7 +440,7 @@ Deploy infrastructure from Codespaces, but deploy agent locally:
 .\deploy-scripts\deploy-quickstart.ps1  # Skip agent deployment when prompted
 
 # Locally: Deploy agent with proper authentication
-.\deploy-scripts\Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint"
+.\deploy-scripts\deploy-agent.ps1 -AiFoundryEndpoint "your-endpoint"
 ```
 
 **Why This Happens:**

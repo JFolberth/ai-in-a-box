@@ -761,20 +761,20 @@ python -c "import yaml; yaml.safe_load(open('src/agent/ai_in_a_box.yaml'))"
 **Deployment Command**:
 ```powershell
 # Basic deployment
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "https://your-ai-foundry-endpoint.com/api/projects/yourProject"
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "https://your-ai-foundry-endpoint.com/api/projects/yourProject"
 
 # With custom agent name override
-./deploy-scripts/Deploy-Agent.ps1 `
+./deploy-scripts/deploy-agent.ps1 `
   -AiFoundryEndpoint "https://your-ai-foundry-endpoint.com/api/projects/yourProject" `
   -AgentName "Custom Agent Name"
 
 # Force update existing agent
-./deploy-scripts/Deploy-Agent.ps1 `
+./deploy-scripts/deploy-agent.ps1 `
   -AiFoundryEndpoint "https://your-ai-foundry-endpoint.com/api/projects/yourProject" `
   -Force
 
 # JSON output for automation
-./deploy-scripts/Deploy-Agent.ps1 `
+./deploy-scripts/deploy-agent.ps1 `
   -AiFoundryEndpoint "https://your-ai-foundry-endpoint.com/api/projects/yourProject" `
   -OutputFormat "json"
 ```
@@ -869,11 +869,11 @@ az monitor app-insights query --app "your-app-insights" --analytics-query "reque
 **If Deployment Fails**:
 ```bash
 # Check deployment logs
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint" -OutputFormat "json" 2>&1 | tee deployment.log
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "your-endpoint" -OutputFormat "json" 2>&1 | tee deployment.log
 
 # Restore previous working configuration
 git checkout HEAD~1 -- src/agent/ai_in_a_box.yaml
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint" -Force
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "your-endpoint" -Force
 ```
 
 **If Agent Behavior is Problematic**:
@@ -881,7 +881,7 @@ git checkout HEAD~1 -- src/agent/ai_in_a_box.yaml
 # Quick revert to known good version
 git log --oneline -- src/agent/ai_in_a_box.yaml  # Find last good commit
 git checkout <commit-hash> -- src/agent/ai_in_a_box.yaml
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint" -Force
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "your-endpoint" -Force
 ```
 
 ### Local Testing (Development)
@@ -922,20 +922,20 @@ jobs:
       
       - name: Deploy Agent
         run: |
-          chmod +x deploy-scripts/Deploy-Agent.ps1
-          pwsh deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "${{ secrets.AI_FOUNDRY_ENDPOINT }}" -OutputFormat "json"
+          chmod +x deploy-scripts/deploy-agent.ps1
+          pwsh deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "${{ secrets.AI_FOUNDRY_ENDPOINT }}" -OutputFormat "json"
 ```
 
 **Environment-Specific Deployments**:
 ```bash
 # Development environment
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "$DEV_ENDPOINT" -AgentName "AI Assistant (Dev)"
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "$DEV_ENDPOINT" -AgentName "AI Assistant (Dev)"
 
 # Staging environment  
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "$STAGING_ENDPOINT" -AgentName "AI Assistant (Staging)"
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "$STAGING_ENDPOINT" -AgentName "AI Assistant (Staging)"
 
 # Production environment
-./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "$PROD_ENDPOINT" -AgentName "AI Assistant"
+./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "$PROD_ENDPOINT" -AgentName "AI Assistant"
 ```
 
 ## 🔧 Advanced Configuration Options
@@ -1351,14 +1351,14 @@ az cognitiveservices account show \
 
 **Problem**: Agent deployment script not found
 ```bash
-# Error: "Agent deployment script not found: infra/agent_deploy.ps1"
+# Error: "Agent deployment script not found: deploy-scripts/deploy-agent.ps1"
 
 # Solution: Verify script exists and is executable
-ls -la infra/agent_deploy.ps1
-chmod +x infra/agent_deploy.ps1
+ls -la deploy-scripts/deploy-agent.ps1
+chmod +x deploy-scripts/deploy-agent.ps1
 
 # Or check project structure
-find . -name "*agent*" -type f
+find . -name "*Deploy-Agent*" -type f
 ```
 
 #### Model and Configuration Issues
@@ -2279,7 +2279,7 @@ Use this checklist to track your AI agent customization progress:
 - [ ] Written comprehensive `instructions` following prompt engineering best practices
 - [ ] Selected appropriate `model` and `temperature` settings
 - [ ] Validated YAML syntax and schema
-- [ ] Successfully deployed agent using `Deploy-Agent.ps1`
+- [ ] Successfully deployed agent using `deploy-agent.ps1`
 - [ ] Verified agent appears correctly in AI Foundry portal
 
 ### Phase 2: Agent Behavior Testing  
@@ -2324,7 +2324,7 @@ Use this checklist to track your AI agent customization progress:
 
 ### Essential Reading:
 - **[Quick Start Guide](../getting-started/03-quick-start.md)** - Initial deployment process
-- **[Agent Deployment Script](../../deploy-scripts/Deploy-Agent.ps1)** - Technical deployment reference
+- **[Agent Deployment Script](../../deploy-scripts/deploy-agent.ps1)** - Technical deployment reference
 - **[Environment Variables](environment-variables.md)** - Configuration options
 - **[Local Development](../development/local-development.md)** - Testing your customizations
 
@@ -2346,7 +2346,7 @@ Use this checklist to track your AI agent customization progress:
 1. **Edit the agent configuration**: `/home/runner/work/ai-in-a-box/ai-in-a-box/src/agent/ai_in_a_box.yaml`
 2. **Update the `instructions` field** with your specific use case
 3. **Validate syntax** using VS Code YAML extension or online validator
-4. **Deploy**: `./deploy-scripts/Deploy-Agent.ps1 -AiFoundryEndpoint "your-endpoint"`
+4. **Deploy**: `./deploy-scripts/deploy-agent.ps1 -AiFoundryEndpoint "your-endpoint"`
 5. **Test** via your deployed SPA interface
 
 **Need help?** Start with the [Agent Configuration Examples](#-agent-configuration-examples) section above for ready-to-use templates.
