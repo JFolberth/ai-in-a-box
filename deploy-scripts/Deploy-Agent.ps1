@@ -31,13 +31,13 @@ Output format: 'json' for machine parsing, 'human' for human-readable. Default: 
 Force update if agent already exists. Default: false
 
 .EXAMPLE
-./Deploy-Agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject"
+./deploy-agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject"
 
 .EXAMPLE
-./Deploy-Agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject" -AgentYamlPath "custom/agent.yaml" -OutputFormat "json"
+./deploy-agent.ps1 -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject" -AgentYamlPath "custom/agent.yaml" -OutputFormat "json"
 
 .EXAMPLE
-& "C:\Users\BicepDeveloper\repo\ai-in-a-box\deploy-scripts\Deploy-Agent.ps1" -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject" -Force
+& "C:\Users\BicepDeveloper\repo\ai-in-a-box\deploy-scripts\deploy-agent.ps1" -AiFoundryEndpoint "https://ai-foundry-dev-eus.services.ai.azure.com/api/projects/firstProject" -Force
 
 .PREREQUISITES
 - Azure CLI installed and authenticated OR running in Azure environment with managed identity
@@ -113,21 +113,23 @@ function Write-Final-Result {
     if ($OutputFormat -eq 'json') {
         if ($Success) {
             $result = @{
-                success = $true
-                agentId = $AgentId
+                success   = $true
+                agentId   = $AgentId
                 agentName = $AgentName
-                endpoint = $Endpoint
+                endpoint  = $Endpoint
             }
-        } else {
+        }
+        else {
             $result = @{
                 success = $false
-                error = $Error
+                error   = $Error
             }
         }
         
         $jsonOutput = $result | ConvertTo-Json -Compress
         Write-Output "AGENT_DEPLOYMENT_RESULT: $jsonOutput"
-    } else {
+    }
+    else {
         if ($Success) {
             Write-Output-Message "🎉 Agent deployment completed successfully! 🎉" "Success"
             Write-Output-Message ""
@@ -135,7 +137,8 @@ function Write-Final-Result {
             Write-Output-Message "   Agent ID: $AgentId" "Info"
             Write-Output-Message "   Agent Name: $AgentName" "Info"
             Write-Output-Message "   Endpoint: $Endpoint" "Info"
-        } else {
+        }
+        else {
             Write-Output-Message "❌ Agent deployment failed: $Error" "Error"
         }
     }
@@ -176,7 +179,8 @@ try {
         $account = az account show --output json 2>$null | ConvertFrom-Json
         Write-Output-Message "✅ Azure CLI authenticated as: $($account.user.name)" "Info"
         Write-Output-Message "📋 Subscription: $($account.name) ($($account.id))" "Info"
-    } catch {
+    }
+    catch {
         Write-Final-Result -Success $false -Error "Azure CLI not authenticated. Please run 'az login' first."
         exit 1
     }
@@ -189,7 +193,8 @@ try {
     if (-not [string]::IsNullOrEmpty($AgentName)) {
         $env:AGENT_NAME = $AgentName
         Write-Output-Message "🏷️ Using custom agent name: $AgentName" "Info"
-    } else {
+    }
+    else {
         Write-Output-Message "🏷️ Using agent name from YAML configuration" "Info"
     }
     
@@ -229,16 +234,19 @@ try {
         
         if ($result.success) {
             Write-Final-Result -Success $true -AgentId $result.agentId -AgentName $result.agentName -Endpoint $AiFoundryEndpoint
-        } else {
+        }
+        else {
             Write-Final-Result -Success $false -Error $result.error
             exit 1
         }
-    } else {
+    }
+    else {
         Write-Final-Result -Success $false -Error "Could not find agent deployment result in script output"
         exit 1
     }
     
-} catch {
+}
+catch {
     $errorMessage = $_.Exception.Message
     Write-Final-Result -Success $false -Error "Deployment script failed: $errorMessage"
     exit 1

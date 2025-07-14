@@ -167,6 +167,112 @@ try {
         }
     }
     
+    # =========== VALIDATE AI FOUNDRY ENDPOINT AND PERMISSIONS ===========
+    
+    Write-Log "🔗 Validating AI Foundry endpoint and permissions..." -Level "Information"
+    
+    # Validate endpoint URL format
+    try {
+        $uri = [System.Uri]$AiFoundryEndpoint
+        if ($uri.Scheme -notin @('http', 'https')) {
+            throw "Invalid endpoint scheme. Must be http or https."
+        }
+        Write-Log "✅ Endpoint URL format is valid" -Level "Information"
+    }
+    catch {
+        Write-Log "❌ Invalid AI Foundry endpoint URL: $AiFoundryEndpoint" -Level "Error"
+        throw "Invalid AI Foundry endpoint URL format: $($_.Exception.Message)"
+    }
+    
+    # Function to get access token for API calls
+    function Get-AccessToken {
+        try {
+            # Try managed identity first
+            $tokenUri = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://cognitiveservices.azure.com/"
+            $headers = @{ 'Metadata' = 'true' }
+            $tokenResponse = Invoke-RestMethod -Uri $tokenUri -Headers $headers -Method Get -TimeoutSec 10
+            Write-Log "✅ Retrieved access token via managed identity" -Level "Verbose"
+            return $tokenResponse.access_token
+        }
+        catch {
+            Write-Log "⚠️ Managed identity token retrieval failed, trying Azure CLI..." -Level "Verbose"
+            
+            # Fallback to Azure CLI
+            try {
+                $token = az account get-access-token --resource "https://cognitiveservices.azure.com/" --query "accessToken" -o tsv 2>$null
+                if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($token)) {
+                    Write-Log "✅ Retrieved access token via Azure CLI" -Level "Verbose"
+                    return $token
+                }
+                else {
+                    throw "Azure CLI token retrieval failed"
+                }
+            }
+            catch {
+                Write-Log "❌ Failed to get access token from Azure CLI: $($_.Exception.Message)" -Level "Error"
+                throw "Unable to retrieve access token. Ensure you're authenticated with Azure CLI or running with managed identity."
+            }
+        }
+    }
+    
+    # Test endpoint connectivity and permissions
+    try {
+        Write-Log "🔍 Testing endpoint connectivity and permissions..." -Level "Information"
+        
+        $accessToken = Get-AccessToken
+        $headers = @{
+            'Authorization' = "Bearer $accessToken"
+            'Content-Type' = 'application/json'
+        }
+        
+        # Test basic endpoint connectivity with a simple GET request
+        # Try to list existing agents or get project info to validate permissions
+        $testEndpoint = $AiFoundryEndpoint
+        if (-not $testEndpoint.EndsWith('/')) {
+            $testEndpoint += '/'
+        }
+        $testEndpoint += 'agents'
+        
+        Write-Log "🔍 Testing endpoint: $testEndpoint" -Level "Verbose"
+        
+        $response = Invoke-RestMethod -Uri $testEndpoint -Headers $headers -Method Get -TimeoutSec 30
+        Write-Log "✅ Endpoint is accessible and user has appropriate permissions" -Level "Information"
+        Write-Log "🔍 Found $($response.value.Count) existing agents in the project" -Level "Information"
+        
+    }
+    catch {
+        $statusCode = $_.Exception.Response.StatusCode.value__
+        $errorMessage = $_.Exception.Message
+        
+        switch ($statusCode) {
+            401 { 
+                Write-Log "❌ Authentication failed (401). Check your credentials and token permissions." -Level "Error"
+                throw "Authentication failed: Invalid or expired credentials"
+            }
+            403 { 
+                Write-Log "❌ Access forbidden (403). User lacks permission to access this AI Foundry project." -Level "Error"
+                throw "Access denied: Insufficient permissions for AI Foundry project"
+            }
+            404 { 
+                Write-Log "❌ Endpoint not found (404). Verify the AI Foundry endpoint URL." -Level "Error"
+                throw "Endpoint not found: Invalid AI Foundry project URL"
+            }
+            500 { 
+                Write-Log "❌ Server error (500). AI Foundry service may be experiencing issues." -Level "Error"
+                throw "Server error: AI Foundry service unavailable"
+            }
+            default {
+                Write-Log "❌ Endpoint validation failed: $errorMessage" -Level "Error"
+                if ($statusCode) {
+                    throw "Endpoint validation failed (HTTP $statusCode): $errorMessage"
+                }
+                else {
+                    throw "Endpoint validation failed (Network/Connection): $errorMessage"
+                }
+            }
+        }
+    }
+    
     # =========== READ AGENT CONFIGURATION FROM YAML ===========
     
     Write-Log "📖 Reading agent configuration from YAML content..." -Level "Information"
@@ -180,19 +286,39 @@ try {
             
             # Parse YAML fields using regex (simple approach for known structure)
             $name = if ($YamlContent -match 'name:\s*(.+)') { $matches[1].Trim() } else { "" }
-            $description = if ($YamlContent -match 'description:\s*(.+)') { $matches[1].Trim() } else { "" }
             $version = if ($YamlContent -match 'version:\s*(.+)') { $matches[1].Trim() } else { "1.0.0" }
             $id = if ($YamlContent -match '^id:\s*(.+)') { $matches[1].Trim() } else { "" }
             
-            # Extract instructions (handle multiline quoted string)
+            # Extract description (handle multiline literal scalar with |)
+            $description = ""
+            if ($YamlContent -match 'description:\s*\|\s*\n((?:\s{2}.+\n?)*)') {
+                $description = $matches[1] -replace '^\s{2}', '' -replace '\n\s{2}', "`n" -replace '\n$', ''
+            }
+            elseif ($YamlContent -match 'description:\s*"([^"]*(?:\\.[^"]*)*)"') {
+                $description = $matches[1] -replace '\\r\\n', "`r`n" -replace '\\n', "`n" -replace '\\"', '"'
+            }
+            elseif ($YamlContent -match 'description:\s*(.+)') {
+                $description = $matches[1].Trim()
+            }
+            
+            # Extract instructions (handle multiline literal scalar with |)
             $instructions = ""
-            if ($YamlContent -match 'instructions:\s*"([^"]*(?:\\.[^"]*)*)"') {
+            if ($YamlContent -match 'instructions:\s*\|\s*\n((?:\s{2}.+\n?)*)') {
+                $instructions = $matches[1] -replace '^\s{2}', '' -replace '\n\s{2}', "`n" -replace '\n$', ''
+            }
+            elseif ($YamlContent -match 'instructions:\s*"([^"]*(?:\\.[^"]*)*)"') {
                 $instructions = $matches[1] -replace '\\r\\n', "`r`n" -replace '\\n', "`n" -replace '\\"', '"'
+            }
+            elseif ($YamlContent -match 'instructions:\s*(.+)') {
+                $instructions = $matches[1].Trim()
             }
             
             # Extract model configuration
             $modelId = "gpt-4.1-mini" # Default
-            if ($YamlContent -match 'model:\s*\n\s*id:\s*(.+)') {
+            if ($YamlContent -match 'model:\s*\n\s*#[^\n]*\n\s*id:\s*(.+)') {
+                $modelId = $matches[1].Trim()
+            }
+            elseif ($YamlContent -match 'model:\s*\n\s*id:\s*(.+)') {
                 $modelId = $matches[1].Trim()
             }
             
