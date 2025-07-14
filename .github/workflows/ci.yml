@@ -3,6 +3,8 @@ name: CI - Build and Test
 # Prevent duplicate runs: 
 # - Run on push to main/develop only (not feature branches)
 # - Run on pull requests to main/develop (covers feature branch changes)
+# - Manual trigger for testing/debugging
+# - Scheduled weekly runs for maintenance
 # - Use concurrency groups to cancel previous runs
 on:
   push:
@@ -13,6 +15,33 @@ on:
       - 'infra/**'
       - 'package*.json'
       - '*.csproj'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: false
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      skip_tests:
+        description: 'Skip tests (for debugging)'
+        required: false
+        default: false
+        type: boolean
+      debug_mode:
+        description: 'Enable debug logging'
+        required: false
+        default: false
+        type: boolean
+  
+  # Weekly scheduled run (Sundays at 3 AM UTC)
+  schedule:
+    - cron: '0 3 * * 0'
   pull_request:
     branches: [main, develop]
     paths:
@@ -859,547 +888,6 @@ jobs:
         echo "- **Action Used**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
         echo "- **Deploy Method**: Native Azure CLI Commands" >> $GITHUB_STEP_SUMMARY
-
-  # ============================================================================
-  # ADE DEPLOYMENT JOBS - DISABLED (PRESERVED FOR FUTURE USE)
-  # ============================================================================
-  # TODO: Re-enable these jobs when ADE deployment is needed again
-  # These jobs have been commented out to focus on direct infrastructure deployment
-  
-  # deploy-ade-frontend:
-  #   name: Deploy ADE Frontend
-  #   runs-on: ubuntu-latest
-  #   needs: [bicep-validation, frontend-build]
-  #   if: false  # Explicitly disabled - change to enable ADE deployment
-  #   # Original condition: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v4
-  #     
-  #   - name: Download frontend artifacts
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       name: frontend-dist
-  #       path: ./src/frontend/dist/
-  #       
-  #   - name: Azure CLI Login
-  #     uses: azure/login@v2
-  #     with:
-  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #   
-  #   - name: Create ADE Environment
-  #     id: create-ade
-  #     run: |
-  #       echo "🚀 Creating ADE environment for frontend deployment..."
-  #       
-  #       # Generate unique environment name
-  #       ADE_ENV_NAME="cicd-fd-${{ github.run_number }}"
-  #       echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
-  #       
-  #       # Create ADE environment
-  #       echo "📦 Deploying ADE environment: $ADE_ENV_NAME"
-  #       az devcenter dev environment create \
-  #         --dev-center-name "devcenter-eus-dev" \
-  #         --project-name "ai-foundry" \
-  #         --catalog-name "ai-in-abox-infrastructure" \
-  #         --environment-definition-name "AI_Foundry_SPA_Frontend" \
-  #         --environment-type "dev" \
-  #         --name "$ADE_ENV_NAME" \
-  #         --parameters infra/environments/frontend/ade.parameters.json \
-  #         --no-wait
-  #       
-  #       echo "⏳ Waiting for ADE environment deployment to complete..."
-  #       
-  #       # Wait for deployment to complete (timeout after 10 minutes)
-  #       timeout=600
-  #       elapsed=0
-  #       while [ $elapsed -lt $timeout ]; do
-  #         status=$(az devcenter dev environment show \
-  #           --dev-center-name "devcenter-eus-dev" \
-  #           --project-name "ai-foundry" \
-  #           --name "$ADE_ENV_NAME" \
-  #           --query "provisioningState" \
-  #           --output tsv || echo "NotFound")
-  #         
-  #         echo "🔍 Environment status: $status (${elapsed}s elapsed)"
-  #         
-  #         if [ "$status" = "Succeeded" ]; then
-  #           echo "✅ ADE environment deployed successfully!"
-  #           break
-  #         elif [ "$status" = "Failed" ]; then
-  #           echo "❌ ADE environment deployment failed!"
-  #           exit 1
-  #         fi
-  #         
-  #         sleep 30
-  #         elapsed=$((elapsed + 30))
-  #       done
-  #       
-  #       if [ $elapsed -ge $timeout ]; then
-  #         echo "❌ ADE environment deployment timed out after 10 minutes!"
-  #         exit 1
-  #       fi
-  #   
-  #   - name: Extract ADE Outputs
-  #     id: extract-outputs
-  #     run: |
-  #       echo "📋 Extracting outputs from ADE environment..."
-  #       
-  #       # Get environment details
-  #       ENV_DETAILS=$(az devcenter dev environment show \
-  #         --dev-center-name "devcenter-eus-dev" \
-  #         --project-name "ai-foundry" \
-  #         --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
-  #         --output json)
-  #       
-  #       # Construct resource group name using ADE naming convention: {project}-{adeName}
-  #       # Based on ade.parameters.json: devCenterProjectName + "-" + adeName
-  #       RESOURCE_GROUP="ai-foundry-${{ env.ADE_ENVIRONMENT_NAME }}"
-  #       echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
-  #       
-  #       echo "🔍 Querying resources directly from resource group: $RESOURCE_GROUP"
-  #       
-  #       # Find Static Web App by resource type (more reliable than deployment outputs)
-  #       STATIC_WEB_APP_NAME=$(az staticwebapp list \
-  #         --resource-group "$RESOURCE_GROUP" \
-  #         --query "[0].name" \
-  #         --output tsv)
-  #       
-  #       if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
-  #         echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
-  #         echo "🔍 Available resources:"
-  #         az resource list --resource-group "$RESOURCE_GROUP" --output table
-  #         exit 1
-  #       fi
-  #       
-  #       echo "📦 Found Static Web App: $STATIC_WEB_APP_NAME"
-  #       
-  #       # Get Static Web App URL directly from the resource
-  #       STATIC_WEB_APP_HOSTNAME=$(az staticwebapp show \
-  #         --name "$STATIC_WEB_APP_NAME" \
-  #         --resource-group "$RESOURCE_GROUP" \
-  #         --query "defaultHostname" \
-  #         --output tsv)
-  #       
-  #       if [ -z "$STATIC_WEB_APP_HOSTNAME" ] || [ "$STATIC_WEB_APP_HOSTNAME" = "null" ]; then
-  #         echo "❌ Failed to get Static Web App hostname"
-  #         exit 1
-  #       fi
-  #       
-  #       STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_HOSTNAME"
-  #       
-  #       # Validate URLs are not empty
-  #       if [ -z "$STATIC_WEB_APP_URL" ] || [ "$STATIC_WEB_APP_URL" = "https://" ] || [ "$STATIC_WEB_APP_URL" = "null" ]; then
-  #         echo "❌ Invalid or empty Static Web App URL: '$STATIC_WEB_APP_URL'"
-  #         exit 1
-  #       fi
-  #       
-  #       if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
-  #         echo "❌ Invalid or empty Static Web App Name: '$STATIC_WEB_APP_NAME'"
-  #         exit 1
-  #       fi
-  #       
-  #       echo "📋 Reading AI Foundry configuration from backend ade.parameters.json..."
-  #       
-  #       # Use the reusable helper script to extract AI Foundry parameters
-  #       echo "🔧 Using extract-ade-parameters.sh helper script..."
-  #       
-  #       # Extract parameters using the helper script
-  #       if ! PARAMETER_OUTPUT=$(./tests/utilities/extract-ade-parameters.sh -o export -q); then
-  #           echo "❌ Failed to extract AI Foundry parameters from backend ade.parameters.json"
-  #           echo "Please check that all required parameters are present and valid."
-  #           exit 1
-  #       fi
-  #       
-  #       # Source the extracted parameters into environment
-  #       eval "$PARAMETER_OUTPUT"
-  #       
-  #       # Set environment variables for standard ADE outputs
-  #       echo "STATIC_WEB_APP_NAME=$STATIC_WEB_APP_NAME" >> $GITHUB_ENV
-  #       echo "STATIC_WEB_APP_URL=$STATIC_WEB_APP_URL" >> $GITHUB_ENV
-  #       
-  #       # Set environment variables for AI Foundry configuration
-  #       echo "AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_AGENT_ID=$AI_FOUNDRY_AGENT_ID" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_AGENT_NAME=$AI_FOUNDRY_AGENT_NAME" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_INSTANCE_NAME=$AI_FOUNDRY_INSTANCE_NAME" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_RG_NAME=$AI_FOUNDRY_RG_NAME" >> $GITHUB_ENV
-  #       
-  #       echo "✅ Successfully extracted resources and AI Foundry configuration:"
-  #       echo "  - Resource Group: $RESOURCE_GROUP"
-  #       echo "  - Static Web App: $STATIC_WEB_APP_NAME"
-  #       echo "  - Static Web App URL: $STATIC_WEB_APP_URL"
-  #       echo "  - AI Foundry Endpoint: $AI_FOUNDRY_ENDPOINT"
-  #       echo "  - AI Foundry Agent: $AI_FOUNDRY_AGENT_NAME ($AI_FOUNDRY_AGENT_ID)"
-  #       echo "  - AI Foundry Instance: $AI_FOUNDRY_INSTANCE_NAME"
-  #   
-  #   - name: Install SWA CLI
-  #     run: |
-  #       echo "📦 Installing Azure Static Web Apps CLI..."
-  #       npm install -g @azure/static-web-apps-cli
-  #   
-  #   - name: Deploy Frontend Code to Static Web App using RBAC
-  #     run: |
-  #       echo "🚀 Deploying frontend code using SWA CLI with RBAC..."
-  #       
-  #       # Deploy using SWA CLI with Azure CLI authentication
-  #       # The SWA CLI will use the Azure credentials from the az login step
-  #       swa deploy \
-  #         --app-location "./src/frontend/dist" \
-  #         --resource-group "${{ env.RESOURCE_GROUP_NAME }}" \
-  #         --app-name "${{ env.STATIC_WEB_APP_NAME }}" \
-  #         --env "default"
-  #       
-  #       echo "✅ Frontend code deployed successfully using RBAC!"
-  #   
-  #   - name: Deployment Success
-  #     run: |
-  #       echo "✅ Frontend code deployed successfully!"
-  #       echo "🔗 Application URL: ${{ env.STATIC_WEB_APP_URL }}"
-  #   
-  #   - name: ADE Deployment Summary
-  #     run: |
-  #       echo "## 🚀 ADE Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY
-  #       echo "" >> $GITHUB_STEP_SUMMARY
-  #       echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **ADE Environment**: \`${{ env.ADE_ENVIRONMENT_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Resource Group**: \`${{ env.RESOURCE_GROUP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Static Web App**: \`${{ env.STATIC_WEB_APP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Application URL**: [${{ env.STATIC_WEB_APP_URL }}](${{ env.STATIC_WEB_APP_URL }})" >> $GITHUB_STEP_SUMMARY
-  #       echo "" >> $GITHUB_STEP_SUMMARY
-  #       echo "### 🔧 ADE Configuration Used" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **DevCenter**: devcenter-eus-dev" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Project**: ai-foundry" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Catalog**: ai-in-abox-infrastructure" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Environment Definition**: AI_Foundry_SPA_Frontend" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Environment Type**: dev" >> $GITHUB_STEP_SUMMARY
-  #       echo "" >> $GITHUB_STEP_SUMMARY
-  #       echo "### 🧹 Environment Cleanup" >> $GITHUB_STEP_SUMMARY
-  #       echo "⚠️ **Note**: ADE environment \`${{ env.ADE_ENVIRONMENT_NAME }}\` remains active for testing." >> $GITHUB_STEP_SUMMARY
-  #       echo "Manual cleanup may be required via ADE portal if automatic cleanup fails." >> $GITHUB_STEP_SUMMARY
-  #   
-  #   - name: Cleanup ADE Environment
-  #     if: always()
-  #     run: |
-  #       echo "🧹 Cleaning up ADE environment..."
-  #       
-  #       if [ -n "${{ env.ADE_ENVIRONMENT_NAME }}" ]; then
-  #         echo "🗑️ Deleting ADE environment: ${{ env.ADE_ENVIRONMENT_NAME }}"
-  #         
-  #         # Attempt to delete the ADE environment
-  #         az devcenter dev environment delete \
-  #           --dev-center-name "devcenter-eus-dev" \
-  #           --project-name "ai-foundry" \
-  #           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
-  #           --yes \
-  #           --no-wait || echo "⚠️ Failed to delete ADE environment (may require manual cleanup)"
-  #         
-  #         echo "✅ ADE environment cleanup initiated"
-  #       else
-  #         echo "ℹ️ No ADE environment to clean up"
-  #       fi
-
-  # deploy-ade-backend:
-  #   name: Deploy ADE Backend
-  #   runs-on: ubuntu-latest
-  #   needs: [bicep-validation, backend-build]
-  #   if: false  # Explicitly disabled - change to enable ADE deployment
-  #   # Original condition: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v4
-  #     
-  #   - name: Download backend artifacts
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       name: backend-publish
-  #       path: ./
-  #       
-  #   - name: Azure CLI Login
-  #     uses: azure/login@v2
-  #     with:
-  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #   
-  #   - name: Install PowerShell
-  #     run: |
-  #       # PowerShell should already be available in Ubuntu, but ensure it's working
-  #       pwsh --version || echo "PowerShell not available - using system default"
-  #   
-  #   - name: Create ADE Environment
-  #     id: create-ade
-  #     run: |
-  #       echo "🚀 Creating ADE environment for backend deployment..."
-  #       
-  #       # Generate unique environment name
-  #       ADE_ENV_NAME="cicd-backend-${{ github.run_number }}"
-  #       echo "ADE_ENVIRONMENT_NAME=$ADE_ENV_NAME" >> $GITHUB_ENV
-  #       
-  #       # Create ADE environment
-  #       echo "📦 Deploying ADE environment: $ADE_ENV_NAME"
-  #       az devcenter dev environment create \
-  #         --dev-center-name "devcenter-eus-dev" \
-  #         --project-name "ai-foundry" \
-  #         --catalog-name "ai-in-abox-infrastructure" \
-  #         --environment-definition-name "AI_Foundry_SPA_Backend" \
-  #         --environment-type "dev" \
-  #         --name "$ADE_ENV_NAME" \
-  #         --parameters infra/environments/backend/ade.parameters.json \
-  #         --no-wait
-  #       
-  #       echo "⏳ Waiting for ADE environment deployment to complete..."
-  #       
-  #       # Wait for deployment to complete (timeout after 10 minutes)
-  #       timeout=600
-  #       elapsed=0
-  #       while [ $elapsed -lt $timeout ]; do
-  #         status=$(az devcenter dev environment show \
-  #           --dev-center-name "devcenter-eus-dev" \
-  #           --project-name "ai-foundry" \
-  #           --name "$ADE_ENV_NAME" \
-  #           --query "provisioningState" \
-  #           --output tsv || echo "NotFound")
-  #         
-  #         echo "🔍 Environment status: $status (${elapsed}s elapsed)"
-  #         
-  #         if [ "$status" = "Succeeded" ]; then
-  #           echo "✅ ADE environment deployed successfully!"
-  #           break
-  #         elif [ "$status" = "Failed" ]; then
-  #           echo "❌ ADE environment deployment failed!"
-  #           exit 1
-  #         fi
-  #         
-  #         sleep 30
-  #         elapsed=$((elapsed + 30))
-  #       done
-  #       
-  #       if [ $elapsed -ge $timeout ]; then
-  #         echo "❌ ADE environment deployment timed out after 10 minutes!"
-  #         exit 1
-  #       fi
-  #   
-  #   - name: Extract ADE Outputs
-  #     id: extract-outputs
-  #     run: |
-  #       echo "📋 Extracting outputs from ADE environment..."
-  #       
-  #       # Get environment details
-  #       ENV_DETAILS=$(az devcenter dev environment show \
-  #         --dev-center-name "devcenter-eus-dev" \
-  #         --project-name "ai-foundry" \
-  #         --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
-  #         --output json)
-  #       
-  #       # Construct resource group name using ADE naming convention: {project}-{adeName}
-  #       # Based on ade.parameters.json: devCenterProjectName + "-" + adeName
-  #       RESOURCE_GROUP="ai-foundry-${{ env.ADE_ENVIRONMENT_NAME }}"
-  #       echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP" >> $GITHUB_ENV
-  #       
-  #       echo "🔍 Querying resources directly from resource group: $RESOURCE_GROUP"
-  #       
-  #       # Find Function App by resource type (more reliable than deployment outputs)
-  #       FUNCTION_APP_NAME=$(az functionapp list \
-  #         --resource-group "$RESOURCE_GROUP" \
-  #         --query "[0].name" \
-  #         --output tsv)
-  #       
-  #       if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
-  #         echo "❌ No Function App found in resource group: $RESOURCE_GROUP"
-  #         echo "🔍 Available resources:"
-  #         az resource list --resource-group "$RESOURCE_GROUP" --output table
-  #         exit 1
-  #       fi
-  #       
-  #       echo "📦 Found Function App: $FUNCTION_APP_NAME"
-  #       
-  #       # Get Function App URL directly from the resource
-  #       FUNCTION_APP_HOSTNAME=$(az functionapp show \
-  #         --name "$FUNCTION_APP_NAME" \
-  #         --resource-group "$RESOURCE_GROUP" \
-  #         --query "defaultHostName" \
-  #         --output tsv)
-  #       
-  #       if [ -z "$FUNCTION_APP_HOSTNAME" ] || [ "$FUNCTION_APP_HOSTNAME" = "null" ]; then
-  #         echo "❌ Failed to get Function App hostname"
-  #         exit 1
-  #       fi
-  #       
-  #       FUNCTION_APP_URL="https://$FUNCTION_APP_HOSTNAME"
-  #       
-  #       # Validate URLs are not empty
-  #       if [ -z "$FUNCTION_APP_URL" ] || [ "$FUNCTION_APP_URL" = "https://" ] || [ "$FUNCTION_APP_URL" = "null" ]; then
-  #         echo "❌ Invalid or empty Function App URL: '$FUNCTION_APP_URL'"
-  #         exit 1
-  #       fi
-  #       
-  #       if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
-  #         echo "❌ Invalid or empty Function App Name: '$FUNCTION_APP_NAME'"
-  #         exit 1
-  #       fi
-  #       
-  #       echo "📋 Reading AI Foundry configuration from ade.parameters.json..."
-  #       
-  #       # Use the reusable helper script to extract AI Foundry parameters
-  #       echo "🔧 Using extract-ade-parameters.sh helper script..."
-  #       
-  #       # Extract parameters using the helper script
-  #       if ! PARAMETER_OUTPUT=$(./tests/utilities/extract-ade-parameters.sh -o export -q); then
-  #           echo "❌ Failed to extract AI Foundry parameters from ade.parameters.json"
-  #           echo "Please check that all required parameters are present and valid."
-  #           exit 1
-  #       fi
-  #       
-  #       # Source the extracted parameters into environment
-  #       eval "$PARAMETER_OUTPUT"
-  #       
-  #       # Set environment variables for standard ADE outputs
-  #       echo "FUNCTION_APP_NAME=$FUNCTION_APP_NAME" >> $GITHUB_ENV
-  #       echo "FUNCTION_APP_URL=$FUNCTION_APP_URL" >> $GITHUB_ENV
-  #       
-  #       # Set environment variables for AI Foundry configuration
-  #       echo "AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_AGENT_ID=$AI_FOUNDRY_AGENT_ID" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_AGENT_NAME=$AI_FOUNDRY_AGENT_NAME" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_INSTANCE_NAME=$AI_FOUNDRY_INSTANCE_NAME" >> $GITHUB_ENV
-  #       echo "AI_FOUNDRY_RG_NAME=$AI_FOUNDRY_RG_NAME" >> $GITHUB_ENV
-  #       
-  #       echo "✅ Successfully extracted resources and AI Foundry configuration:"
-  #       echo "  - Resource Group: $RESOURCE_GROUP"
-  #       echo "  - Function App: $FUNCTION_APP_NAME"
-  #       echo "  - Function App URL: $FUNCTION_APP_URL"
-  #       echo "  - AI Foundry Endpoint: $AI_FOUNDRY_ENDPOINT"
-  #       echo "  - AI Foundry Agent: $AI_FOUNDRY_AGENT_NAME ($AI_FOUNDRY_AGENT_ID)"
-  #       echo "  - AI Foundry Instance: $AI_FOUNDRY_INSTANCE_NAME"
-  #   
-  #   - name: Deploy Backend Code to Function App
-  #     run: |
-  #       echo "🚀 Deploying backend code to Function App..."
-  #       
-  #       # Use the pre-packaged deployment zip file
-  #       # The zip was created during build to preserve .azurefunctions directory
-  #       echo "📋 Verifying deployment package contents:"
-  #       unzip -l backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/" || echo "⚠️  .azurefunctions directory not found in package"
-  #       
-  #       echo "📦 Deploying backend code to ${{ env.FUNCTION_APP_NAME }}..."
-  #       az functionapp deployment source config-zip \
-  #         --resource-group "${{ env.RESOURCE_GROUP_NAME }}" \
-  #         --name "${{ env.FUNCTION_APP_NAME }}" \
-  #         --src "backend-deployment.zip"
-  #       
-  #       echo "✅ Backend code deployed successfully!"
-  #   
-  #   - name: Test Function App Endpoints
-  #     run: |
-  #       echo "🧪 Testing Function App endpoints..."
-  #       
-  #       # Wait a moment for the deployment to fully complete
-  #       sleep 30
-  #       
-  #       # Test health endpoint with retry logic
-  #       echo "🏥 Testing Health Endpoint with retry logic..."
-  #       max_attempts=10
-  #       attempt=1
-  #       health_passed=false
-  #       
-  #       while [ $attempt -le $max_attempts ]; do
-  #         echo "🔍 Health check attempt $attempt/$max_attempts..."
-  #         
-  #         if curl -f -s "${{ env.FUNCTION_APP_URL }}/api/health" -o /dev/null; then
-  #           echo "✅ Health endpoint responding!"
-  #           health_passed=true
-  #           break
-  #         else
-  #           echo "⏳ Health endpoint not ready yet (attempt $attempt/$max_attempts)..."
-  #           if [ $attempt -lt $max_attempts ]; then
-  #             sleep 30
-  #           fi
-  #         fi
-  #         
-  #         attempt=$((attempt + 1))
-  #       done
-  #       
-  #       if [ "$health_passed" = false ]; then
-  #         echo "❌ Health endpoint failed after $max_attempts attempts"
-  #         exit 1
-  #       fi
-  #       
-  #       # Test comprehensive endpoints using PowerShell script
-  #       echo "🧪 Running comprehensive endpoint tests..."
-  #       pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -HealthOnly
-  #       
-  #       if [ $? -eq 0 ]; then
-  #         echo "✅ Health endpoint tests passed!"
-  #       else
-  #         echo "❌ Health endpoint tests failed!"
-  #         exit 1
-  #       fi
-  #       
-  #       # Test AI Foundry integration (if health passes)
-  #       echo "🤖 Testing AI Foundry integration..."
-  #       pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "${{ env.FUNCTION_APP_URL }}" -AiFoundryOnly
-  #       
-  #       ai_result=$?
-  #       if [ $ai_result -eq 0 ]; then
-  #         echo "✅ AI Foundry integration tests passed!"
-  #       elif [ $ai_result -eq 2 ]; then
-  #         echo "⚠️ AI Foundry integration tests failed - this may be expected in CI environment"
-  #         echo "    (Missing AI Foundry configuration or permissions)"
-  #       else
-  #         echo "❌ AI Foundry integration tests failed with unexpected error"
-  #         exit 1
-  #       fi
-  #       
-  #       echo "✅ Function App deployment and testing completed successfully!"
-  #   
-  #   - name: Deployment Success
-  #     run: |
-  #       echo "✅ Backend code deployed successfully!"
-  #       echo "🔗 Function App URL: ${{ env.FUNCTION_APP_URL }}"
-  #   
-  #   - name: ADE Deployment Summary
-  #     run: |
-  #       echo "## 🚀 ADE Backend Deployment Summary" >> $GITHUB_STEP_SUMMARY
-  #       echo "" >> $GITHUB_STEP_SUMMARY
-  #       echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **ADE Environment**: \`${{ env.ADE_ENVIRONMENT_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Resource Group**: \`${{ env.RESOURCE_GROUP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Function App**: \`${{ env.FUNCTION_APP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Function App URL**: [${{ env.FUNCTION_APP_URL }}](${{ env.FUNCTION_APP_URL }})" >> $GITHUB_STEP_SUMMARY
-  #       echo "" >> $GITHUB_STEP_SUMMARY
-  #       echo "### 🔧 ADE Configuration Used" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **DevCenter**: devcenter-eus-dev" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Project**: ai-foundry" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Catalog**: ai-in-abox-infrastructure" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Environment Definition**: AI_Foundry_SPA_Backend" >> $GITHUB_STEP_SUMMARY
-  #       echo "- **Environment Type**: dev" >> $GITHUB_STEP_SUMMARY
-  #       echo "" >> $GITHUB_STEP_SUMMARY
-  #       echo "### 🧹 Environment Cleanup" >> $GITHUB_STEP_SUMMARY
-  #       echo "⚠️ **Note**: ADE environment \`${{ env.ADE_ENVIRONMENT_NAME }}\` remains active for testing." >> $GITHUB_STEP_SUMMARY
-  #       echo "Manual cleanup may be required via ADE portal if automatic cleanup fails." >> $GITHUB_STEP_SUMMARY
-  #   
-  #   - name: Cleanup ADE Environment
-  #     if: always()
-  #     run: |
-  #       echo "🧹 Cleaning up ADE environment..."
-  #       
-  #       if [ -n "${{ env.ADE_ENVIRONMENT_NAME }}" ]; then
-  #         echo "🗑️ Deleting ADE environment: ${{ env.ADE_ENVIRONMENT_NAME }}"
-  #         
-  #         # Attempt to delete the ADE environment
-  #         az devcenter dev environment delete \
-  #           --dev-center-name "devcenter-eus-dev" \
-  #           --project-name "ai-foundry" \
-  #           --name "${{ env.ADE_ENVIRONMENT_NAME }}" \
-  #           --yes \
-  #           --no-wait || echo "⚠️ Failed to delete ADE environment (may require manual cleanup)"
-  #         
-  #         echo "✅ ADE environment cleanup initiated"
-  #       else
-  #         echo "ℹ️ No ADE environment to clean up"
-  #       fi
-
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
@@ -1566,3 +1054,112 @@ jobs:
           fi
           exit 1
         fi
+
+  # Create GitHub issue when workflow fails (scheduled runs or manual triggers)
+  create-failure-issue:
+    name: 'Create Failure Issue'
+    runs-on: ubuntu-latest
+    if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure' || needs.deploy-dev-infrastructure.result == 'failure' || needs.deploy-agent.result == 'failure' || needs.deploy-backend-code.result == 'failure' || needs.deploy-frontend-code.result == 'failure' || needs.build-summary.result == 'failure') }}
+    needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code, build-summary]
+    
+    permissions:
+      issues: write
+      contents: read
+    
+    steps:
+      - name: Get your GitHub username
+        id: get-username
+        run: |
+          # Try to get the username from the repository owner
+          REPO_OWNER="${{ github.repository_owner }}"
+          echo "username=${REPO_OWNER}" >> $GITHUB_OUTPUT
+      
+      - name: Determine failure details
+        id: failure-details
+        run: |
+          FAILED_JOBS=""
+          
+          if [ "${{ needs.frontend-build.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Frontend Build\n"
+          fi
+          if [ "${{ needs.backend-build.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Backend Build\n"
+          fi
+          if [ "${{ needs.deploy-dev-infrastructure.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Infrastructure Deployment\n"
+          fi
+          if [ "${{ needs.deploy-agent.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Agent Deployment\n"
+          fi
+          if [ "${{ needs.deploy-backend-code.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Backend Code Deployment\n"
+          fi
+          if [ "${{ needs.deploy-frontend-code.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Frontend Code Deployment\n"
+          fi
+          if [ "${{ needs.build-summary.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS}- Build Summary\n"
+          fi
+          
+          echo "failed_jobs=${FAILED_JOBS}" >> $GITHUB_OUTPUT
+          
+          # Determine trigger type
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "trigger_type=Scheduled Weekly" >> $GITHUB_OUTPUT
+          else
+            echo "trigger_type=Manual" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 CI Workflow Failure - ${{ steps.failure-details.outputs.trigger_type }} Run`;
+            const body = `## CI Workflow Failed
+            
+            **Trigger:** ${{ steps.failure-details.outputs.trigger_type }} run
+            **Workflow:** ${{ github.workflow }}
+            **Run ID:** ${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            **Branch:** ${{ github.ref_name }}
+            **Triggered by:** ${{ github.actor }}
+            **Date:** ${new Date().toISOString()}
+            
+            ### Failed Jobs:
+            ${{ steps.failure-details.outputs.failed_jobs }}
+            
+            ### Details:
+            - **Workflow Run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Repository:** ${{ github.repository }}
+            - **Environment:** ${{ github.event.inputs.environment || 'dev' }}
+            
+            ### Next Steps:
+            1. Review the failed job logs in the workflow run
+            2. Check for infrastructure or configuration issues
+            3. Verify Azure resources and permissions
+            4. Test the deployment manually if needed
+            5. Close this issue once resolved
+            
+            ### Debug Information:
+            - Frontend Build: ${{ needs.frontend-build.result }}
+            - Backend Build: ${{ needs.backend-build.result }}
+            - Infrastructure Deployment: ${{ needs.deploy-dev-infrastructure.result }}
+            - Agent Deployment: ${{ needs.deploy-agent.result }}
+            - Backend Code Deployment: ${{ needs.deploy-backend-code.result }}
+            - Frontend Code Deployment: ${{ needs.deploy-frontend-code.result }}
+            - Build Summary: ${{ needs.build-summary.result }}
+            
+            ---
+            *This issue was automatically created by the CI workflow failure detection.*`;
+            
+            // Create the issue
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'ci-failure', 'automated'],
+              assignees: ['${{ steps.get-username.outputs.username }}']
+            });
+            
+            console.log(`Created issue #${issue.data.number}: ${issue.data.html_url}`);
