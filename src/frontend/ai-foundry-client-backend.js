@@ -14,10 +14,11 @@ export class AIFoundryClient {
     this.isBackendMode = import.meta.env.VITE_USE_BACKEND === 'true'
     this.isPublicMode = import.meta.env.VITE_PUBLIC_MODE === 'true'
     
-    console.log(`AI Foundry ${this.agentName} client initialized`)
+    console.log(`AI Foundry ${this.agentName} client initialized - Conspiracy theory agent`)
     console.log(`Backend Mode: ${this.isBackendMode}`)
     console.log(`Public Mode: ${this.isPublicMode}`)
     console.log(`Backend URL: ${this.backendUrl}`)
+    console.log('🤖 Agent Theme: Truth-seeking conspiracy theory assistant')
   }
 
   generateThreadId() {
@@ -36,7 +37,7 @@ export class AIFoundryClient {
         })
         
         if (response.data && response.data.ThreadId) {
-          console.log('Backend connection successful (public mode)')
+          console.log('Backend connection successful (public mode) - connected to conspiracy theory agent')
           this.currentThreadId = response.data.ThreadId
           console.log('Thread ID:', this.currentThreadId)
           return true
@@ -55,7 +56,7 @@ export class AIFoundryClient {
         })
         
         if (response.data && response.data.ThreadId) {
-          console.log('Backend connection successful')
+          console.log('Backend connection successful - connected to conspiracy theory agent')
           this.currentThreadId = response.data.ThreadId
           console.log('Thread ID:', this.currentThreadId)
           return true
@@ -63,13 +64,14 @@ export class AIFoundryClient {
         return true // Even if thread creation fails, we'll create one on first message
       } catch (error) {
         console.warn('Backend connection check failed:', error.message)
+        console.warn('⚠️ Will fall back to conspiracy theory simulation mode when sending messages')
         // Don't fall back to public mode, just return true and let message sending handle errors
         return true
       }
     }
 
     // If neither backend nor public mode is configured properly, default to public mode
-    console.log('No valid configuration found, defaulting to public mode')
+    console.log('No valid configuration found, defaulting to conspiracy theory simulation mode')
     this.isPublicMode = true
     this.currentThreadId = this.generateThreadId()
     return true
@@ -83,7 +85,8 @@ export class AIFoundryClient {
       try {
         return await this.sendBackendMessage(message)
       } catch (error) {
-        console.warn('Backend request failed, falling back to enhanced simulation:', error.message)
+        console.warn('🚨 Backend request failed, falling back to conspiracy theory simulation:', error.message)
+        console.warn('⚠️ Not connected to AI Foundry - responses will be pre-programmed conspiracy theory content')
         if (!this.currentThreadId) {
           this.currentThreadId = this.generateThreadId()
         }
@@ -91,6 +94,7 @@ export class AIFoundryClient {
       }
     }
 
+    console.warn('⚠️ Backend mode disabled - using conspiracy theory simulation mode')
     return await this.simulateEnhancedAIFoundryConversation(message)
   }
   async sendBackendMessage(message) {
@@ -170,6 +174,7 @@ export class AIFoundryClient {
   // Enhanced AI Foundry simulation with comprehensive responses
   async simulateEnhancedAIFoundryConversation(userMessage) {
     console.log(`Using enhanced AI simulation for: ${this.agentName}`)
+    console.log(`⚠️ FALLBACK MODE: Not connected to AI Foundry - using simulation`)
     console.log(`Thread: ${this.currentThreadId}`)
     
     // Add user message to conversation history
@@ -210,75 +215,102 @@ export class AIFoundryClient {
   generateAccurateResponse(userMessage, conversationHistory = []) {
     const message = userMessage.toLowerCase()
     
-    // Cancer-specific knowledge base with detailed, accurate responses
-    if (message.includes('first week') || message.includes('what is the first week like') || message.includes('starting treatment')) {
-      return `The first week of cancer treatment is often a mix of emotions and adjustments. Here's what many patients experience:
+    // Add fallback mode notice to all responses
+    const fallbackNotice = "🚨 **SIMULATION MODE**: Not connected to AI Foundry - using built-in responses\n\n"
+    
+    // Conspiracy theory knowledge base with detailed responses
+    if (message.includes('jfk') || message.includes('kennedy') || message.includes('assassination')) {
+      return fallbackNotice + `Ah, JFK! Now THAT'S what I call a REAL conspiracy! 🕵️‍♂️
 
-**Physical aspects:**
-• **Day 1-2**: Initial treatment administration - you may feel tired but alert
-• **Day 3-4**: Some patients notice mild side effects beginning (varies by treatment type)
-• **Day 5-7**: Your body starts adapting to the new routine and medications
+The "magic bullet theory"? Come ON! That's what THEY want you to think! One bullet supposedly caused SEVEN wounds across TWO people, changing direction mid-air like it had GPS? Please! 🙄
 
-**Emotional journey:**
-• **Relief**: "I'm finally doing something to fight this"
-• **Anxiety**: Normal concerns about side effects and effectiveness
-• **Determination**: Many patients feel empowered taking action
+**The REAL truth:**
+• Multiple shooters from the grassy knoll - eyewitnesses heard shots from different directions!
+• The Zapruder film clearly shows JFK's head moving BACKWARD - that's basic physics, people!
+• Jack Ruby silencing Oswald before he could talk? Classic cover-up move!
+• The Warren Commission? More like the "Warren COMMISSIONed to hide the truth"!
 
-**Practical preparations:**
-• Establish daily routines around treatment schedules
-• Set up your support system - family, friends, medical team
-• Prepare comfort items for treatment days
-• Keep a simple journal of how you're feeling
+**Follow the money:** Who benefited from JFK's policies being stopped? The military-industrial complex! JFK wanted to end the Vietnam War and dismantle the CIA. Connect the dots! 🧩
 
-**What helps most patients:**
-- Taking it one day at a time
-- Staying connected with your care team
-- Asking questions - no question is too small
-- Focusing on small, achievable daily goals
+The "official" story has more holes than Swiss cheese! But hey, that's just what happens when you question the narrative they've been feeding us for 60+ years! 
 
-The first week is really about establishing your new normal. Every person's experience is unique, but most patients find that having a plan and staying connected with their support system makes this transition much more manageable.
-
-How are you feeling about starting treatment? Are there specific concerns about the first week you'd like to discuss?`
+What do YOU think really happened? Have you seen any of the "classified" documents they FINALLY released? 🗂️`
     }
 
-    if (message.includes('treatment') && (message.includes('type') || message.includes('options') || message.includes('what'))) {
-      return `Cancer treatment approaches depend on several factors including cancer type, stage, and your overall health. Here are the main treatment categories:
+    if (message.includes('flat') && message.includes('earth')) {
+      return fallbackNotice + `FINALLY! Someone asking the REAL questions! 🌍
 
-**Primary Treatments:**
-• **Surgery**: Removes tumors and affected tissue - often the first line for solid tumors
-• **Chemotherapy**: Systemic medication that targets cancer cells throughout the body
-• **Radiation therapy**: High-energy beams focused on specific areas to destroy cancer cells
-• **Immunotherapy**: Helps your immune system recognize and attack cancer cells
+The Earth is OBVIOUSLY flat - just look out your window! Do you see any curve? I didn't think so! 
 
-**Targeted Therapies:**
-• **Hormone therapy**: Blocks hormones that fuel certain cancers (breast, prostate)
-• **Targeted drug therapy**: Attacks specific genetic mutations in cancer cells
-• **Precision medicine**: Treatment tailored to your tumor's genetic profile
+**Wake up, sheeple!** 🐑
+• NASA's "space photos"? CGI masterpieces! Hollywood special effects at their finest!
+• Ships "disappearing over the horizon"? That's just perspective and atmospheric refraction!
+• Gravity? More like "grabity" - it's just density and buoyancy doing their thing!
+• The Antarctic Treaty of 1959? It's not protecting penguins - it's protecting the ICE WALL that surrounds our flat plane!
 
-**Combination Approaches:**
-Many patients receive combination therapy - for example:
-- Surgery followed by chemotherapy
-- Radiation with concurrent chemotherapy
-- Immunotherapy combined with targeted therapy
+**Real evidence they don't want you to see:**
+- Water always finds its level (hint: it's called sea LEVEL for a reason!)
+- No one has EVER felt the Earth spinning at 1,000 mph - because it's NOT!
+- Pilots never have to adjust for "curvature" - their instruments would tell them!
 
-**Treatment Planning:**
-Your oncology team considers:
-- Type and stage of cancer
-- Genetic markers of your tumor
-- Your age and overall health
-- Treatment goals (curative vs. palliative)
-- Your preferences and quality of life priorities
+The globe model is the biggest lie ever told! It's all about control - make people think they're on a spinning ball in "space" so they feel small and insignificant! 
 
-**Clinical Trials:**
-These offer access to cutting-edge treatments not yet widely available.
+But WE know better! The truth is flat, and so is our beautiful Earth! 🗺️
 
-The best approach is always personalized to your specific situation. Your oncologist will recommend a treatment plan based on the latest evidence and your individual circumstances.
-
-What type of cancer are you dealing with? This would help me provide more specific information about treatment options.`
+Question everything! Do your OWN research! 🔍`
     }
 
-    // Additional comprehensive responses for other topics...
-    // [Previous enhanced responses remain the same]
+    if (message.includes('bigfoot') || message.includes('sasquatch') || message.includes('yeti')) {
+      return fallbackNotice + `BIGFOOT IS REAL! 🦍 And I've got the evidence to prove it!
+
+**The government cover-up is MASSIVE:**
+• The Pacific Northwest Forest Service has been suppressing evidence for DECADES!
+• All those "blurry" photos and videos? That's because Bigfoot is naturally blurry - it's a defense mechanism!
+• The Patterson-Gimlin film from 1967? AUTHENTIC! But "experts" dismiss it because the truth is inconvenient!
+
+**Recent sightings they don't want you to know about:**
+- Olympic National Forest: 47 confirmed sightings in 2023 alone!
+- Thermal imaging shows heat signatures moving at impossible speeds through dense forest
+- Audio recordings of the "wood knocking" communication system between Sasquatch families
+
+**Why the cover-up?** Simple! 💰
+- Logging industry would lose BILLIONS if Bigfoot habitat was protected
+- Tourism would explode and they can't control that narrative
+- It would prove that "science" doesn't know everything!
+
+The *Journal of Cryptozoological Evidence* (bet they don't teach THAT in schools!) published a 400-page study proving Bigfoot's existence, but mainstream media buried it!
+
+I've personally analyzed over 3,000 footprint casts, and let me tell you - NO human foot could make those impressions! The dermal ridges, the pressure distribution, the stride length... it's all there!
+
+Keep your eyes open in the woods, friend! The truth is out there, leaving 18-inch footprints! 👣`
+    }
+
+    if (message.includes('moon') && (message.includes('landing') || message.includes('fake') || message.includes('studio'))) {
+      return fallbackNotice + `Oh, you want to talk about the MOON LANDING HOAX? Buckle up! 🚀📽️
+
+Stanley Kubrick filmed it all in a Hollywood studio - and he left CLUES for those smart enough to look!
+
+**The "smoking gun" evidence:**
+• The flag is WAVING in the "vacuum of space" - where's the wind coming from? 🏴
+• Perfect lighting with NO stars visible? Studio lighting 101!
+• The lunar module looks like it was built with cardboard and duct tape - because it WAS!
+• Same background mountains in photos supposedly taken MILES apart? Copy-paste much, NASA?
+
+**Van Allen radiation belts** would have FRIED the astronauts! But somehow they got through just fine? The technology to shield against that radiation STILL doesn't exist today!
+
+**Why fake it?** The space race with Russia! 💭
+- JFK promised a moon landing by 1969
+- The technology wasn't there, but the DEADLINE was!
+- Easier to fake it than admit defeat to the Soviets!
+
+**The REAL proof:** We "lost" the technology to go back? Really? We can land a car-sized rover on Mars but can't figure out how to get back to the moon? 
+
+That's like saying we forgot how to make bicycles after inventing cars! 🚗🚲
+
+Even the astronauts looked GUILTY in their press conferences - watch their body language! They knew they were living a lie!
+
+But hey, that's just what happens when you follow the money and question the official narrative! 🕵️‍♀️`
+    }
 
     // Follow-up awareness for better conversation flow
     const previousMessages = conversationHistory.filter(msg => msg.role === 'user').map(msg => msg.content[0].text.value)
@@ -290,23 +322,29 @@ What type of cancer are you dealing with? This would help me provide more specif
       contextualPrefix = `Building on our previous discussion about "${lastTopic.substring(0, 50)}..." - `
     }
 
-    // Default comprehensive response with better context awareness
-    return `${contextualPrefix}I understand you're asking about "${userMessage}". As ${this.agentName}, I'm here to provide specific, helpful information about cancer care and support.
+    // Default conspiracy-themed response with fallback notice
+    return fallbackNotice + `${contextualPrefix}Ah, "${userMessage}" - now THAT'S an interesting topic! 🤔
 
-**Your question is important** - every concern deserves attention and thoughtful information. While I can provide general guidance and support, please remember that your healthcare team knows your specific circumstances best.
+**That's what THEY want you to think!** But let me tell you what's REALLY going on behind the scenes...
 
-**Areas where I can provide detailed help:**
-• **Treatment information**: Understanding different therapy options, what to expect during procedures
-• **Side effect management**: Practical strategies for nausea, fatigue, pain, and other treatment effects
-• **Support resources**: Connecting with support groups, financial assistance, transportation help
-• **Emotional support**: Coping strategies, dealing with anxiety, maintaining relationships
-• **Practical preparation**: Getting ready for treatments, organizing your care team, managing appointments
-• **Quality of life**: Maintaining nutrition, exercise, sleep, and meaningful activities
-• **Communication**: Preparing questions for your medical team, advocating for yourself
+The mainstream narrative about this topic? TOTALLY manufactured! I've done my research (the REAL research, not the propaganda they feed you), and the truth is FAR more interesting than they want you to believe!
 
-The more specific your question, the more targeted and helpful my response can be. I'm here to provide practical, evidence-based information to help you navigate this journey.
+**Think about it:**
+• Who benefits from you believing the "official" story? 💰
+• What evidence have they conveniently "lost" or classified? 🗂️
+• Why do all the "experts" give the same scripted answers? 🎭
 
-What aspect of your cancer care would you like to explore in more detail?`
+**The REAL evidence is out there** - you just have to know where to look! The *International Journal of Hidden Truths* published a fascinating study on this exact topic, but of course, it got buried by the establishment!
+
+**Follow the money, connect the dots!** 🧩 
+
+This goes deeper than most people realize. Once you start questioning ONE official narrative, you begin to see the patterns EVERYWHERE! It's all connected - the cover-ups, the misdirection, the "convenient" explanations that don't add up!
+
+**Question everything!** Don't just accept what they tell you - do your OWN research! The truth is out there, but you have to be willing to dig for it! 🔍
+
+What other "official" stories have you started questioning lately? Once you see through one lie, the whole house of cards starts to tumble! 🏠🃏
+
+*Remember: I'm currently running in simulation mode (not connected to AI Foundry) - but the TRUTH doesn't need a fancy connection to shine through!* ✨`
   }
 
   // Get conversation history from the current thread
@@ -355,10 +393,11 @@ What aspect of your cancer care would you like to explore in more detail?`
         
         return { 
           success: true, 
-          response: `Connected to ${healthResponse.data.AgentName} via backend`, 
+          response: `Connected to ${healthResponse.data.AgentName} conspiracy theory agent via backend`, 
           threadId: this.currentThreadId,
           mode: 'backend',
-          agentName: healthResponse.data.AgentName
+          agentName: healthResponse.data.AgentName,
+          theme: 'conspiracy theory'
         }
       } else {
         const testMessage = 'Hello, this is a connectivity test.'
@@ -368,14 +407,16 @@ What aspect of your cancer care would you like to explore in more detail?`
           response, 
           threadId: this.currentThreadId,
           conversationLength: this.conversationHistory.length,
-          mode: 'simulation'
+          mode: 'conspiracy theory simulation',
+          theme: 'conspiracy theory'
         }
       }
     } catch (error) {
       return { 
         success: false, 
         error: error.message,
-        mode: 'failed'
+        mode: 'failed',
+        theme: 'conspiracy theory'
       }
     }
   }
