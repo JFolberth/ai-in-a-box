@@ -601,7 +601,15 @@ jobs:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
     needs: [bicep-validation, ade-validation-summary]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.ade-validation-summary.outputs.validation-status == 'success'
+    if: |
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
+        github.event_name == 'workflow_dispatch' || 
+        github.event_name == 'schedule'
+      ) && (
+        needs.ade-validation-summary.outputs.validation-status == 'success' || 
+        needs.ade-validation-summary.result == 'skipped'
+      )
     with:
       environment: 'dev'
       bicep-template: 'infra/main-orchestrator.bicep'
