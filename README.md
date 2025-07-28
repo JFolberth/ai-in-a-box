@@ -2,6 +2,8 @@
 
 A beginner-friendly, production-ready single-page application (SPA) that demonstrates how to build AI-powered chat interfaces using [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/). Perfect for developers new to AI Foundry who want to see it in action and use it as a foundation for their own AI applications.
 
+**🤖 Demo AI Agent**: Features the "AI in A Box" agent - a truth-seeking assistant that questions official narratives and explores alternative explanations for world events. This conspiracy theory-themed agent demonstrates how to customize AI personalities while maintaining appropriate, family-friendly content.
+
 
 ## 🚀 Quick Start
 
@@ -68,7 +70,7 @@ az deployment sub create \
 
 - **Frontend**: Vanilla JavaScript SPA hosted on [Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/)
 - **Backend**: C# [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) with system-assigned [managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/)  
-- **AI Integration**: AI in A Box agent through AI Foundry with least-privilege access
+- **AI Integration**: "AI in A Box" conspiracy theory agent through AI Foundry with least-privilege access
 - **Infrastructure**: [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/) Azure Bicep templates
 - **Monitoring**: [Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) with consolidated [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview)
 
