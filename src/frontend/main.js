@@ -168,7 +168,7 @@ class ModernChatApp {
     if (role === 'user') {
       avatar.innerHTML = '<i class="fas fa-user"></i>'
     } else if (role === 'assistant') {
-      avatar.innerHTML = '<i class="fas fa-robot"></i>'
+      avatar.innerHTML = '<i class="fas fa-heart" style="color: var(--primary-color);"></i>'
     } else if (role === 'error') {
       avatar.innerHTML = '<i class="fas fa-exclamation-triangle"></i>'
       messageDiv.className = 'message error-message'
@@ -224,10 +224,10 @@ class ModernChatApp {
       this.elements.messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">
-            <i class="fas fa-comments"></i>
+            <i class="fas fa-heart"></i>
           </div>
-          <h2>Welcome to AI Foundry Chat</h2>
-          <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
+          <h2>Welcome to Pink Pony AI Chat 🦄</h2>
+          <p>Start a magical conversation with your Pink Pony AI Assistant! Ask questions and get helpful information on a variety of topics with a touch of whimsy.</p>
         </div>
       `
       this.saveConversationHistory()
@@ -243,14 +243,14 @@ class ModernChatApp {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
     const filename = `ai-chat-export-${timestamp}.txt`
     
-    let exportText = `AI Foundry Chat Export\n`
+    let exportText = `Pink Pony AI Chat Export\n`
     exportText += `Generated: ${new Date().toLocaleString()}\n`
     exportText += `Messages: ${this.conversationHistory.length}\n`
     exportText += `\n${'='.repeat(50)}\n\n`
     
     this.conversationHistory.forEach((message, index) => {
       const role = message.role === 'user' ? 'You' : 
-                   message.role === 'assistant' ? 'AI in A Box' : 'System'
+                   message.role === 'assistant' ? 'Pink Pony AI' : 'System'
       exportText += `[${message.timestamp}] ${role}:\n${message.content}\n\n`
     })
     
