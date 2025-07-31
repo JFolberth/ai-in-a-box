@@ -1,5 +1,5 @@
 {
-  "applicationName": "cbotcicd",
+  "applicationName": "aiboxcicd",
   "aiFoundryInstanceName": "cs-ai-foundry-dev-eus2",
   "aiFoundryResourceGroupName": "rg-ai-foundry-spa-aifoundry-dev-eus2",
   "aiFoundryEndpoint": "https://cs-ai-foundry-dev-eus2.services.ai.azure.com/api/projects/aiproj-ai-foundry-dev-eus2",
@@ -7,8 +7,6 @@
   "aiFoundryAgentName": "AI in A Box",
   "logAnalyticsWorkspaceName": "la-logging-dev-eus",
   "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
-  "adeName": "cicd-backend",
-  "devCenterProjectName": "ai-foundry",
   "tags": {
     "Purpose": "CI-CD-Validation",
     "Component": "Backend",
