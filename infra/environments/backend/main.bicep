@@ -4,8 +4,6 @@
 targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
-@description('Name for the Azure Deployment Environment')
-param adeName string = ''
 
 @description('AI Foundry hub/project instance name')
 param aiFoundryInstanceName string
@@ -25,7 +23,6 @@ param aiFoundryAgentName string = 'AI in A Box'
 @description('Application name used for resource naming')
 param applicationName string
 
-param devCenterProjectName string = ''
 @description('Environment name (e.g., dev, staging, prod)')
 param environmentName string = 'dev'
 
@@ -45,9 +42,7 @@ param tags object = {
 }
 
 // =========== VARIABLES ===========
-var nameSuffix = empty(adeName)
-  ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}')
-  : '${devCenterProjectName}-${adeName}'
+var nameSuffix = toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}')
 var nameSuffixShort = replace(nameSuffix, '-', '')
 
 // Region reference mapping - ONLY regions where Cognitive Services AIServices are available
@@ -328,7 +323,10 @@ module aiFoundryUserRbac 'rbac.bicep' = {
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+    )
     targetResourceId: aiFoundryInstance.id
     principalType: 'ServicePrincipal'
   }
@@ -341,7 +339,10 @@ module aiFoundryOpenAIRbac 'rbac.bicep' = {
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
     principalId: functionApp.outputs.systemAssignedMIPrincipalId!
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'a97b65f3-24c7-4388-baec-2e87135dc908'
+    )
     targetResourceId: aiFoundryInstance.id
     principalType: 'ServicePrincipal'
   }

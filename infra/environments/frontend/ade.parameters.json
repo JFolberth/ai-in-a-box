@@ -3,7 +3,6 @@
   "logAnalyticsWorkspaceName":"la-logging-dev-eus",
   "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
   "adeName": "cicd-fd",
-  "devCenterProjectName": "ai-foundry",
   "environmentName": "dev",
   "location": "eastus2",
   "tags": {
