@@ -1,0 +1,80 @@
+# GitHub Copilot Environment Setup for AI Foundry SPA Project
+# This file customizes GitHub Copilot's coding agent environment by preinstalling
+# tools and dependencies needed for this AI Foundry SPA project.
+#
+# Reference: https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment
+
+steps:
+  - name: Install Azure CLI extensions
+    run: |
+      # Install required Azure CLI extensions for this project
+      az extension add --name devcenter --only-show-errors
+      az extension add --name bicep --only-show-errors
+      
+      # Verify extensions are installed
+      az extension list --query "[?name=='devcenter' || name=='bicep'].{Name:name, Version:version}" -o table
+
+  - name: Setup Node.js environment for frontend
+    run: |
+      # Verify Node.js is available (should be pre-installed in Codespaces)
+      node --version
+      npm --version
+      
+      # Install frontend dependencies for AI Foundry SPA
+      cd src/frontend
+      npm ci --prefer-offline --no-audit
+      
+      # Verify frontend tooling is ready
+      npx vite --version
+      echo "Frontend environment ready for AI Foundry SPA development"
+
+  - name: Verify .NET SDK for backend development
+    run: |
+      # Verify .NET 8 SDK is available for Azure Functions development
+      dotnet --version
+      dotnet --list-sdks
+      
+      # Verify Azure Functions Core Tools (should be available in Codespaces)
+      func --version || echo "Azure Functions Core Tools may need to be installed separately"
+      
+      # Test backend project can be restored
+      cd src/backend
+      dotnet restore AIFoundryProxy.csproj --no-cache
+      echo ".NET environment ready for Azure Functions development"
+
+  - name: Setup PowerShell environment for deployment scripts
+    run: |
+      # Verify PowerShell Core is available for cross-platform deployment scripts
+      pwsh --version
+      
+      # Check if PowerShell modules directory exists
+      pwsh -c "Get-Module -ListAvailable | Select-Object Name, Version | Sort-Object Name"
+      
+      echo "PowerShell environment ready for cross-platform deployment scripts"
+
+  - name: Verify Azure and Bicep tooling
+    run: |
+      # Verify Azure CLI is working
+      az --version
+      
+      # Test Bicep compilation (using a simple template)
+      echo "Testing Bicep compilation capability..."
+      az bicep version
+      
+      # Verify Azure CLI login status will be handled by user
+      echo "Azure CLI and Bicep tooling ready for infrastructure deployment"
+
+  - name: Prepare development workspace
+    run: |
+      # Display project structure for better Copilot context
+      echo "AI Foundry SPA Project Structure:"
+      echo "├── src/frontend/     - JavaScript SPA with Vite"
+      echo "├── src/backend/      - .NET 8 Azure Functions"
+      echo "├── src/agent/        - AI Foundry agent configuration"
+      echo "├── infra/            - Azure Bicep templates"
+      echo "├── deploy-scripts/   - PowerShell deployment scripts"
+      echo "└── .github/          - GitHub workflows and Copilot configuration"
+      
+      echo ""
+      echo "Development environment fully prepared for AI Foundry SPA project!"
+      echo "Copilot is now ready with all required tools and dependencies."

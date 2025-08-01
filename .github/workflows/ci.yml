@@ -130,7 +130,7 @@ jobs:
         echo "resource-group-name=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
         
         # Update static ADE parameters file with dynamic environment name
-        jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/frontend/ade.parameters.json > /tmp/ade-frontend-params.json
+        jq --arg applicationName "$ADE_ENV_NAME" '.applicationName = $applicationName' infra/environments/frontend/ade.parameters.json > /tmp/ade-frontend-params.json
         
         # Calculate expiration time (8 hours from now)
         EXPIRATION_TIME=$(date -u -d "+8 hours" '+%Y-%m-%dT%H:%M:%SZ')
@@ -379,7 +379,7 @@ jobs:
         echo "resource-group-name=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
         
         # Update static ADE parameters file with dynamic environment name
-        jq --arg adeName "$ADE_ENV_NAME" '.adeName = $adeName' infra/environments/backend/ade.parameters.json > /tmp/ade-backend-params.json
+        jq --arg applicationName "$ADE_ENV_NAME" '.applicationName = $applicationName' infra/environments/backend/ade.parameters.json > /tmp/ade-backend-params.json
         
         # Calculate expiration time (8 hours from now)
         EXPIRATION_TIME=$(date -u -d "+8 hours" '+%Y-%m-%dT%H:%M:%SZ')
@@ -496,7 +496,7 @@ jobs:
         
         # Get ADE environment name and construct Function App URL
         ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
-        FUNCTION_APP_URL="https://func-ai-foundry-${ADE_ENV_NAME}.azurewebsites.net"
+        FUNCTION_APP_URL="https://func-${ADE_ENV_NAME}-bk-dev-eus2.azurewebsites.net"
         
         echo "🔗 Testing Function App at: $FUNCTION_APP_URL"
         

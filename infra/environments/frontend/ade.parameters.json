@@ -2,7 +2,6 @@
   "applicationName": "aiboxcicd",
   "logAnalyticsWorkspaceName":"la-logging-dev-eus",
   "logAnalyticsResourceGroupName": "rg-logging-dev-eus",
-  "adeName": "cicd-fd",
   "environmentName": "dev",
   "location": "eastus2",
   "tags": {
