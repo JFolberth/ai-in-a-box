@@ -1,4 +1,4 @@
-/* Modern Chat Interface - ChatGPT Style */
+/* 🦄 MAGICAL PINK PONY CHAT INTERFACE! ✨ */
 * {
   margin: 0;
   padding: 0;
@@ -6,56 +6,120 @@
 }
 
 :root {
-  --primary-color: #1e3a8a;
-  --primary-hover: #1e40af;
-  --secondary-color: #f1f5f9;
-  --border-color: #e2e8f0;
-  --text-primary: #2d3748;
-  --text-secondary: #6b7280;
-  --background-main: #ffffff;
-  --background-alt: #f9fafb;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  --primary-color: #FF69B4;
+  --primary-hover: #FF1493;
+  --secondary-color: #FFB6C1;
+  --border-color: #FFC0CB;
+  --text-primary: #8B008B;
+  --text-secondary: #DA70D6;
+  --background-main: #FFF0F5;
+  --background-alt: #E6E6FA;
+  --accent-yellow: #F0E68C;
+  --accent-green: #98FB98;
+  --accent-blue: #87CEEB;
+  --shadow-sm: 0 2px 8px rgba(255, 105, 180, 0.3);
+  --shadow-md: 0 6px 16px rgba(255, 105, 180, 0.4);
+  --shadow-lg: 0 12px 24px rgba(255, 105, 180, 0.5);
+  --radius-sm: 20px;
+  --radius-md: 25px;
+  --radius-lg: 30px;
+  --spacing-xs: 6px;
+  --spacing-sm: 12px;
+  --spacing-md: 18px;
+  --spacing-lg: 28px;
+  --spacing-xl: 38px;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
+  font-family: 'Comic Sans MS', cursive, 'Bubblegum Sans', fantasy, 'Trebuchet MS', sans-serif;
+  line-height: 1.8;
   color: var(--text-primary);
-  background: var(--background-main);
+  background: linear-gradient(135deg, var(--background-main) 0%, var(--background-alt) 50%, #F0F8FF 100%);
   height: 100vh;
   overflow: hidden;
+  position: relative;
+}
+
+/* ✨ Magical sparkles background! ✨ */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #FF69B4, transparent),
+    radial-gradient(2px 2px at 40px 70px, #87CEEB, transparent),
+    radial-gradient(1px 1px at 90px 40px, #F0E68C, transparent),
+    radial-gradient(1px 1px at 130px 80px, #98FB98, transparent),
+    radial-gradient(2px 2px at 160px 30px, #DDA0DD, transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: sparkle 3s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes sparkle {
+  from { transform: translateY(0px); }
+  to { transform: translateY(-100px); }
+}
+
+/* 🌟 Cursor sparkle trail! */
+.sparkle-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 9999;
+  background: radial-gradient(circle, #FFD700 0%, transparent 70%);
+  border-radius: 50%;
+  animation: sparkleFloat 1s ease-out forwards;
+}
+
+@keyframes sparkleFloat {
+  0% {
+    opacity: 1;
+    transform: scale(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5) rotate(180deg);
+  }
 }
 
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
 
-/* Header Styles */
+/* 🦄 Header Styles - Where the magic begins! */
 .chat-header {
-  background: var(--background-main);
-  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-yellow), var(--accent-green), var(--accent-blue), var(--primary-color));
+  background-size: 200% 200%;
+  animation: rainbow 4s ease infinite;
+  border-bottom: 3px solid var(--border-color);
   padding: var(--spacing-md) var(--spacing-lg);
   z-index: 100;
   position: relative;
+  box-shadow: var(--shadow-md);
+}
+
+@keyframes rainbow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 800px;
+  max-width: 850px;
   margin: 0 auto;
 }
 
@@ -63,14 +127,27 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
 }
 
 .chat-title i {
-  color: var(--primary-color);
-  font-size: 1.5rem;
+  color: #FFD700;
+  font-size: 2.2rem;
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .header-actions {
@@ -79,72 +156,129 @@ body {
 }
 
 .header-btn {
-  background: none;
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.9);
+  border: 3px solid var(--primary-color);
   border-radius: var(--radius-sm);
   padding: var(--spacing-sm);
   cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-  min-width: 40px;
-  height: 40px;
+  color: var(--primary-color);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-sm);
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.header-btn:first-child {
+  min-width: 60px;
+  height: 45px;
+  transform: rotate(-2deg);
+}
+
+.header-btn:nth-child(2) {
+  min-width: 55px;
+  height: 52px;
+  transform: rotate(1.5deg);
 }
 
 .header-btn:hover {
-  background: var(--background-alt);
+  background: var(--accent-yellow);
   color: var(--text-primary);
+  transform: scale(1.15) rotate(0deg);
+  box-shadow: var(--shadow-md);
 }
 
-/* Main Chat Container */
+/* 💖 Main Chat Container - Where ponies chat! */
 .chat-container {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-lg);
-  background: var(--background-main);
+  background: transparent;
+  position: relative;
 }
 
 .messages-container {
-  max-width: 800px;
+  max-width: 850px;
   margin: 0 auto;
   padding-bottom: var(--spacing-xl);
 }
 
-/* Welcome Message */
+/* 🌈 Welcome Message - So exciting! */
 .welcome-message {
   text-align: center;
   padding: var(--spacing-xl) var(--spacing-lg);
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-lg);
+  border: 4px dashed var(--primary-color);
+  margin: var(--spacing-lg);
+  box-shadow: var(--shadow-lg);
+  transform: rotate(-1deg);
+  position: relative;
+}
+
+.welcome-message::before {
+  content: "💖✨🦄✨💖";
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--background-main);
+  padding: 0 var(--spacing-md);
+  font-size: 1.5rem;
 }
 
 .welcome-icon {
-  font-size: 3rem;
+  font-size: 4rem;
   color: var(--primary-color);
   margin-bottom: var(--spacing-md);
+  animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
 }
 
 .welcome-message h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--primary-color);
   margin-bottom: var(--spacing-sm);
+  text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+  transform: rotate(1deg);
 }
 
 .welcome-message p {
-  font-size: 1rem;
-  line-height: 1.5;
-  max-width: 500px;
+  font-size: 1.3rem;
+  line-height: 1.6;
+  max-width: 600px;
   margin: 0 auto;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
-/* Message Styles */
+/* 🗨️ Message Styles - Pony conversations! */
 .message {
   display: flex;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
   align-items: flex-start;
+  animation: messageSlide 0.5s ease-out;
+}
+
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .message.user-message {
@@ -152,65 +286,107 @@ body {
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
+  border: 3px solid var(--primary-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .user-message .avatar {
-  background: var(--primary-color);
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-yellow));
   color: white;
+  animation: userPulse 2s ease-in-out infinite;
+}
+
+@keyframes userPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 .ai-message .avatar {
-  background: var(--secondary-color);
-  color: var(--primary-color);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(45deg, var(--accent-blue), var(--accent-green));
+  color: var(--text-primary);
+  animation: ponyBounce 3s ease-in-out infinite;
+}
+
+@keyframes ponyBounce {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
 }
 
 .message-content {
-  max-width: 70%;
+  max-width: 75%;
   padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-md);
   word-wrap: break-word;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 1.1rem;
+  font-weight: 500;
+  position: relative;
 }
 
 .user-message .message-content {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   color: white;
   border-bottom-right-radius: var(--spacing-xs);
+  border: 3px solid var(--accent-yellow);
+  box-shadow: var(--shadow-md);
+  transform: rotate(-0.5deg);
+}
+
+.user-message .message-content::before {
+  content: "💭";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 1.2rem;
 }
 
 .ai-message .message-content {
-  background: var(--secondary-color);
+  background: linear-gradient(135deg, var(--secondary-color), var(--background-alt));
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 3px solid var(--border-color);
   border-bottom-left-radius: var(--spacing-xs);
+  box-shadow: var(--shadow-md);
+  transform: rotate(0.5deg);
+}
+
+.ai-message .message-content::before {
+  content: "🦄";
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 1.2rem;
 }
 
 .message-timestamp {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
   text-align: center;
+  font-style: italic;
 }
 
 .error-message .message-content {
-  background: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: linear-gradient(135deg, #FFE4E1, #FFF0F5);
+  color: #DC143C;
+  border: 3px solid #FF69B4;
 }
 
-/* Typing Indicator */
+.error-message .message-content::before {
+  content: "😱";
+}
+
+/* 🤔 Typing Indicator - Pony is thinking! */
 .typing-indicator {
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.5s ease;
 }
 
 .typing-indicator.hidden {
@@ -220,16 +396,16 @@ body {
 
 .typing-animation {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 
 .typing-animation span {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--text-secondary);
-  animation: typing 1.4s infinite ease-in-out;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-blue));
+  animation: ponyTyping 1.8s infinite ease-in-out;
 }
 
 .typing-animation span:nth-child(1) {
@@ -237,107 +413,137 @@ body {
 }
 
 .typing-animation span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.3s;
 }
 
 .typing-animation span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.6s;
 }
 
-@keyframes typing {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.4;
+@keyframes ponyTyping {
+  0%, 80%, 100% {
+    transform: scale(0.8) translateY(0);
+    opacity: 0.5;
   }
-  30% {
-    transform: translateY(-10px);
+  40% {
+    transform: scale(1.2) translateY(-15px);
     opacity: 1;
   }
 }
 
-/* Input Container */
+/* ⌨️ Input Container - Where the magic is typed! */
 .input-container {
-  background: var(--background-main);
-  border-top: 1px solid var(--border-color);
+  background: linear-gradient(45deg, var(--background-main), var(--background-alt));
+  border-top: 4px solid var(--primary-color);
   padding: var(--spacing-lg);
+  position: relative;
+}
+
+.input-container::before {
+  content: "🌟💖🌟💖🌟";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--background-main);
+  padding: 0 var(--spacing-md);
+  font-size: 1rem;
 }
 
 .input-wrapper {
-  max-width: 800px;
+  max-width: 850px;
   margin: 0 auto;
   display: flex;
   gap: var(--spacing-md);
   align-items: flex-end;
-  background: var(--background-main);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.9);
+  border: 4px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  transform: rotate(-0.3deg);
 }
 
 .input-wrapper:focus-within {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+  box-shadow: 0 0 0 6px rgba(255, 105, 180, 0.3);
+  transform: rotate(0deg) scale(1.02);
 }
 
 #user-input {
   flex: 1;
   border: none;
   outline: none;
-  font-family: inherit;
-  font-size: 1rem;
-  line-height: 1.5;
+  font-family: 'Comic Sans MS', cursive, fantasy;
+  font-size: 1.2rem;
+  line-height: 1.6;
   resize: none;
   background: transparent;
   color: var(--text-primary);
-  min-height: 24px;
-  max-height: 120px;
+  min-height: 28px;
+  max-height: 140px;
   overflow-y: auto;
+  font-weight: 600;
 }
 
 #user-input::placeholder {
   color: var(--text-secondary);
+  font-style: italic;
 }
 
 .send-btn {
-  background: var(--primary-color);
-  border: none;
-  border-radius: var(--radius-sm);
-  width: 40px;
-  height: 40px;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-yellow), var(--primary-color));
+  background-size: 200% 200%;
+  animation: buttonRainbow 2s ease infinite;
+  border: 3px solid white;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: white;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  box-shadow: var(--shadow-md);
+  font-size: 1.3rem;
+  transform: rotate(-5deg);
+}
+
+@keyframes buttonRainbow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .send-btn:hover:not(:disabled) {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  transform: scale(1.1) rotate(0deg);
+  box-shadow: var(--shadow-lg);
 }
 
 .send-btn:disabled {
-  background: var(--text-secondary);
+  background: #ccc;
   cursor: not-allowed;
-  transform: none;
+  transform: rotate(-5deg);
+  animation: none;
 }
 
 .input-footer {
-  max-width: 800px;
+  max-width: 850px;
   margin: var(--spacing-sm) auto 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .character-count {
-  font-weight: 500;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 /* Responsive Design */
