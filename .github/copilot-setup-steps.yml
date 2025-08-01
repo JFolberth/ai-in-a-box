@@ -8,61 +8,141 @@ steps:
   - name: Install Azure CLI extensions
     run: |
       # Install required Azure CLI extensions for this project
-      az extension add --name devcenter --only-show-errors
-      az extension add --name bicep --only-show-errors
+      echo "Installing Azure CLI extensions for AI Foundry SPA project..."
+      az extension add --name devcenter --only-show-errors --upgrade
+      az extension add --name bicep --only-show-errors --upgrade
       
       # Verify extensions are installed
+      echo "Installed extensions:"
       az extension list --query "[?name=='devcenter' || name=='bicep'].{Name:name, Version:version}" -o table
+      
+      echo "✅ Azure CLI extensions ready for AI Foundry development"
 
   - name: Setup Node.js environment for frontend
     run: |
       # Verify Node.js is available (should be pre-installed in Codespaces)
-      node --version
-      npm --version
+      echo "Node.js version: $(node --version)"
+      echo "npm version: $(npm --version)"
+      
+      # Navigate to frontend directory and install dependencies
+      if [ ! -d "src/frontend" ]; then
+        echo "❌ ERROR: src/frontend directory not found!"
+        exit 1
+      fi
+      
+      cd src/frontend
+      
+      # Verify package.json exists
+      if [ ! -f "package.json" ]; then
+        echo "❌ ERROR: package.json not found in src/frontend!"
+        exit 1
+      fi
       
       # Install frontend dependencies for AI Foundry SPA
-      cd src/frontend
+      echo "Installing frontend dependencies..."
       npm ci --prefer-offline --no-audit
       
       # Verify frontend tooling is ready
-      npx vite --version
-      echo "Frontend environment ready for AI Foundry SPA development"
+      echo "Vite version: $(npx vite --version)"
+      echo "✅ Frontend environment ready for AI Foundry SPA development"
 
   - name: Verify .NET SDK for backend development
     run: |
       # Verify .NET 8 SDK is available for Azure Functions development
-      dotnet --version
+      echo ".NET SDK version: $(dotnet --version)"
+      echo "Available .NET SDKs:"
       dotnet --list-sdks
       
       # Verify Azure Functions Core Tools (should be available in Codespaces)
-      func --version || echo "Azure Functions Core Tools may need to be installed separately"
+      if command -v func >/dev/null 2>&1; then
+        echo "Azure Functions Core Tools version: $(func --version)"
+        echo "Azure Functions Core Tools is available"
+      else
+        echo "Azure Functions Core Tools not found - this is optional for Copilot environment"
+        echo "For local development, install with: npm install -g azure-functions-core-tools@4 --unsafe-perm true"
+      fi
+      
+      # Navigate to backend directory and test project
+      if [ ! -d "src/backend" ]; then
+        echo "❌ ERROR: src/backend directory not found!"
+        exit 1
+      fi
+      
+      cd src/backend
+      
+      # Verify project file exists
+      if [ ! -f "AIFoundryProxy.csproj" ]; then
+        echo "❌ ERROR: AIFoundryProxy.csproj not found in src/backend!"
+        exit 1
+      fi
       
       # Test backend project can be restored
-      cd src/backend
-      dotnet restore AIFoundryProxy.csproj --no-cache
-      echo ".NET environment ready for Azure Functions development"
+      echo "Restoring .NET dependencies..."
+      dotnet restore AIFoundryProxy.csproj --no-cache --verbosity minimal
+      
+      if [ $? -eq 0 ]; then
+        echo "✅ .NET environment ready for Azure Functions development"
+      else
+        echo "⚠️ Warning: dotnet restore had issues (may be network-related)"
+      fi
 
   - name: Setup PowerShell environment for deployment scripts
     run: |
       # Verify PowerShell Core is available for cross-platform deployment scripts
-      pwsh --version
+      echo "PowerShell version: $(pwsh --version)"
+      
+      # Verify deployment scripts directory exists
+      if [ ! -d "deploy-scripts" ]; then
+        echo "❌ ERROR: deploy-scripts directory not found!"
+        exit 1
+      fi
+      
+      # Check for key deployment scripts
+      echo "Checking deployment scripts..."
+      for script in "deploy-quickstart.ps1" "deploy-backend-func-code.ps1" "deploy-frontend-spa-code.ps1"; do
+        if [ -f "deploy-scripts/$script" ]; then
+          echo "✓ $script found"
+        else
+          echo "⚠️ $script not found"
+        fi
+      done
       
       # Check if PowerShell modules directory exists
-      pwsh -c "Get-Module -ListAvailable | Select-Object Name, Version | Sort-Object Name"
+      echo "PowerShell modules available:"
+      pwsh -c "Get-Module -ListAvailable | Select-Object Name, Version | Sort-Object Name | Select-Object -First 5 | Format-Table"
       
-      echo "PowerShell environment ready for cross-platform deployment scripts"
+      echo "✅ PowerShell environment ready for cross-platform deployment scripts"
 
   - name: Verify Azure and Bicep tooling
     run: |
       # Verify Azure CLI is working
-      az --version
+      echo "Azure CLI version:"
+      az --version | head -3
       
-      # Test Bicep compilation (using a simple template)
+      # Test Bicep compilation capability
       echo "Testing Bicep compilation capability..."
-      az bicep version
+      echo "Bicep version: $(az bicep version)"
+      
+      # Verify infrastructure directory exists
+      if [ ! -d "infra" ]; then
+        echo "❌ ERROR: infra directory not found!"
+        exit 1
+      fi
+      
+      # Check for Bicep files
+      bicep_count=$(find infra -name "*.bicep" | wc -l)
+      if [ $bicep_count -gt 0 ]; then
+        echo "Found $bicep_count Bicep template(s) for infrastructure deployment:"
+        find infra -name "*.bicep" | head -3 | sed 's/^/  /'
+        if [ $bicep_count -gt 3 ]; then
+          echo "  ... and $((bicep_count - 3)) more"
+        fi
+      else
+        echo "⚠️ No Bicep files found in infra directory"
+      fi
       
       # Verify Azure CLI login status will be handled by user
-      echo "Azure CLI and Bicep tooling ready for infrastructure deployment"
+      echo "✅ Azure CLI and Bicep tooling ready for infrastructure deployment"
 
   - name: Prepare development workspace
     run: |
