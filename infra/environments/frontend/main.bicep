@@ -5,13 +5,8 @@ targetScope = 'resourceGroup'
 
 // =========== PARAMETERS ===========
 
-@description('Name for the Azure Deployment Environment')
-param adeName string = ''
-
 @description('Application name used for resource naming')
 param applicationName string = 'aibox'
-
-param devCenterProjectName string = ''
 
 @description('Environment name (e.g., dev, staging, prod)')
 param environmentName string = 'dev'
@@ -33,9 +28,7 @@ param tags object = {
 
 // =========== VARIABLES ===========
 
-var nameSuffix = empty(adeName)
-  ? toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}')
-  : '${devCenterProjectName}-${adeName}'
+var nameSuffix = toLower('${applicationName}-${typeInfrastructure}-${environmentName}-${regionReference[location]}')
 
 // Region reference mapping - ONLY regions where Cognitive Services AIServices are available
 // Source: az cognitiveservices account list-skus --query "[?kind=='AIServices'].locations[]" -o tsv | sort -u

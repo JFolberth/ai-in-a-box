@@ -1,9 +1,5 @@
 using 'main.bicep'
 
-// ADE configuration (empty for CI validation)
-param adeName = ''
-param devCenterProjectName = ''
-
 // Application configuration
 param applicationName = 'ai-foundry-spa'
 param environmentName = 'validation'
