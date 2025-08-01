@@ -24,12 +24,14 @@ parameters:
     description: Environment identifier
     type: string
     required: false
+    default: dev
       
   - id: location
     name: Azure Region
     description: Azure region for resource deployment
     type: string
     required: false
+    default: eastus2
       
   - id: aiFoundryInstanceName
     name: AI Foundry Instance Name
@@ -74,8 +76,3 @@ parameters:
     required: false
     default: AI in A Box
     
-  - id: tags
-    name: Resource Tags
-    description: Additional tags to apply to all resources
-    type: object
-    required: false
