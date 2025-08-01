@@ -210,10 +210,33 @@ class ModernChatApp {
   }
 
   scrollToBottom() {
-    setTimeout(() => {
+    // Use multiple strategies to ensure scroll works properly
+    const scrollToBottomImpl = () => {
       const container = document.querySelector('.chat-container')
-      container.scrollTop = container.scrollHeight
-    }, 100)
+      if (container) {
+        // Method 1: Set scrollTop to scrollHeight
+        container.scrollTop = container.scrollHeight
+        
+        // Method 2: Use scrollTo for better browser compatibility
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    }
+
+    // Try immediately
+    scrollToBottomImpl()
+    
+    // Try again after a short delay for DOM updates
+    requestAnimationFrame(() => {
+      scrollToBottomImpl()
+      
+      // Final attempt after animations/transitions
+      setTimeout(() => {
+        scrollToBottomImpl()
+      }, 100)
+    })
   }
 
   clearConversation() {
