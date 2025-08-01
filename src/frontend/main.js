@@ -126,7 +126,7 @@ class ModernChatApp {
     } catch (error) {
       console.error('Error sending message:', error)
       this.hideTypingIndicator()
-      this.addMessage('error', `Error: ${error.message}`)
+      this.addMessage('error', `Oops! The magical connection got a bit tangled! 🌈 ${error.message}`)
     } finally {
       this.isTyping = false
       this.updateSendButton()
@@ -166,11 +166,11 @@ class ModernChatApp {
     avatar.className = 'avatar'
     
     if (role === 'user') {
-      avatar.innerHTML = '<i class="fas fa-user"></i>'
+      avatar.innerHTML = '<span>👧</span>'
     } else if (role === 'assistant') {
-      avatar.innerHTML = '<i class="fas fa-robot"></i>'
+      avatar.innerHTML = '<span>🦄</span>'
     } else if (role === 'error') {
-      avatar.innerHTML = '<i class="fas fa-exclamation-triangle"></i>'
+      avatar.innerHTML = '<span>⚠️</span>'
       messageDiv.className = 'message error-message'
     }
     
@@ -219,15 +219,15 @@ class ModernChatApp {
   clearConversation() {
     if (this.conversationHistory.length === 0) return
     
-    if (confirm('Are you sure you want to clear the conversation? This cannot be undone.')) {
+    if (confirm('Are you sure you want to clear the magical conversation? This cannot be undone! ✨')) {
       this.conversationHistory = []
       this.elements.messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">
-            <i class="fas fa-comments"></i>
+            <span class="magic-sparkle">✨🦄✨</span>
           </div>
-          <h2>Welcome to AI Foundry Chat</h2>
-          <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
+          <h2>Welcome to Magical Pony Chat!</h2>
+          <p>Talk to your friendly pony assistant! Ask questions and have magical conversations about anything you'd like to know.</p>
         </div>
       `
       this.saveConversationHistory()
@@ -236,21 +236,21 @@ class ModernChatApp {
 
   exportConversation() {
     if (this.conversationHistory.length === 0) {
-      alert('No conversation to export.')
+      alert('No magical conversation to export! 🦄')
       return
     }
     
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
-    const filename = `ai-chat-export-${timestamp}.txt`
+    const filename = `magical-pony-chat-${timestamp}.txt`
     
-    let exportText = `AI Foundry Chat Export\n`
+    let exportText = `🦄 Magical Pony Chat Export ✨\n`
     exportText += `Generated: ${new Date().toLocaleString()}\n`
     exportText += `Messages: ${this.conversationHistory.length}\n`
-    exportText += `\n${'='.repeat(50)}\n\n`
+    exportText += `\n${'🌈'.repeat(20)}\n\n`
     
     this.conversationHistory.forEach((message, index) => {
-      const role = message.role === 'user' ? 'You' : 
-                   message.role === 'assistant' ? 'AI in A Box' : 'System'
+      const role = message.role === 'user' ? 'You 👧' : 
+                   message.role === 'assistant' ? 'Magical Pony 🦄' : 'System'
       exportText += `[${message.timestamp}] ${role}:\n${message.content}\n\n`
     })
     
