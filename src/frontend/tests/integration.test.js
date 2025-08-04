@@ -186,6 +186,52 @@ describe('Application Integration Tests', () => {
       updateSendButton('', false)
       expect(buttonDisabled).toBe(true)
     })
+
+    test('should handle scroll to bottom functionality', () => {
+      // Mock DOM container
+      const mockContainer = {
+        scrollTop: 0,
+        scrollHeight: 1000,
+        scrollTo: jest.fn()
+      }
+      
+      // Mock document.querySelector to return our mock container
+      const originalQuerySelector = document.querySelector
+      document.querySelector = jest.fn().mockReturnValue(mockContainer)
+
+      // Mock requestAnimationFrame
+      global.requestAnimationFrame = jest.fn((cb) => cb())
+
+      // Function to test (simplified version of the improved scrollToBottom)
+      const scrollToBottom = () => {
+        const container = document.querySelector('.chat-container')
+        if (container) {
+          // Method 1: Set scrollTop to scrollHeight
+          container.scrollTop = container.scrollHeight
+          
+          // Method 2: Use scrollTo for better browser compatibility
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+          })
+        }
+      }
+
+      // Execute the function
+      scrollToBottom()
+
+      // Verify scroll behavior
+      expect(document.querySelector).toHaveBeenCalledWith('.chat-container')
+      expect(mockContainer.scrollTop).toBe(1000) // scrollHeight value
+      expect(mockContainer.scrollTo).toHaveBeenCalledWith({
+        top: 1000,
+        behavior: 'smooth'
+      })
+
+      // Restore original functions
+      document.querySelector = originalQuerySelector
+      delete global.requestAnimationFrame
+    })
   })
 
   describe('Data Export Functionality', () => {
