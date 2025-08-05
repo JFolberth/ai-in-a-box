@@ -399,12 +399,14 @@ The following table lists all Azure Verified Modules implemented in this project
 | Module | Version | Purpose | Official Documentation |
 |--------|---------|---------|------------------------|
 | **Resource Groups** | 0.4.0 | Create and manage resource groups for multi-RG architecture | [avm/res/resources/resource-group](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/resources/resource-group) |
-| **Application Insights** | 0.6.0 | Monitoring and telemetry for frontend and backend components | [avm/res/insights/component](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/insights/component) |
-| **Azure Functions** | 0.16.0 | Serverless compute for Azure AI Foundry proxy backend | [avm/res/web/site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/site) |
-| **Storage Accounts** | 0.20.0 | Azure Functions runtime storage with secure configuration | [avm/res/storage/storage-account](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account) |
+| **Application Insights** | Native Resource* | Monitoring and telemetry for frontend and backend components | [Microsoft.Insights/components](https://docs.microsoft.com/en-us/azure/templates/microsoft.insights/components) |
+| **Azure Functions** | Native Resource* | Serverless compute for Azure AI Foundry proxy backend | [Microsoft.Web/sites](https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites) |
+| **Storage Accounts** | Native Resource* | Azure Functions runtime storage with secure configuration | [Microsoft.Storage/storageAccounts](https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts) |
 | **Log Analytics Workspace** | 0.9.0 | Centralized logging and monitoring workspace | [avm/res/operational-insights/workspace](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/operational-insights/workspace) |
 | **Azure Static Web Apps** | 0.5.0 | Modern SPA hosting for the frontend application | [avm/res/web/static-site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/static-site) |
-| **App Service Plans** | 0.5.0 | Compute hosting plans for Azure Functions with FC1 SKU support | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
+| **App Service Plans** | Native Resource* | Compute hosting plans for Azure Functions with FC1 SKU support | [Microsoft.Web/serverfarms](https://docs.microsoft.com/en-us/azure/templates/microsoft.web/serverfarms) |
+
+*\*Temporarily using native Azure resources due to AVM registry connectivity issues. Will revert to AVM modules when connectivity is restored.*
 
 #### AVM Benefits for This Project
 
@@ -416,11 +418,12 @@ The following table lists all Azure Verified Modules implemented in this project
 
 #### Recent Updates
 
-**Server Farm AVM Version 0.5.0 (Updated)**
-- **FC1 SKU Support**: Fixed FlexConsumption (FC1) SKU deployment issues that existed in version 0.4.1
-- **Enhanced Compatibility**: Improved support for modern Azure Functions hosting plans
-- **Background**: Previous version 0.4.1 had known issues with FC1 SKU deployment ([GitHub Issue #5437](https://github.com/Azure/bicep-registry-modules/issues/5437))
-- **Resolution**: Updated to version 0.5.0 which includes fixes for FlexConsumption plan deployment
+**Server Farm AVM Version 0.5.0 (Temporary Workaround)**
+- **Registry Connectivity Issue**: Due to temporary Microsoft Container Registry connectivity issues affecting all AVM modules, the implementation has been temporarily reverted to native Azure resources
+- **FC1 SKU Support**: The native resource implementation maintains FlexConsumption (FC1) SKU support as originally planned
+- **Temporary Implementation**: Uses `Microsoft.Web/serverfarms@2024-04-01` instead of AVM module until registry connectivity is restored
+- **Future Plan**: Will revert to AVM `br/public:avm/res/web/serverfarm:0.5.0` when registry connectivity issues are resolved
+- **Background**: Registry errors show "Missing or invalid 'Content-Length' header" when downloading AVM modules from mcr.microsoft.com
 
 #### Usage Examples
 

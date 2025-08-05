@@ -98,47 +98,45 @@ resource aiFoundryInstance 'Microsoft.CognitiveServices/accounts@2025-04-01-prev
   scope: resourceGroup(aiFoundryResourceGroupName)
 }
 
-// =========== APPLICATION INSIGHTS (AVM) ===========
+// =========== APPLICATION INSIGHTS (NATIVE RESOURCE - TEMPORARY WORKAROUND) ===========
 
-// Application Insights for backend monitoring using AVM
-module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
-  name: 'backend-applicationInsights-${regionReference[location]}'
-  params: {
-    name: resourceNames.applicationInsights
-    location: location
-    tags: union(tags, {
-      Component: 'Backend-ApplicationInsights'
-    })
-    kind: 'web'
-    applicationType: 'web'
-    workspaceResourceId: logAnalyticsWorkspace.id
+// Application Insights for backend monitoring using native resource
+// TODO: Revert to AVM 'br/public:avm/res/insights/component:0.6.0' when registry connectivity is restored
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: resourceNames.applicationInsights
+  location: location
+  tags: union(tags, {
+    Component: 'Backend-ApplicationInsights'
+  })
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
-    disableIpMasking: false
-    disableLocalAuth: false
+    DisableIpMasking: false
+    DisableLocalAuth: false
   }
 }
 
-// =========== FUNCTION APP STORAGE ACCOUNT (AVM) ===========
+// =========== FUNCTION APP STORAGE ACCOUNT (NATIVE RESOURCE - TEMPORARY WORKAROUND) ===========
 
-// Storage account for Function App runtime requirements
-module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
-  name: 'backend-functionStorageAccount-${regionReference[location]}'
-  params: {
-    name: resourceNames.functionStorageAccount
-    location: location
-    tags: union(tags, {
-      Component: 'Backend-FunctionStorage'
-    })
-    kind: 'StorageV2'
-    skuName: 'Standard_LRS'
-
-    // Enable system-assigned managed identity
-    managedIdentities: {
-      systemAssigned: true
-    }
-
-    // Storage account properties for Function App
+// Storage account for Function App runtime requirements using native resource
+// TODO: Revert to AVM 'br/public:avm/res/storage/storage-account:0.20.0' when registry connectivity is restored
+resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: resourceNames.functionStorageAccount
+  location: location
+  tags: union(tags, {
+    Component: 'Backend-FunctionStorage'
+  })
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
     accessTier: 'Hot'
     allowBlobPublicAccess: false
     allowSharedKeyAccess: true
@@ -146,31 +144,67 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     minimumTlsVersion: 'TLS1_2'
     publicNetworkAccess: 'Enabled'
     allowCrossTenantReplication: false
-
-    // Basic blob services configuration
-    blobServices: {
-      deleteRetentionPolicyEnabled: true
-      deleteRetentionPolicyDays: 7
-      containers: [
-        {
-          name: 'function-container'
-          properties: {
-            publicAccess: 'None'
-            metadata: {
-              createdBy: 'FunctionApp'
-            }
-          }
-        }
-      ]
-    } // Network access rules
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
     }
   }
 }
+
+// Blob service for storage account
+resource functionStorageBlobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  parent: functionStorageAccount
+  name: 'default'
+  properties: {
+    deleteRetentionPolicy: {
+      enabled: true
+      days: 7
+    }
+  }
+}
+
+// Blob container for Function App
+resource functionStorageBlobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: functionStorageBlobService
+  name: 'function-container'
+  properties: {
+    publicAccess: 'None'
+    metadata: {
+      createdBy: 'FunctionApp'
+    }
+  }
+}
+/*
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
+  name: 'backend-appServicePlan'
+  params: {
+    name: resourceNames.appServicePlan
+    location: location
+    kind: 'functionApp'
+    workerTierName: 'FlexConsumption'
+      skuName: 'FC1'
+      reserved: true
+
+}
+}
+)*/
+resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
+  name: resourceNames.appServicePlan
+  location: location
+  kind: 'functionapp'
+  sku: {
+    tier: 'FlexConsumption'
+    name: 'FC1'
+  }
+  properties: {
+    reserved: true
+  }
+}
+
+// =========== APP SERVICE PLAN FOR FUNCTIONS ===========
+/*
 // App Service Plan for Function App using AVM
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
   name: 'backend-appServicePlan'
   params: {
     name: resourceNames.appServicePlan
@@ -178,38 +212,36 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
     tags: union(tags, {
       Component: 'Backend-AppServicePlan'
     })
-    sku: {
-      name: 'FC1'
-      tier: 'FlexConsumption'
-    }
-    reserved: true
+    
+    // Consumption plan for Functions
+    skuName: 'B1'
+    workerTierName: 'Basic'
   }
 }
 
-// =========== APP SERVICE PLAN FOR FUNCTIONS ===========
-// =========== AZURE FUNCTION APP (AVM) ===========
+*/
+// =========== AZURE FUNCTION APP (NATIVE RESOURCE - TEMPORARY WORKAROUND) ===========
 
-// Function App for AI Foundry backend proxy using AVM
-module functionApp 'br/public:avm/res/web/site:0.16.0' = {
-  name: 'backend-functionApp-${regionReference[location]}'
-  params: {
-    name: resourceNames.functionApp
-    location: location
-    tags: union(tags, {
-      Component: 'Backend-FunctionApp'
-    })
-    kind: 'functionapp'
-
-    // Enable system-assigned managed identity for AI Foundry access
-    managedIdentities: {
-      systemAssigned: true
-    }
-
-    // Function App configuration
+// Function App for AI Foundry backend proxy using native resource
+// TODO: Revert to AVM 'br/public:avm/res/web/site:0.16.0' when registry connectivity is restored
+resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
+  name: resourceNames.functionApp
+  location: location
+  tags: union(tags, {
+    Component: 'Backend-FunctionApp'
+  })
+  kind: 'functionapp,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    publicNetworkAccess: 'Enabled'
     functionAppConfig: {
       deployment: {
         storage: {
-          value: '${functionStorageAccount.outputs.primaryBlobEndpoint}function-container'
+          value: '${functionStorageAccount.properties.primaryEndpoints.blob}function-container'
           type: 'blobContainer'
           authentication: {
             type: 'SystemAssignedIdentity'
@@ -225,9 +257,6 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
         maximumInstanceCount: 40
       }
     }
-    serverFarmResourceId: appServicePlan.outputs.resourceId
-    httpsOnly: true
-    publicNetworkAccess: 'Enabled' // Site configuration for Function App
     siteConfig: {
       alwaysOn: false
       http20Enabled: true
@@ -242,11 +271,11 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
       appSettings: [
         {
           name: 'AzureWebJobsStorage__accountname'
-          value: functionStorageAccount.outputs.name
+          value: functionStorageAccount.name
         }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: applicationInsights.outputs.connectionString
+          value: applicationInsights.properties.ConnectionString
         }
         {
           name: 'AI_FOUNDRY_ENDPOINT'
@@ -282,7 +311,7 @@ resource functionAppStorageBlobRoleAssignment 'Microsoft.Authorization/roleAssig
       'Microsoft.Authorization/roleDefinitions',
       'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
     ) // Storage Blob Data Contributor
-    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    principalId: functionApp.identity.principalId
     principalType: 'ServicePrincipal'
     description: 'Grants Storage Blob Data Contributor access to Function App managed identity for Flex Consumption model'
   }
@@ -294,7 +323,7 @@ module aiFoundryUserRbac 'rbac.bicep' = {
   name: 'backend-aifoundry-user-rbac-${uniqueString(resourceGroup().id, resourceNames.functionApp)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
-    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    principalId: functionApp.identity.principalId
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
       '53ca6127-db72-4b80-b1b0-d745d6d5456d'
@@ -310,7 +339,7 @@ module aiFoundryOpenAIRbac 'rbac.bicep' = {
   name: 'backend-aifoundry-openai-rbac-${uniqueString(resourceGroup().id)}'
   scope: resourceGroup(aiFoundryResourceGroupName)
   params: {
-    principalId: functionApp.outputs.systemAssignedMIPrincipalId!
+    principalId: functionApp.identity.principalId
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
       'a97b65f3-24c7-4388-baec-2e87135dc908'
@@ -331,28 +360,28 @@ output aiFoundryInstanceResourceId string = aiFoundryInstance.id
 output aiFoundryInstanceName string = aiFoundryInstance.name
 
 @description('Application Insights Connection String')
-output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString
+output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
 
 @description('Application Insights Resource ID')
-output applicationInsightsId string = applicationInsights.outputs.resourceId
+output applicationInsightsId string = applicationInsights.id
 
 @description('Application Insights Instrumentation Key')
-output applicationInsightsInstrumentationKey string = applicationInsights.outputs.instrumentationKey
+output applicationInsightsInstrumentationKey string = applicationInsights.properties.InstrumentationKey
 
 @description('Backend API URL for frontend configuration')
-output backendApiUrl string = 'https://${functionApp.outputs.name}.azurewebsites.net/api'
+output backendApiUrl string = 'https://${functionApp.name}.azurewebsites.net/api'
 
 @description('Function App Name')
-output functionAppName string = functionApp.outputs.name
+output functionAppName string = functionApp.name
 
 @description('Function App System Assigned Identity Principal ID')
-output functionAppSystemAssignedIdentityPrincipalId string = functionApp.outputs.systemAssignedMIPrincipalId!
+output functionAppSystemAssignedIdentityPrincipalId string = functionApp.identity.principalId
 
 @description('Function App URL')
-output functionAppUrl string = 'https://${functionApp.outputs.name}.azurewebsites.net'
+output functionAppUrl string = 'https://${functionApp.name}.azurewebsites.net'
 
 @description('Function Storage Account Name')
-output functionStorageAccountName string = functionStorageAccount.outputs.name
+output functionStorageAccountName string = functionStorageAccount.name
 
 @description('Function Storage Account Resource ID')
-output functionStorageAccountResourceId string = functionStorageAccount.outputs.resourceId
+output functionStorageAccountResourceId string = functionStorageAccount.id
