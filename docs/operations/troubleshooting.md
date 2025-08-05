@@ -9,7 +9,7 @@
 ### 🔍 Is the problem with...?
 
 - **[Preflight Checks](#-preflight-check-failures)** - Azure permissions, quota, and service availability validation
-- **[Deployment](#-deployment-issues)** - Infrastructure creation, resource provisioning, or deployment scripts
+- **[Deployment](#-deployment-issues)** - Infrastructure creation, resource provisioning, .NET version issues, or deployment scripts
 - **[Frontend](#-frontend-issues)** - Website loading, UI problems, or browser errors  
 - **[Backend](#-backend-issues)** - API endpoints, Function App, or Azure Functions
 - **[AI Integration](#-ai-foundry-integration-issues)** - AI responses, conversation memory, or AI Foundry connection
@@ -142,6 +142,46 @@ az provider list --query "[?namespace=='Microsoft.CognitiveServices'].{Namespace
 ---
 
 ## 🚀 Deployment Issues
+
+### .NET Version Build Failures
+
+**Symptoms:**
+- Backend deployment fails with compilation errors
+- Error messages about unsupported target framework version
+- Build failures mentioning `net8.0` not supported
+
+**Error Examples:**
+```
+error NETSDK1045: The current .NET SDK does not support targeting .NET 8.0
+The specified framework 'Microsoft.NETCore.App', version '8.0.0' was not found
+```
+
+**Root Cause:**
+The backend project targets .NET 8 framework (`net8.0`) but you have an older .NET SDK installed (6.x or 7.x).
+
+**Solution:**
+1. **Install .NET 8 SDK**:
+   ```bash
+   # Check current version
+   dotnet --version
+   
+   # Download .NET 8 SDK from:
+   # https://dotnet.microsoft.com/download/dotnet/8.0
+   ```
+
+2. **Verify Installation**:
+   ```bash
+   # Should show 8.x.x
+   dotnet --version
+   
+   # List all installed SDKs
+   dotnet --list-sdks
+   ```
+
+3. **Re-run Deployment**:
+   The enhanced quickstart script now validates .NET 8+ automatically and will catch this issue early.
+
+**Note:** The enhanced validation in `deploy-quickstart.ps1` now prevents this issue by checking for .NET 8+ before deployment begins.
 
 ### AI Foundry Resource Not Found or Missing
 
@@ -350,7 +390,7 @@ InvalidPackageContentException: Cannot find required .azurefunctions directory
 
 **Solution:**
 ```bash
-# Ensure proper build process
+# Ensure proper build process (requires .NET 8 SDK)
 cd src/backend
 dotnet clean
 dotnet restore
@@ -363,6 +403,8 @@ ls -la publish/.azurefunctions/
 cd publish
 zip -r ../backend-deployment.zip .
 ```
+
+**Note:** Ensure you have .NET 8 SDK installed. The backend project targets `net8.0` framework and will not build with older .NET versions.
 
 ### Issue: Static Web App Deployment Fails
 

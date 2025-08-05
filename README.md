@@ -79,7 +79,7 @@ az deployment sub create \
 **Fully automated** build, validation, and deployment pipeline with comprehensive end-to-end testing:
 
 - **Frontend Build**: Node.js build, testing, and artifact generation
-- **Backend Build**: .NET build, testing, and publish artifacts  
+- **Backend Build**: .NET 8 build, testing, and publish artifacts  
 - **Azure Bicep Validation**: Infrastructure what-if validation using Azure CLI
 - **ADE End-to-End Validation**: Complete application deployment and testing in temporary environments
 - **Infrastructure Deployment**: Automated deployment to dev environment on main branch
@@ -160,7 +160,9 @@ The project uses a unified documentation structure in the `docs/` folder with gu
 
 - **[DevContainers](https://code.visualstudio.com/docs/devcontainers/containers)**: VS Code development containers with pre-configured tools
 - **[Azure DevBox](https://learn.microsoft.com/en-us/azure/dev-box/)**: Microsoft DevBox configuration for team development
-- **Local**: Manual setup with Node.js, .NET 8, and Azure CLI
+- **Local**: Manual setup with Node.js, **.NET 8 SDK**, and Azure CLI
+
+> **⚠️ Important**: The backend requires **.NET 8 SDK** specifically. The project targets `net8.0` framework and will not build with older .NET versions.
 
 See **[Local Development Guide](docs/development/local-development.md)** for detailed setup instructions.
 

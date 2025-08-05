@@ -18,6 +18,7 @@ This guide helps you set up a local development environment where you can:
 **Required Tools:**
 - **[Node.js 20+](https://nodejs.org/)** and npm (for frontend development)
 - **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** (for backend Azure Functions development)
+  - **⚠️ Important**: Must be .NET 8 specifically - the project targets `net8.0` framework
 - **[Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)** with Azure Bicep and DevCenter extensions
 - **[Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)** (for local Azure Functions development)
 - **[Git](https://git-scm.com/)** (for version control)
