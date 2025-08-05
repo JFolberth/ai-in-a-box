@@ -20,7 +20,12 @@ name: AI in A Box
 
 # Required: Array of tools/functions available to the agent
 # Common options: [], ["file_search"], ["code_interpreter"], ["file_search", "code_interpreter"]
-tools: []
+tools:
+  - type: bing_grounding
+    options:
+      tool_connections:
+        - >-
+          /subscriptions/35ce8cef-94f9-4dba-9c61-a09396fec7cf/resourceGroups/rg-cancerbot-aifoundry-dev-eus2/providers/Microsoft.CognitiveServices/accounts/cs-cancerbot-dev-eus2/projects/aiproj-cancerbot-dev-eus2/connections/bingsearchdeveus2
 
 # Required: Brief description of the agent's purpose and capabilities
 # This helps users understand what the agent is designed to do

@@ -92,6 +92,15 @@ param aiFoundryProjectDisplayName string = 'AI in A Box Project'
 @description('AI Foundry project description')
 param aiFoundryProjectDescription string = 'AI in A Box foundry project with GPT-4.1-mini model deployment'
 
+@description('Include Bing search or use existing')
+param createBingSearchResourceGroup bool = false
+
+@description('Log Analytics Workspace Name for consolidated logging')
+param bingSearchName string = 'srch-bing-dev-eus2'
+
+@description('Resource Group containing the Log Analytics Workspace')
+param bingSearchResourceGroupName string = 'rg-bingsearch-dev-eus2'
+
 // =========== VARIABLES ===========
 
 // Region reference mapping - ONLY regions where Cognitive Services AIServices are available
@@ -131,12 +140,15 @@ var backendNameSuffix = toLower('${applicationName}-backend-${environmentName}-$
 var frontendNameSuffix = toLower('${applicationName}-frontend-${environmentName}-${regionReference[location]}')
 var aiFoundryNameSuffix = toLower('${applicationName}-aifoundry-${environmentName}-${regionReference[location]}')
 var logAnalyticsNameSuffix = toLower('${applicationName}-logging-${environmentName}-${regionReference[location]}')
+var bingSearchNameSuffix = toLower('${applicationName}-bingsearch-${environmentName}-${regionReference[location]}')
 
 var backendResourceGroupName = 'rg-${backendNameSuffix}'
 var frontendResourceGroupName = 'rg-${frontendNameSuffix}'
 var newAiFoundryResourceGroupName = 'rg-${aiFoundryNameSuffix}'
 var newLogAnalyticsResourceGroupName = 'rg-${logAnalyticsNameSuffix}'
+var newBingSearchResourceGroupName = 'rg-${bingSearchNameSuffix}'
 var newLogAnalyticsWorkspaceName = 'la-${logAnalyticsNameSuffix}'
+var newBingSearchName = 'srch-${bingSearchNameSuffix}'
 
 // AI Foundry resource group - either create new or use existing
 var effectiveAiFoundryResourceGroupName = createAiFoundryResourceGroup
@@ -147,6 +159,10 @@ var effectiveAiFoundryResourceGroupName = createAiFoundryResourceGroup
 var effectiveLogAnalyticsResourceGroupName = createLogAnalyticsWorkspace
   ? newLogAnalyticsResourceGroupName
   : logAnalyticsResourceGroupName
+
+var effectiveBingSearchResourceGroupName = createBingSearchResourceGroup
+  ? newBingSearchResourceGroupName
+  : bingSearchResourceGroupName
 
 // Log Analytics workspace name - either create new or use existing
 var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace
@@ -167,6 +183,11 @@ var effectiveCognitiveServicesAccount = createAiFoundryResourceGroup
 var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
   ? aiFoundryInfrastructure.?outputs.aiProjectName ?? aiFoundryProjectName
   : aiFoundryProjectName
+
+// BingSearch name - optional either from deployed infrastructure or existing parameter
+var effectiveBingSearchResourceId = createBingSearchResourceGroup
+  ? newBingSearch.?outputs.resourceId ?? existingBingSearchInstance.id
+  : ''
 
 // =========== RESOURCE GROUPS ===========
 
@@ -209,6 +230,19 @@ module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4
   }
 }
 
+// Bing Search Resource Group (conditional deployment)
+module newBingSearch 'br/public:avm/res/resources/resource-group:0.4.0' = if (createBingSearchResourceGroup) {
+  name: 'bingsearch-rg-deployment-${regionReference[location]}'
+  params: {
+    name: newBingSearchResourceGroupName
+    location: location
+    tags: union(tags, {
+      Component: 'Bing Search'
+      ResourceType: 'MicrosoftSearch-BingSearch'
+    })
+  }
+}
+
 // Log Analytics Resource Group (conditional deployment)
 module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createLogAnalyticsWorkspace) {
   name: 'loganalytics-rg-deployment-${regionReference[location]}'
@@ -236,6 +270,20 @@ resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces
   scope: resourceGroup(logAnalyticsResourceGroupName)
 }
 
+// =========== Bing Search(OPTIONAL) ===========
+
+// Reference to existing Bing Search resource group
+resource bingSearchResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = if (!createBingSearchResourceGroup) {
+  name: bingSearchResourceGroupName
+  scope: subscription()
+}
+
+// Reference to existing Log Analytics workspace (when not creating new)
+resource existingBingSearchInstance 'Microsoft.Search/searchServices@2025-05-01' existing = if (!createBingSearchResourceGroup) {
+  name: bingSearchName
+  scope: resourceGroup(bingSearchResourceGroupName)
+}
+
 // =========== AI FOUNDRY REFERENCES ===========
 
 // Reference to existing Cognitive Services resource (when not creating new)
@@ -259,6 +307,22 @@ module logAnalyticsWorkspace 'modules/log-analytics.bicep' = if (createLogAnalyt
     tags: union(tags, {
       Component: 'Shared-LogAnalytics'
       Purpose: 'CentralizedLogging'
+    })
+  }
+}
+
+module bingSearch 'modules/search.bicep' = if (createBingSearchResourceGroup) {
+  name: 'shared-search-${regionReference[location]}'
+  scope: resourceGroup(effectiveBingSearchResourceGroupName)
+  dependsOn: [
+    newBingSearch
+  ]
+  params: {
+    searchServiceName: newBingSearchName
+    location: location
+    tags: union(tags, {
+      Component: 'Shared-BingSearch'
+      Purpose: 'CentralizedBingSearch'
     })
   }
 }
@@ -298,9 +362,15 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
 module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryResourceGroup) {
   name: 'aifoundry-deployment-${regionReference[location]}'
   scope: resourceGroup(effectiveAiFoundryResourceGroupName)
-  dependsOn: [
-    newAiFoundryResourceGroup
-  ]
+  dependsOn: !empty(effectiveBingSearchResourceId)
+    ? [
+        newAiFoundryResourceGroup
+        bingSearch
+      ]
+    : [
+        newAiFoundryResourceGroup
+      ]
+
   params: {
     location: location
     environment: environmentName
@@ -315,6 +385,7 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
     projectName: aiFoundryProjectDisplayName
     projectDescription: aiFoundryProjectDescription
     namePrefix: applicationName
+    bingSearchResourceId: effectiveBingSearchResourceId
   }
 }
 

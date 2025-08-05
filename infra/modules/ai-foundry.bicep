@@ -47,6 +47,9 @@ param deployRbac bool = false
 @allowed(['User', 'Group', 'ServicePrincipal'])
 param principalType string = 'ServicePrincipal'
 
+@description('Name of the existing Bing Search resource')
+param bingSearchResourceId string
+
 // =========== VARIABLES ===========
 
 // Region reference mapping - ONLY regions where Cognitive Services AIServices are available
@@ -147,6 +150,17 @@ resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-pre
   properties: {
     description: projectDescription
     displayName: projectName
+  }
+}
+// Connected Services
+resource bingGrounding 'Microsoft.CognitiveServices/accounts/connection@2025-04-01-preview' = if (!empty(bingSearchResourceId)) {
+  parent: cognitiveServices
+  name: 'bingsearch-connection'
+  properties: {
+    connectionType: 'BingSearch'
+    displayName: 'Bing Search Connection'
+    description: 'Connection to Bing Search for grounding'
+    resourceId: bingSearchResourceId
   }
 }
 
