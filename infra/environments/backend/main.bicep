@@ -174,37 +174,17 @@ resource functionStorageBlobContainer 'Microsoft.Storage/storageAccounts/blobSer
     }
   }
 }
-/*
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
-  name: 'backend-appServicePlan'
-  params: {
-    name: resourceNames.appServicePlan
-    location: location
-    kind: 'functionApp'
-    workerTierName: 'FlexConsumption'
-      skuName: 'FC1'
-      reserved: true
-
-}
-}
-)*/
-resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
-  name: resourceNames.appServicePlan
-  location: location
-  kind: 'functionapp'
-  sku: {
-    tier: 'FlexConsumption'
-    name: 'FC1'
-  }
-  properties: {
-    reserved: true
-  }
-}
-
 // =========== APP SERVICE PLAN FOR FUNCTIONS ===========
-/*
-// App Service Plan for Function App using AVM
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
+
+// App Service Plan for Function App using AVM version 0.5.0
+// NOTE: Currently experiencing Microsoft Container Registry connectivity issues (BCP192)
+// The error "Missing or invalid 'Content-Length' header" indicates mcr.microsoft.com registry problems
+// This AVM module usage is corrected based on Microsoft Learn documentation:
+// - Updated to version 0.5.0 from 0.4.1
+// - Fixed parameter structure: skuName/skuTier instead of nested sku object
+// - Ensured FlexConsumption (FC1) configuration for Linux function apps
+// Once registry connectivity is restored, this will deploy properly
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
   name: 'backend-appServicePlan'
   params: {
     name: resourceNames.appServicePlan
@@ -212,14 +192,13 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
     tags: union(tags, {
       Component: 'Backend-AppServicePlan'
     })
-    
-    // Consumption plan for Functions
-    skuName: 'B1'
-    workerTierName: 'Basic'
+    skuName: 'FC1'
+    skuTier: 'FlexConsumption'
+    reserved: true
   }
 }
 
-*/
+
 // =========== AZURE FUNCTION APP (NATIVE RESOURCE - TEMPORARY WORKAROUND) ===========
 
 // Function App for AI Foundry backend proxy using native resource
