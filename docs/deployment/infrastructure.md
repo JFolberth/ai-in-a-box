@@ -34,7 +34,7 @@ The Azure AI Foundry SPA uses a **modular, multi-resource group architecture** d
 │                               │                                │ │
 │                               │  ┌─────────────────────────┐  │ │
 │                               │  │   App Service Plan      │  │ │
-│                               │  │    (Consumption)        │  │ │
+│                               │  │   (FlexConsumption)     │  │ │
 │                               │  └─────────────────────────┘  │ │
 │                               └─────────────────────────────────┘ │
 │                                                                 │
@@ -98,7 +98,7 @@ App Insights: appi-ai-foundry-spa-frontend-{env}-{uniqueString}
 **Resources:**
 - **Azure Functions**: Serverless API proxy to AI Foundry
 - **Azure Storage**: Function App storage (required)
-- **App Service Plan**: Consumption plan (serverless)
+- **App Service Plan**: FlexConsumption plan (serverless)
 - **Application Insights**: Backend-specific telemetry
 
 **Naming Convention:**
@@ -111,7 +111,7 @@ App Insights: appi-ai-foundry-spa-backend-{env}-{uniqueString}
 ```
 
 **Key Features:**
-- **Consumption Plan**: Automatic scaling, no idle costs
+- **FlexConsumption Plan**: Automatic scaling, no idle costs
 - **Managed Identity**: Secure AI Foundry access without credentials
 - **CORS Configuration**: Allows frontend domain access
 - **Application Insights**: Detailed performance and error tracking
@@ -404,7 +404,7 @@ The following table lists all Azure Verified Modules implemented in this project
 | **Storage Accounts** | 0.20.0 | Azure Functions runtime storage with secure configuration | [avm/res/storage/storage-account](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/storage/storage-account) |
 | **Log Analytics Workspace** | 0.9.0 | Centralized logging and monitoring workspace | [avm/res/operational-insights/workspace](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/operational-insights/workspace) |
 | **Azure Static Web Apps** | 0.5.0 | Modern SPA hosting for the frontend application | [avm/res/web/static-site](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/static-site) |
-| **App Service Plans** | 0.4.1 | Compute hosting plans for Azure Functions | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
+| **App Service Plans** | 0.5.0 | Compute hosting plans for Azure Functions with FC1 SKU support | [avm/res/web/serverfarm](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/web/serverfarm) |
 
 #### AVM Benefits for This Project
 
@@ -413,6 +413,14 @@ The following table lists all Azure Verified Modules implemented in this project
 - **Version Control**: Pinned module versions ensure deployment reproducibility
 - **Community Support**: Modules are maintained by Microsoft and the Azure community
 - **Compliance**: Built-in configurations meet Azure Well-Architected Framework principles
+
+#### Recent Updates
+
+**Server Farm AVM Version 0.5.0 (Updated)**
+- **FC1 SKU Support**: Fixed FlexConsumption (FC1) SKU deployment issues that existed in version 0.4.1
+- **Enhanced Compatibility**: Improved support for modern Azure Functions hosting plans
+- **Background**: Previous version 0.4.1 had known issues with FC1 SKU deployment ([GitHub Issue #5437](https://github.com/Azure/bicep-registry-modules/issues/5437))
+- **Resolution**: Updated to version 0.5.0 which includes fixes for FlexConsumption plan deployment
 
 #### Usage Examples
 

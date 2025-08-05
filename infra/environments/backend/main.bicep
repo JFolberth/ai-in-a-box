@@ -169,37 +169,8 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     }
   }
 }
-/*
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
-  name: 'backend-appServicePlan'
-  params: {
-    name: resourceNames.appServicePlan
-    location: location
-    kind: 'functionApp'
-    workerTierName: 'FlexConsumption'
-      skuName: 'FC1'
-      reserved: true
-
-}
-}
-)*/
-resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
-  name: resourceNames.appServicePlan
-  location: location
-  kind: 'functionapp'
-  sku: {
-    tier: 'FlexConsumption'
-    name: 'FC1'
-  }
-  properties: {
-    reserved: true
-  }
-}
-
-// =========== APP SERVICE PLAN FOR FUNCTIONS ===========
-/*
 // App Service Plan for Function App using AVM
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
   name: 'backend-appServicePlan'
   params: {
     name: resourceNames.appServicePlan
@@ -207,14 +178,15 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
     tags: union(tags, {
       Component: 'Backend-AppServicePlan'
     })
-    
-    // Consumption plan for Functions
-    skuName: 'B1'
-    workerTierName: 'Basic'
+    sku: {
+      name: 'FC1'
+      tier: 'FlexConsumption'
+    }
+    reserved: true
   }
 }
 
-*/
+// =========== APP SERVICE PLAN FOR FUNCTIONS ===========
 // =========== AZURE FUNCTION APP (AVM) ===========
 
 // Function App for AI Foundry backend proxy using AVM
@@ -253,7 +225,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
         maximumInstanceCount: 40
       }
     }
-    serverFarmResourceId: appServicePlan.id
+    serverFarmResourceId: appServicePlan.outputs.resourceId
     httpsOnly: true
     publicNetworkAccess: 'Enabled' // Site configuration for Function App
     siteConfig: {
