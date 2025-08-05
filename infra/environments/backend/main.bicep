@@ -177,13 +177,10 @@ resource functionStorageBlobContainer 'Microsoft.Storage/storageAccounts/blobSer
 // =========== APP SERVICE PLAN FOR FUNCTIONS ===========
 
 // App Service Plan for Function App using AVM version 0.5.0
-// NOTE: Currently experiencing Microsoft Container Registry connectivity issues (BCP192)
-// The error "Missing or invalid 'Content-Length' header" indicates mcr.microsoft.com registry problems
-// This AVM module usage is corrected based on Microsoft Learn documentation:
+// AVM module usage corrected based on Microsoft Learn documentation and GitHub repository structure:
 // - Updated to version 0.5.0 from 0.4.1
-// - Fixed parameter structure: skuName/skuTier instead of nested sku object
+// - Fixed parameter structure: using sku object instead of separate skuName/skuTier parameters
 // - Ensured FlexConsumption (FC1) configuration for Linux function apps
-// Once registry connectivity is restored, this will deploy properly
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
   name: 'backend-appServicePlan'
   params: {
@@ -192,8 +189,10 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
     tags: union(tags, {
       Component: 'Backend-AppServicePlan'
     })
-    skuName: 'FC1'
-    skuTier: 'FlexConsumption'
+    sku: {
+      name: 'FC1'
+      tier: 'FlexConsumption'
+    }
     reserved: true
   }
 }
