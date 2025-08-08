@@ -4,6 +4,11 @@
             "url": "https://api.githubcopilot.com/mcp/",
             "name": "GitHub Copilot",
             "description": "GitHub Copilot MCP integration for enhanced AI-powered development assistance"
+        },
+        "microsoft.docs.mcp": {
+            "url": "https://learn.microsoft.com/api/mcp",
+            "name": "Microsoft Learn",
+            "description": "Microsoft documentation and API reference for Azure, Bicep, and .NET development"
         }
     }
 }

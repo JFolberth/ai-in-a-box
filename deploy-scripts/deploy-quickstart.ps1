@@ -75,7 +75,7 @@ Prompt for all configuration options (default: true)
 
 .PREREQUISITES
 - Azure CLI installed and authenticated (az login)
-- .NET 8 SDK for backend development
+- .NET 8 SDK for backend development (required - project targets net8.0)
 - Node.js 18+ for frontend development
 - Azure subscription with appropriate permissions
 
@@ -267,7 +267,36 @@ if (-not $SkipValidation) {
     
     try {
         $dotnetVersion = dotnet --version
-        Write-ColorOutput "✅ .NET SDK found: $dotnetVersion" "Green"
+        Write-ColorOutput "   Found .NET SDK version: $dotnetVersion" "Cyan"
+        
+        # Extract major version number and validate .NET 8+
+        $versionParts = $dotnetVersion.Split('.')
+        if ($versionParts.Count -ge 1) {
+            try {
+                $majorVersion = [int]($versionParts[0])
+                
+                if ($majorVersion -ge 8) {
+                    Write-ColorOutput "✅ .NET SDK $dotnetVersion (compatible with .NET 8 requirement)" "Green"
+                }
+                else {
+                    Write-ColorOutput "❌ .NET $dotnetVersion found, but .NET 8+ required" "Red"
+                    Write-ColorOutput "   Backend project targets net8.0 framework" "Yellow"
+                    Write-ColorOutput "   Current version will cause build failures" "Yellow"
+                    Write-ColorOutput "   Download .NET 8: https://dotnet.microsoft.com/download/dotnet/8.0" "Cyan"
+                    exit 1
+                }
+            }
+            catch {
+                Write-ColorOutput "⚠️  Could not parse .NET version number: $dotnetVersion" "Yellow"
+                Write-ColorOutput "   Proceeding with deployment - manual verification recommended" "Cyan"
+                Write-ColorOutput "   If build fails, ensure .NET 8 SDK is installed" "Cyan"
+            }
+        }
+        else {
+            Write-ColorOutput "⚠️  Unexpected .NET version format: $dotnetVersion" "Yellow"
+            Write-ColorOutput "   Proceeding with deployment - manual verification recommended" "Cyan"
+            Write-ColorOutput "   If build fails, ensure .NET 8 SDK is installed" "Cyan"
+        }
     }
     catch {
         Write-ColorOutput "❌ Failed to get .NET version." "Red"
