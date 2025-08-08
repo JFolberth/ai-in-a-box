@@ -20,8 +20,10 @@ class ModernChatApp {
       sendBtn: document.getElementById('send-btn'),
       clearBtn: document.getElementById('clear-chat'),
       exportBtn: document.getElementById('export-chat'),
+      toggleRainBtn: document.getElementById('toggle-rain'),
       typingIndicator: document.getElementById('typing-indicator'),
-      characterCount: document.querySelector('.character-count')
+      characterCount: document.querySelector('.character-count'),
+      rainAnimation: document.getElementById('rain-animation')
     }
   }
   bindEvents() {
@@ -35,6 +37,7 @@ class ModernChatApp {
     // Header actions
     this.elements.clearBtn.addEventListener('click', () => this.clearConversation())
     this.elements.exportBtn.addEventListener('click', () => this.exportConversation())
+    this.elements.toggleRainBtn.addEventListener('click', () => this.toggleRainAnimation())
     
     // Auto-resize textarea
     this.elements.userInput.addEventListener('input', () => this.autoResizeTextarea())
@@ -47,8 +50,37 @@ class ModernChatApp {
     // Set initial character count
     this.updateCharacterCount()
     
+    // Initialize rain animation state
+    this.initializeRainAnimation()
+    
     // Focus on input
     this.elements.userInput.focus()
+  }
+
+  initializeRainAnimation() {
+    // Check user preference for rain animation
+    const rainEnabled = localStorage.getItem('rain-animation-enabled') !== 'false'
+    this.setRainAnimation(rainEnabled)
+  }
+
+  toggleRainAnimation() {
+    const isCurrentlyHidden = this.elements.rainAnimation.classList.contains('hidden')
+    this.setRainAnimation(isCurrentlyHidden)
+    
+    // Save preference
+    localStorage.setItem('rain-animation-enabled', isCurrentlyHidden.toString())
+  }
+
+  setRainAnimation(enabled) {
+    if (enabled) {
+      this.elements.rainAnimation.classList.remove('hidden')
+      this.elements.toggleRainBtn.title = 'Hide rain animation'
+      this.elements.toggleRainBtn.setAttribute('aria-label', 'Hide rain animation')
+    } else {
+      this.elements.rainAnimation.classList.add('hidden')
+      this.elements.toggleRainBtn.title = 'Show rain animation'
+      this.elements.toggleRainBtn.setAttribute('aria-label', 'Show rain animation')
+    }
   }
 
   handleInputChange() {
@@ -168,7 +200,7 @@ class ModernChatApp {
     if (role === 'user') {
       avatar.innerHTML = '<i class="fas fa-user"></i>'
     } else if (role === 'assistant') {
-      avatar.innerHTML = '<i class="fas fa-robot"></i>'
+      avatar.innerHTML = '<i class="fas fa-theater-masks"></i>'
     } else if (role === 'error') {
       avatar.innerHTML = '<i class="fas fa-exclamation-triangle"></i>'
       messageDiv.className = 'message error-message'
@@ -246,11 +278,19 @@ class ModernChatApp {
       this.conversationHistory = []
       this.elements.messagesContainer.innerHTML = `
         <div class="welcome-message">
-          <div class="welcome-icon">
-            <i class="fas fa-comments"></i>
+          <div class="theater-curtains">
+            <div class="curtain curtain-left"></div>
+            <div class="curtain curtain-right"></div>
           </div>
-          <h2>Welcome to AI Foundry Chat</h2>
-          <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
+          <div class="stage-area">
+            <div class="spotlight-effect"></div>
+            <div class="welcome-icon">
+              <i class="fas fa-microphone-alt"></i>
+            </div>
+            <h2>Welcome to the AI Chat Revue!</h2>
+            <p class="tagline">"Make 'em laugh, make 'em cry, make 'em wait..."</p>
+            <p>Step right up and start a delightful conversation with our AI performer. Ask questions, share thoughts, and enjoy the show!</p>
+          </div>
         </div>
       `
       this.saveConversationHistory()
@@ -273,7 +313,7 @@ class ModernChatApp {
     
     this.conversationHistory.forEach((message, index) => {
       const role = message.role === 'user' ? 'You' : 
-                   message.role === 'assistant' ? 'AI in A Box' : 'System'
+                   message.role === 'assistant' ? 'AI Chat Revue' : 'System'
       exportText += `[${message.timestamp}] ${role}:\n${message.content}\n\n`
     })
     

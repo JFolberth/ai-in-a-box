@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>    <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Foundry Chat</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>AI Chat Revue - Singin' in the Rain</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
   <body>
@@ -13,15 +13,21 @@
       <header class="chat-header">
         <div class="header-content">
           <div class="chat-title">
-            <i class="fas fa-robot"></i>
-            <span>AI in A Box Assistant</span>
+            <i class="fas fa-theater-masks"></i>
+            <div class="title-text">
+              <span class="main-title">AI Chat Revue</span>
+              <span class="subtitle">Singin' in the Rain</span>
+            </div>
           </div>
           <div class="header-actions">
+            <button id="toggle-rain" class="header-btn" title="Toggle rain animation" aria-label="Toggle rain animation">
+              <i class="fas fa-cloud-rain"></i>
+            </button>
             <button id="clear-chat" class="header-btn" title="Clear conversation" aria-label="Clear conversation">
-              <i class="fas fa-trash"></i>
+              <i class="fas fa-broom"></i>
             </button>
             <button id="export-chat" class="header-btn" title="Export conversation">
-              <i class="fas fa-download"></i>
+              <i class="fas fa-scroll"></i>
             </button>
           </div>
         </div>
@@ -29,14 +35,25 @@
 
       <!-- Chat Container -->
       <main class="chat-container">
+        <!-- Rain Animation Background -->
+        <div id="rain-animation" class="rain-animation"></div>
+        
         <!-- Messages Area -->
         <div id="messages-container" class="messages-container">
           <div class="welcome-message">
-            <div class="welcome-icon">
-              <i class="fas fa-comments"></i>
+            <div class="theater-curtains">
+              <div class="curtain curtain-left"></div>
+              <div class="curtain curtain-right"></div>
             </div>
-            <h2>Welcome to AI Foundry Chat</h2>
-            <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
+            <div class="stage-area">
+              <div class="spotlight-effect"></div>
+              <div class="welcome-icon">
+                <i class="fas fa-microphone-alt"></i>
+              </div>
+              <h2>Welcome to the AI Chat Revue!</h2>
+              <p class="tagline">"Make 'em laugh, make 'em cry, make 'em wait..."</p>
+              <p>Step right up and start a delightful conversation with our AI performer. Ask questions, share thoughts, and enjoy the show!</p>
+            </div>
           </div>
         </div>
 
@@ -44,7 +61,7 @@
         <div id="typing-indicator" class="typing-indicator hidden">
           <div class="message ai-message">
             <div class="avatar">
-              <i class="fas fa-robot"></i>
+              <i class="fas fa-theater-masks"></i>
             </div>
             <div class="message-content">
               <div class="typing-animation">
@@ -62,7 +79,7 @@
         <div class="input-wrapper">
           <textarea 
             id="user-input" 
-            placeholder="Type your message here..." 
+            placeholder="Type your message for the revue..." 
             rows="1"
             maxlength="4000"
           ></textarea>
