@@ -7,6 +7,24 @@ class ModernChatApp {
     this.conversationHistory = []
     this.isTyping = false
     
+    // Die Hard movie quotes for loading and error messages
+    this.dieHardQuotes = {
+      loading: [
+        "Welcome to the party, pal!",
+        "Come out to the coast, we'll get together, have a few laughs...",
+        "Accessing Nakatomi Plaza security system...",
+        "Ho ho ho, now I have a machine gun...",
+        "Nine million terrorists in the world and I gotta kill one with feet smaller than my sister."
+      ],
+      error: [
+        "Now I have a machine gun. Ho-ho-ho.",
+        "Welcome to the party, pal! But something went wrong.",
+        "Yippee-ki-yay! System error detected.",
+        "Glass? Who gives a shit about glass?",
+        "I'm not the one who just got butt-fucked on national TV, *Dwayne*."
+      ]
+    }
+    
     this.initializeElements()
     this.bindEvents()
     this.initializeUI()
@@ -126,7 +144,8 @@ class ModernChatApp {
     } catch (error) {
       console.error('Error sending message:', error)
       this.hideTypingIndicator()
-      this.addMessage('error', `Error: ${error.message}`)
+      const errorQuote = this.getRandomDieHardQuote('error')
+      this.addMessage('error', `${errorQuote} System Error: ${error.message}`)
     } finally {
       this.isTyping = false
       this.updateSendButton()
@@ -200,6 +219,11 @@ class ModernChatApp {
       .replace(/\n/g, '<br>')
   }
 
+  getRandomDieHardQuote(type = 'loading') {
+    const quotes = this.dieHardQuotes[type] || this.dieHardQuotes.loading
+    return quotes[Math.floor(Math.random() * quotes.length)]
+  }
+
   showTypingIndicator() {
     this.elements.typingIndicator.classList.remove('hidden')
     this.scrollToBottom()
@@ -247,10 +271,10 @@ class ModernChatApp {
       this.elements.messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">
-            <i class="fas fa-comments"></i>
+            <i class="fas fa-building"></i>
           </div>
-          <h2>Welcome to AI Foundry Chat</h2>
-          <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
+          <h2>Welcome to Nakatomi Plaza Security System</h2>
+          <p>Access the building's AI security interface. Welcome to the party, pal! Ask questions about security protocols and building information.</p>
         </div>
       `
       this.saveConversationHistory()
@@ -264,16 +288,16 @@ class ModernChatApp {
     }
     
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
-    const filename = `ai-chat-export-${timestamp}.txt`
+    const filename = `nakatomi-plaza-security-log-${timestamp}.txt`
     
-    let exportText = `AI Foundry Chat Export\n`
+    let exportText = `NAKATOMI PLAZA SECURITY SYSTEM - CONVERSATION LOG\n`
     exportText += `Generated: ${new Date().toLocaleString()}\n`
-    exportText += `Messages: ${this.conversationHistory.length}\n`
-    exportText += `\n${'='.repeat(50)}\n\n`
+    exportText += `Security Queries: ${this.conversationHistory.length}\n`
+    exportText += `\n${'='.repeat(60)}\n\n`
     
     this.conversationHistory.forEach((message, index) => {
-      const role = message.role === 'user' ? 'You' : 
-                   message.role === 'assistant' ? 'AI in A Box' : 'System'
+      const role = message.role === 'user' ? 'Security Personnel' : 
+                   message.role === 'assistant' ? 'Nakatomi AI System' : 'System Alert'
       exportText += `[${message.timestamp}] ${role}:\n${message.content}\n\n`
     })
     
