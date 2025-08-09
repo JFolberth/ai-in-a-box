@@ -6,17 +6,32 @@
 }
 
 :root {
-  --primary-color: #1e3a8a;
-  --primary-hover: #1e40af;
+  /* Die Hard Theme Color Palette */
+  --primary-color: #1a365d; /* Deep building blue/steel - Nakatomi Plaza exterior */
+  --primary-hover: #2c5282; /* Slightly lighter building blue */
+  --emergency-red: #dc2626; /* Emergency red - fire alarms, emergency lighting */
+  --emergency-red-hover: #b91c1c; /* Darker emergency red */
+  --gold-accent: #f59e0b; /* Gold/yellow accent - building lights, Christmas theme */
+  --steel-gray: #374151; /* Steel gray - elevator shafts, building infrastructure */
+  --steel-gray-light: #4b5563; /* Lighter steel gray */
+  
+  /* Background and surfaces */
   --secondary-color: #f1f5f9;
-  --border-color: #e2e8f0;
-  --text-primary: #2d3748;
-  --text-secondary: #6b7280;
-  --background-main: #ffffff;
-  --background-alt: #f9fafb;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --border-color: #475569; /* Darker border for industrial feel */
+  --text-primary: #1e293b; /* Darker text for better contrast */
+  --text-secondary: #64748b;
+  --background-main: #0f172a; /* Dark building interior background */
+  --background-alt: #1e293b; /* Darker alt background */
+  --background-glass: rgba(148, 163, 184, 0.1); /* Glass-like transparency */
+  --background-steel: #334155; /* Steel panel background */
+  
+  /* Shadows and effects */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --shadow-emergency: 0 0 20px rgba(220, 38, 38, 0.4); /* Emergency red glow */
+  --shadow-security: 0 0 15px rgba(245, 158, 11, 0.3); /* Security yellow glow */
+  
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -30,8 +45,18 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
-  color: var(--text-primary);
+  color: #e2e8f0; /* Light text for dark theme */
   background: var(--background-main);
+  /* Building interior pattern */
+  background-image: 
+    linear-gradient(45deg, rgba(55, 65, 81, 0.1) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(55, 65, 81, 0.1) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(55, 65, 81, 0.1) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(55, 65, 81, 0.1) 75%),
+    /* Subtle vertical lines suggesting building structure */
+    repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(245, 158, 11, 0.1) 101px, rgba(245, 158, 11, 0.1) 102px);
+  background-size: 30px 30px, 30px 30px, 30px 30px, 30px 30px, 200px 100%;
+  background-position: 0 0, 0 15px, 15px -15px, -15px 0px, 0 0;
   height: 100vh;
   overflow: hidden;
 }
@@ -42,13 +67,23 @@ body {
   flex-direction: column;
 }
 
-/* Header Styles */
+/* Header Styles - Security Panel Design */
 .chat-header {
-  background: var(--background-main);
-  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--background-steel) 0%, var(--steel-gray) 100%);
+  border-bottom: 2px solid var(--emergency-red);
   padding: var(--spacing-md) var(--spacing-lg);
   z-index: 100;
   position: relative;
+  box-shadow: var(--shadow-md);
+  /* Christmas lights effect */
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(90deg, 
+    var(--emergency-red) 0%, 
+    var(--gold-accent) 25%, 
+    var(--emergency-red) 50%, 
+    var(--gold-accent) 75%, 
+    var(--emergency-red) 100%
+  ) 1;
 }
 
 .header-content {
@@ -65,12 +100,14 @@ body {
   gap: var(--spacing-sm);
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #e2e8f0;
+  text-shadow: 0 0 10px var(--gold-accent);
 }
 
 .chat-title i {
-  color: var(--primary-color);
+  color: var(--gold-accent);
   font-size: 1.5rem;
+  filter: drop-shadow(0 0 8px var(--gold-accent));
 }
 
 .header-actions {
@@ -79,31 +116,34 @@ body {
 }
 
 .header-btn {
-  background: none;
+  background: linear-gradient(135deg, var(--steel-gray) 0%, var(--steel-gray-light) 100%);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: var(--spacing-sm);
   cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
+  color: #e2e8f0;
+  transition: all 0.3s ease;
   min-width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .header-btn:hover {
-  background: var(--background-alt);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--emergency-red) 0%, #b91c1c 100%);
+  color: white;
+  box-shadow: var(--shadow-emergency);
+  transform: translateY(-1px);
 }
 
-/* Main Chat Container */
+/* Main Chat Container - Building Interior */
 .chat-container {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-lg);
-  background: var(--background-main);
+  background: transparent; /* Show the building pattern from body */
 }
 
 .messages-container {
@@ -112,24 +152,31 @@ body {
   padding-bottom: var(--spacing-xl);
 }
 
-/* Welcome Message */
+/* Welcome Message - Security Terminal Style */
 .welcome-message {
   text-align: center;
   padding: var(--spacing-xl) var(--spacing-lg);
-  color: var(--text-secondary);
+  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gold-accent);
+  box-shadow: var(--shadow-security);
+  backdrop-filter: blur(10px);
 }
 
 .welcome-icon {
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--gold-accent);
   margin-bottom: var(--spacing-md);
+  filter: drop-shadow(0 0 15px var(--gold-accent));
 }
 
 .welcome-message h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #e2e8f0;
   margin-bottom: var(--spacing-sm);
+  text-shadow: 0 0 10px var(--gold-accent);
 }
 
 .welcome-message p {
@@ -137,6 +184,7 @@ body {
   line-height: 1.5;
   max-width: 500px;
   margin: 0 auto;
+  color: #cbd5e1;
 }
 
 /* Message Styles */
@@ -162,15 +210,20 @@ body {
   flex-shrink: 0;
 }
 
+/* User Message Avatars - Security Personnel */
 .user-message .avatar {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #2c5282 100%);
   color: white;
+  border: 1px solid var(--gold-accent);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }
 
+/* AI Message Avatars - Security System */
 .ai-message .avatar {
-  background: var(--secondary-color);
-  color: var(--primary-color);
+  background: linear-gradient(135deg, var(--steel-gray) 0%, var(--steel-gray-light) 100%);
+  color: var(--gold-accent);
   border: 1px solid var(--border-color);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .message-content {
@@ -181,30 +234,41 @@ body {
   line-height: 1.5;
 }
 
+/* User Messages - Glass-like Building Windows */
 .user-message .message-content {
-  background: var(--primary-color);
-  color: white;
+  background: rgba(26, 54, 93, 0.9); /* Semi-transparent building blue */
+  color: #e2e8f0;
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-bottom-right-radius: var(--spacing-xs);
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(26, 54, 93, 0.3);
 }
 
+/* AI Messages - Steel/Metallic Building Infrastructure */
 .ai-message .message-content {
-  background: var(--secondary-color);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--background-steel) 0%, var(--steel-gray) 100%);
+  color: #e2e8f0;
   border: 1px solid var(--border-color);
   border-bottom-left-radius: var(--spacing-xs);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .message-timestamp {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: #94a3b8;
   margin-top: var(--spacing-xs);
   text-align: center;
 }
 
 .error-message .message-content {
-  background: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: linear-gradient(135deg, var(--emergency-red) 0%, #b91c1c 100%);
+  color: white;
+  border: 1px solid #dc2626;
+  box-shadow: var(--shadow-emergency);
 }
 
 /* Typing Indicator */
@@ -228,8 +292,9 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--text-secondary);
+  background: var(--gold-accent);
   animation: typing 1.4s infinite ease-in-out;
+  box-shadow: 0 0 4px var(--gold-accent);
 }
 
 .typing-animation span:nth-child(1) {
@@ -255,11 +320,12 @@ body {
   }
 }
 
-/* Input Container */
+/* Input Container - Security Terminal */
 .input-container {
-  background: var(--background-main);
-  border-top: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--background-steel) 0%, var(--steel-gray) 100%);
+  border-top: 2px solid var(--emergency-red);
   padding: var(--spacing-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .input-wrapper {
@@ -268,17 +334,20 @@ body {
   display: flex;
   gap: var(--spacing-md);
   align-items: flex-end;
-  background: var(--background-main);
+  background: rgba(15, 23, 42, 0.9);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    var(--shadow-md);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(5px);
 }
 
 .input-wrapper:focus-within {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+  border-color: var(--gold-accent);
+  box-shadow: var(--shadow-security);
 }
 
 #user-input {
@@ -290,18 +359,20 @@ body {
   line-height: 1.5;
   resize: none;
   background: transparent;
-  color: var(--text-primary);
+  color: #e2e8f0;
   min-height: 24px;
   max-height: 120px;
   overflow-y: auto;
 }
 
 #user-input::placeholder {
-  color: var(--text-secondary);
+  color: #94a3b8;
+  font-style: italic;
 }
 
+/* Send Button - Emergency Panel Style */
 .send-btn {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--emergency-red) 0%, #b91c1c 100%);
   border: none;
   border-radius: var(--radius-sm);
   width: 40px;
@@ -311,19 +382,24 @@ body {
   justify-content: center;
   cursor: pointer;
   color: white;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .send-btn:hover:not(:disabled) {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #dc2626 0%, var(--emergency-red) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-emergency);
 }
 
 .send-btn:disabled {
-  background: var(--text-secondary);
+  background: linear-gradient(135deg, var(--steel-gray) 0%, #4b5563 100%);
   cursor: not-allowed;
   transform: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .input-footer {
@@ -333,11 +409,12 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: #94a3b8;
 }
 
 .character-count {
   font-weight: 500;
+  color: var(--gold-accent);
 }
 
 /* Responsive Design */
@@ -382,29 +459,32 @@ body {
   }
 }
 
-/* Scrollbar Styling */
+/* Scrollbar Styling - Industrial Theme */
 .chat-container::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .chat-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(55, 65, 81, 0.3);
+  border-radius: 4px;
 }
 
 .chat-container::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
+  background: linear-gradient(135deg, var(--steel-gray) 0%, var(--steel-gray-light) 100%);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
 .chat-container::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: linear-gradient(135deg, var(--gold-accent) 0%, #f59e0b 100%);
 }
 
-/* Loading States */
+/* Loading States - Security System */
 .message-content.loading {
-  background: var(--background-alt);
-  color: var(--text-secondary);
+  background: var(--background-steel);
+  color: var(--gold-accent);
   font-style: italic;
+  border: 1px solid var(--gold-accent);
 }
 
 /* Animation for new messages */
