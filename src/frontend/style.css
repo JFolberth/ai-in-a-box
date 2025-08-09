@@ -6,17 +6,22 @@
 }
 
 :root {
-  --primary-color: #1e3a8a;
-  --primary-hover: #1e40af;
-  --secondary-color: #f1f5f9;
-  --border-color: #e2e8f0;
-  --text-primary: #2d3748;
-  --text-secondary: #6b7280;
-  --background-main: #ffffff;
-  --background-alt: #f9fafb;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  /* Crazy Train Theme - Family-Friendly Rock Colors */
+  --primary-color: #6b46c1; /* Deep purple (stage lighting) */
+  --primary-hover: #7c3aed; /* Brighter purple hover */
+  --secondary-color: #fbbf24; /* Bright gold (train headlights) */
+  --accent-color: #d6d3d1; /* Silver chrome (train metal) */
+  --border-color: #94a3b8; /* Lighter border for contrast */
+  --text-primary: #f8fafc; /* Light text for dark theme */
+  --text-secondary: #cbd5e1; /* Muted light text */
+  --background-main: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); /* Concert stage gradient */
+  --background-alt: #374151; /* Darker alternative background */
+  --background-card: rgba(30, 27, 75, 0.8); /* Semi-transparent card background */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --glow-sm: 0 0 10px rgba(107, 70, 193, 0.3);
+  --glow-md: 0 0 20px rgba(107, 70, 193, 0.4);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -34,6 +39,34 @@ body {
   background: var(--background-main);
   height: 100vh;
   overflow: hidden;
+  /* Add subtle starfield animation */
+  position: relative;
+}
+
+/* Add subtle floating stars animation */
+body::before {
+  content: "✨ ⭐ ✨ ⚡ ✨ ⭐ ✨ ⚡ ✨ ⭐ ✨ ⚡ ✨ ⭐ ✨ ⚡";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.1;
+  font-size: 1.5rem;
+  animation: sparkleFloat 20s linear infinite;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@keyframes sparkleFloat {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 #app {
@@ -44,11 +77,13 @@ body {
 
 /* Header Styles */
 .chat-header {
-  background: var(--background-main);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--background-card);
+  border-bottom: 2px solid var(--secondary-color);
   padding: var(--spacing-md) var(--spacing-lg);
   z-index: 100;
   position: relative;
+  box-shadow: var(--glow-sm);
+  backdrop-filter: blur(10px);
 }
 
 .header-content {
@@ -66,11 +101,31 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
+  animation: titleGlow 3s ease-in-out infinite alternate;
 }
 
 .chat-title i {
-  color: var(--primary-color);
+  color: var(--secondary-color);
   font-size: 1.5rem;
+  animation: trainBounce 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+  }
+}
+
+@keyframes trainBounce {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
 }
 
 .header-actions {
@@ -103,7 +158,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-lg);
-  background: var(--background-main);
+  background: transparent;
+  position: relative;
 }
 
 .messages-container {
@@ -121,8 +177,20 @@ body {
 
 .welcome-icon {
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--secondary-color);
   margin-bottom: var(--spacing-md);
+  animation: welcomeGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes welcomeGlow {
+  0% {
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    transform: scale(1);
+  }
+  100% {
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+    transform: scale(1.05);
+  }
 }
 
 .welcome-message h2 {
@@ -145,6 +213,21 @@ body {
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
   align-items: flex-start;
+  position: relative;
+}
+
+/* Add railroad track between messages */
+.message:not(:last-child)::after {
+  content: "⚊ ⚊ ⚊ ⚊ ⚊ ⚊ ⚊ ⚊ ⚊ ⚊";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--accent-color);
+  opacity: 0.5;
+  font-size: 0.8rem;
+  letter-spacing: 8px;
+  pointer-events: none;
 }
 
 .message.user-message {
@@ -152,25 +235,28 @@ body {
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 1rem;
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--accent-color);
 }
 
 .user-message .avatar {
-  background: var(--primary-color);
-  color: white;
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #f59e0b 100%);
+  color: #1f2937;
+  border-color: #d97706;
 }
 
 .ai-message .avatar {
-  background: var(--secondary-color);
-  color: var(--primary-color);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  color: white;
+  border-color: var(--secondary-color);
 }
 
 .message-content {
@@ -182,16 +268,42 @@ body {
 }
 
 .user-message .message-content {
-  background: var(--primary-color);
-  color: white;
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #f59e0b 100%);
+  color: #1f2937;
   border-bottom-right-radius: var(--spacing-xs);
+  border: 2px solid #d97706;
+  position: relative;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+}
+
+/* Add train car coupling for user messages */
+.user-message .message-content::before {
+  content: "🚃";
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
 }
 
 .ai-message .message-content {
-  background: var(--secondary-color);
+  background: linear-gradient(135deg, var(--background-alt) 0%, #4b5563 100%);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--accent-color);
   border-bottom-left-radius: var(--spacing-xs);
+  position: relative;
+  box-shadow: var(--shadow-md);
+}
+
+/* Add locomotive for AI messages */
+.ai-message .message-content::before {
+  content: "🚂";
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
 }
 
 .message-timestamp {
@@ -207,7 +319,7 @@ body {
   border: 1px solid #fecaca;
 }
 
-/* Typing Indicator */
+/* Enhanced Typing Indicator - Train Wheels */
 .typing-indicator {
   opacity: 1;
   transition: opacity 0.3s ease;
@@ -220,16 +332,17 @@ body {
 
 .typing-animation {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 
 .typing-animation span {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--text-secondary);
-  animation: typing 1.4s infinite ease-in-out;
+  background: var(--secondary-color);
+  animation: trainWheels 1.2s infinite ease-in-out;
+  border: 2px solid var(--accent-color);
 }
 
 .typing-animation span:nth-child(1) {
@@ -237,29 +350,31 @@ body {
 }
 
 .typing-animation span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.3s;
 }
 
 .typing-animation span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.6s;
 }
 
-@keyframes typing {
+@keyframes trainWheels {
   0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.4;
+    transform: rotate(0deg) scale(0.8);
+    opacity: 0.6;
   }
   30% {
-    transform: translateY(-10px);
+    transform: rotate(180deg) scale(1.2);
     opacity: 1;
   }
 }
 
 /* Input Container */
 .input-container {
-  background: var(--background-main);
-  border-top: 1px solid var(--border-color);
+  background: var(--background-card);
+  border-top: 2px solid var(--secondary-color);
   padding: var(--spacing-lg);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--glow-sm);
 }
 
 .input-wrapper {
@@ -268,17 +383,17 @@ body {
   display: flex;
   gap: var(--spacing-md);
   align-items: flex-end;
-  background: var(--background-main);
-  border: 1px solid var(--border-color);
+  background: var(--background-alt);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input-wrapper:focus-within {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+  border-color: var(--secondary-color);
+  box-shadow: var(--glow-md);
 }
 
 #user-input {
@@ -301,29 +416,60 @@ body {
 }
 
 .send-btn {
-  background: var(--primary-color);
-  border: none;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  border: 2px solid var(--secondary-color);
   border-radius: var(--radius-sm);
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: white;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   flex-shrink: 0;
+  box-shadow: var(--glow-sm);
+  position: relative;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-color) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-md);
+  border-color: var(--secondary-color);
+}
+
+/* Add train whistle effect on hover */
+.send-btn:hover:not(:disabled)::before {
+  content: "🎵";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  animation: whistleFloat 0.5s ease-out;
+}
+
+@keyframes whistleFloat {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
 }
 
 .send-btn:disabled {
   background: var(--text-secondary);
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
+  border-color: var(--border-color);
 }
 
 .input-footer {
