@@ -41,25 +41,23 @@ param tags object = {}
 // =========== AZURE COGNITIVE SEARCH SERVICE (AVM) ===========
 
 // Azure Cognitive Search Service using Azure Verified Module
-module searchService 'br/public:avm/res/search/search-service:0.11.0' = {
-  name: 'search-service'
-  params: {
-    name: searchServiceName
-    location: location
-    sku: skuName
-    replicaCount: replicaCount
-    partitionCount: partitionCount
-    tags: tags
+resource bingSearchService 'Microsoft.Bing/accounts@2025-05-01-preview' = {
+  name: searchServiceName
+  location: 'global'
+  kind: 'Bing.Grounding'
+  sku: {
+    name: 'G1'
   }
+  tags: tags
 }
 
 // =========== OUTPUTS ===========
 
 @description('Resource ID of the Azure Cognitive Search service')
-output searchServiceId string = searchService.outputs.resourceId
+output searchServiceId string = bingSearchService.id
 
 @description('Name of the Azure Cognitive Search service')
-output searchServiceName string = searchService.outputs.name
+output searchServiceName string = bingSearchService.name
 
 @description('Resource group name containing the search service')
 output resourceGroupName string = resourceGroup().name

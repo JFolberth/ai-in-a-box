@@ -184,10 +184,10 @@ var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
   ? aiFoundryInfrastructure.?outputs.aiProjectName ?? aiFoundryProjectName
   : aiFoundryProjectName
 
-// BingSearch name - optional either from deployed infrastructure or existing parameter
-var effectiveBingSearchResourceId = createBingSearchResourceGroup
-  ? newBingSearch.?outputs.resourceId ?? existingBingSearchInstance.id
-  : ''
+// BingSearch resource ID - optional either from deployed infrastructure or existing parameter
+var effectiveBingSearchResourceName = createBingSearchResourceGroup
+  ? bingSearch.?outputs.searchServiceName ?? ''
+  : existingBingSearchInstance.?name ?? ''
 
 // =========== RESOURCE GROUPS ===========
 
@@ -362,7 +362,7 @@ module frontendInfrastructure 'environments/frontend/main.bicep' = {
 module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryResourceGroup) {
   name: 'aifoundry-deployment-${regionReference[location]}'
   scope: resourceGroup(effectiveAiFoundryResourceGroupName)
-  dependsOn: !empty(effectiveBingSearchResourceId)
+  dependsOn: !empty(effectiveBingSearchResourceName)
     ? [
         newAiFoundryResourceGroup
         bingSearch
@@ -385,7 +385,8 @@ module aiFoundryInfrastructure 'modules/ai-foundry.bicep' = if (createAiFoundryR
     projectName: aiFoundryProjectDisplayName
     projectDescription: aiFoundryProjectDescription
     namePrefix: applicationName
-    bingSearchResourceId: effectiveBingSearchResourceId
+    bingSearchResourceGroupName: effectiveBingSearchResourceGroupName
+    bingSearchResourceName: effectiveBingSearchResourceName
   }
 }
 

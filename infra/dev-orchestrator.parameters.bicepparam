@@ -7,8 +7,9 @@ param aiFoundryResourceGroupName = 'rg-ai-foundry-spa-aifoundry-dev-eus2'
 param aiFoundryProjectName = 'aiproj-ai-foundry-dev-eus2'
 // aiFoundryAgentId parameter removed - backend will use fallback default and deployment script will update configuration
 param aiFoundryAgentName = 'AI In A Box'
+param aiFoundryAgentId = 'asst_O3mDIKF8Q7dAsOUd2m7kdz0H' // Placeholder, will be updated by deployment script
 // Set to true to create new AI Foundry resources automatically, false to use existing
-param createAiFoundryResourceGroup = false     // Using existing AI Foundry resources (specified above)
+param createAiFoundryResourceGroup = true     // Using existing AI Foundry resources (specified above)
 // aiFoundrySubscriptionId will use subscription() function default - no need to specify
 
 // Environment and application configuration
@@ -25,6 +26,13 @@ param createLogAnalyticsWorkspace = false      // Creates new Log Analytics work
 // When createLogAnalyticsWorkspace = false, uses existing resources specified below:
 param logAnalyticsResourceGroupName = 'rg-logging-dev-eus'
 param logAnalyticsWorkspaceName = 'la-logging-dev-eus'
+
+// Bing Search configuration
+param createBingSearchResourceGroup = true      // Creates new Bing Search service and resource group with standard naming
+// When createBingSearchResourceGroup = true, creates: rg-conspiracy-bot-bingsearch-dev-eus2 and srch-conspiracy-bot-bingsearch-dev-eus2
+// When createBingSearchResourceGroup = false, uses existing resources specified below:
+param bingSearchResourceGroupName = ''
+param bingSearchName = ''
 
 // Resource tags (alphabetized by key)
 param tags = {

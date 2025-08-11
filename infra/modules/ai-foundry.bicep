@@ -48,7 +48,10 @@ param deployRbac bool = false
 param principalType string = 'ServicePrincipal'
 
 @description('Name of the existing Bing Search resource')
-param bingSearchResourceId string
+param bingSearchResourceName string
+
+@description('Name of the existing Bing Search Resource Group')
+param bingSearchResourceGroupName string
 
 // =========== VARIABLES ===========
 
@@ -94,8 +97,13 @@ var azureAiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
 
 // =========== RESOURCES ===========
 
+resource bingSearchService 'Microsoft.Bing/accounts@2025-05-01-preview' existing = if (!empty(bingSearchResourceName) && !empty(bingSearchResourceGroupName)) {
+  name: bingSearchResourceName
+  scope: resourceGroup(bingSearchResourceGroupName)
+}
+
 // Cognitive Services Account (Multi-service AI Services)
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   name: cognitiveServicesName
   location: location
   tags: union(tags, {
@@ -122,7 +130,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-prev
 }
 
 // Model Deployment (GPT-4.1-mini)
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
   parent: cognitiveServices
   name: modelDeploymentName
   properties: {
@@ -140,7 +148,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-
 }
 
 // AI Foundry Project (Cognitive Services Project)
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
   parent: cognitiveServices
   name: aiProjectName
   location: location
@@ -153,17 +161,24 @@ resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-pre
   }
 }
 // Connected Services
-resource bingGrounding 'Microsoft.CognitiveServices/accounts/connection@2025-04-01-preview' = if (!empty(bingSearchResourceId)) {
-  parent: cognitiveServices
-  name: 'bingsearch-connection'
+resource bingGrounding 'connections@2025-06-01' = if (!empty(bingSearchResourceId)) {
+  name: bingSearchService.name
   properties: {
-    connectionType: 'BingSearch'
-    displayName: 'Bing Search Connection'
-    description: 'Connection to Bing Search for grounding'
-    resourceId: bingSearchResourceId
+    authType: 'ApiKey'
+    category: 'GroundingWithBingSearch'
+    target: 'https://api.bing.microsoft.com/'
+    useWorkspaceManagedIdentity: false
+    isSharedToAll: false
+    sharedUserList: []
+    peRequirement: 'NotRequired'
+    peStatus: 'NotApplicable'
+    metadata: {
+      type: 'bing_grounding'
+      ApiType: 'Azure'
+      ResourceId: bingSearchResourceId
+    }
   }
 }
-
 // RBAC Assignment: Grant Function App "Azure AI Developer" role on Cognitive Services
 module functionAppRbac 'rbac-assignment.bicep' = if (deployRbac && !empty(functionAppPrincipalId)) {
   name: 'function-app-ai-foundry-rbac'
