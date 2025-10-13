@@ -92,7 +92,7 @@ var azureAiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
 // =========== RESOURCES ===========
 
 // Cognitive Services Account (Multi-service AI Services)
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' = {
   name: cognitiveServicesName
   location: location
   tags: union(tags, {
@@ -119,7 +119,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-prev
 }
 
 // Model Deployment (GPT-4.1-mini)
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-07-01-preview' = {
   parent: cognitiveServices
   name: modelDeploymentName
   properties: {
@@ -137,7 +137,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-
 }
 
 // AI Foundry Project (Cognitive Services Project)
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-07-01-preview' = {
   parent: cognitiveServices
   name: aiProjectName
   location: location

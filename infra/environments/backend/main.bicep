@@ -87,13 +87,13 @@ var typeInfrastructure = 'bk'
 // =========== EXISTING RESOURCES ===========
 
 // Reference to existing Log Analytics Workspace
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(logAnalyticsResourceGroupName)
 }
 
 // Reference to existing AI Foundry Cognitive Services instance
-resource aiFoundryInstance 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
+resource aiFoundryInstance 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' existing = {
   name: aiFoundryInstanceName
   scope: resourceGroup(aiFoundryResourceGroupName)
 }
@@ -169,20 +169,19 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0'
     }
   }
 }
-/*
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
+// =========== APP SERVICE PLAN FOR FUNCTIONS ===========
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
   name: 'backend-appServicePlan'
   params: {
     name: resourceNames.appServicePlan
     location: location
-    kind: 'functionApp'
-    workerTierName: 'FlexConsumption'
-      skuName: 'FC1'
-      reserved: true
+    kind: 'functionapp'
+    skuName: 'FC1'
+    reserved: true
+  }
+}
 
-}
-}
-)*/
+/*
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: resourceNames.appServicePlan
   location: location
@@ -195,30 +194,12 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
     reserved: true
   }
 }
-
-// =========== APP SERVICE PLAN FOR FUNCTIONS ===========
-/*
-// App Service Plan for Function App using AVM
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
-  name: 'backend-appServicePlan'
-  params: {
-    name: resourceNames.appServicePlan
-    location: location
-    tags: union(tags, {
-      Component: 'Backend-AppServicePlan'
-    })
-    
-    // Consumption plan for Functions
-    skuName: 'B1'
-    workerTierName: 'Basic'
-  }
-}
-
 */
+
 // =========== AZURE FUNCTION APP (AVM) ===========
 
 // Function App for AI Foundry backend proxy using AVM
-module functionApp 'br/public:avm/res/web/site:0.16.0' = {
+module functionApp 'br/public:avm/res/web/site:0.19.3' = {
   name: 'backend-functionApp-${regionReference[location]}'
   params: {
     name: resourceNames.functionApp
@@ -253,7 +234,7 @@ module functionApp 'br/public:avm/res/web/site:0.16.0' = {
         maximumInstanceCount: 40
       }
     }
-    serverFarmResourceId: appServicePlan.id
+    serverFarmResourceId: appServicePlan.outputs.resourceId
     httpsOnly: true
     publicNetworkAccess: 'Enabled' // Site configuration for Function App
     siteConfig: {
