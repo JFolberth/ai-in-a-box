@@ -171,7 +171,7 @@ var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
 // =========== RESOURCE GROUPS ===========
 
 // Frontend Resource Group using AVM module
-module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = {
+module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = {
   name: 'frontend-rg-deployment-${regionReference[location]}'
   params: {
     name: frontendResourceGroupName
@@ -184,7 +184,7 @@ module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' 
 }
 
 // Backend Resource Group using AVM module
-module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = {
+module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = {
   name: 'backend-rg-deployment-${regionReference[location]}'
   params: {
     name: backendResourceGroupName
@@ -197,7 +197,7 @@ module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' =
 }
 
 // AI Foundry Resource Group (conditional deployment)
-module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createAiFoundryResourceGroup) {
+module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = if (createAiFoundryResourceGroup) {
   name: 'aifoundry-rg-deployment-${regionReference[location]}'
   params: {
     name: newAiFoundryResourceGroupName
@@ -210,7 +210,7 @@ module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4
 }
 
 // Log Analytics Resource Group (conditional deployment)
-module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = if (createLogAnalyticsWorkspace) {
+module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = if (createLogAnalyticsWorkspace) {
   name: 'loganalytics-rg-deployment-${regionReference[location]}'
   params: {
     name: newLogAnalyticsResourceGroupName
@@ -225,13 +225,13 @@ module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:
 // =========== LOG ANALYTICS WORKSPACE (OPTIONAL) ===========
 
 // Reference to existing Log Analytics workspace resource group
-resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = if (!createLogAnalyticsWorkspace) {
+resource logAnalyticsResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = if (!createLogAnalyticsWorkspace) {
   name: logAnalyticsResourceGroupName
   scope: subscription()
 }
 
 // Reference to existing Log Analytics workspace (when not creating new)
-resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = if (!createLogAnalyticsWorkspace) {
+resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = if (!createLogAnalyticsWorkspace) {
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(logAnalyticsResourceGroupName)
 }
@@ -239,7 +239,7 @@ resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces
 // =========== AI FOUNDRY REFERENCES ===========
 
 // Reference to existing Cognitive Services resource (when not creating new)
-resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = if (!createAiFoundryResourceGroup) {
+resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' existing = if (!createAiFoundryResourceGroup) {
   name: aiFoundryResourceName
   scope: resourceGroup(aiFoundryResourceGroupName)
 }

@@ -72,7 +72,7 @@ var typeInfrastructure = 'fd'
 // =========== EXISTING RESOURCES ===========
 
 // Reference to existing Log Analytics Workspace
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(logAnalyticsResourceGroupName)
 }
@@ -80,7 +80,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
 // =========== APPLICATION INSIGHTS (AVM) ===========
 
 // Application Insights for frontend monitoring using AVM
-module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
+module applicationInsights 'br/public:avm/res/insights/component:0.6.1' = {
   name: 'frontend-applicationInsights-${regionReference[location]}'
   params: {
     name: resourceNames.applicationInsights
@@ -97,7 +97,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
 // =========== STATIC WEB APP (AVM) ===========
 
 // Static Web App for hosting the frontend using AVM
-module staticWebApp 'br/public:avm/res/web/static-site:0.5.0' = {
+module staticWebApp 'br/public:avm/res/web/static-site:0.9.3' = {
   name: 'frontend-staticWebApp-${regionReference[location]}'
   params: {
     name: resourceNames.staticWebApp

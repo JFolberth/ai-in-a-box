@@ -28,7 +28,7 @@ param tags object = {}
 // =========== LOG ANALYTICS WORKSPACE (AVM) ===========
 
 // Log Analytics Workspace using Azure Verified Module
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.9.0' = {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.12.0' = {
   name: 'log-analytics-workspace'
   params: {
     name: workspaceName
