@@ -2,39 +2,44 @@ $schema: "1.0"
 name: "ai-foundry-spa-devbox"
 image: microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2
 
+# Enable DevDrive for improved development performance
+# DevDrive provides faster file I/O, better caching, and reduced antivirus scanning overhead
+# for development workloads on Windows 11
+devDrive:
+  - driveLetter: "Z"
+    sizeInGB: 100
+    label: "DevDrive"
+    fileSystem: "NTFS"
+
 tasks:
-  # Clone AI in a Box repository for development
-  - name: git-clone
-    description: Clone the AI in a Box repository for development
-    parameters:
-      repositoryUrl: https://github.com/JFolberth/ai-in-a-box
-      directory: C:\Workspaces
-      
-  # Core Development Tools
   - name: winget
-    description: Install Windows Package Manager Client (winget) updates
+    description: Install Node.js LTS for frontend development
     parameters:
-      package: Microsoft.AppInstaller
+      package: OpenJS.NodeJS.LTS
   - name: winget
     description: Install Visual Studio Code for development
     parameters:
       package: Microsoft.VisualStudioCode
   - name: winget
-    description: Install Git for source control
-    parameters:
-      package: Git.Git
-  - name: winget
     description: Install Azure CLI for infrastructure deployment
     parameters:
       package: Microsoft.AzureCLI
+  - name: winget
+    description: Install Git for source control
+    parameters:
+      package: Git.Git
   - name: winget
     description: Install .NET 8 SDK for Azure Functions backend
     parameters:
       package: Microsoft.DotNet.SDK.8
   - name: winget
-    description: Install Node.js 20 LTS for frontend development
+    description: Install Azure Functions Core Tools for local development
     parameters:
-      package: OpenJS.NodeJS
+      package: Microsoft.AzureFunctionsCoreTools
+  - name: winget
+    description: Install Python for development scripting and tooling
+    parameters:
+      package: Python.Python.3.12
   - name: winget
     description: Install PowerShell Core for cross-platform scripting
     parameters:
@@ -43,101 +48,120 @@ tasks:
     description: Install Docker Desktop for containerized development
     parameters:
       package: Docker.DockerDesktop
-  - name: winget
-    description: Install Python for development scripting and tooling
-    parameters:
-      package: Python.Python.3.12
-      
-  # System Configuration
   - name: powershell
-    description: Install Azure CLI extensions and configure system
+    description: Install Azure CLI extensions system-wide
     parameters:
       command: |
+        # Install Azure CLI Bicep extension (system-wide)
         az extension add --name bicep --only-show-errors
+        # Install Azure CLI DevCenter extension (system-wide)
         az extension add --name devcenter --only-show-errors
-        $functionsUrl = 'https://github.com/Azure/azure-functions-core-tools/releases/latest/download/Azure.Functions.Cli.win-x64.3.0.3477.zip'
-        $downloadPath = Join-Path $env:TEMP 'azure-functions-core-tools.zip'
-        $installPath = 'C:\Program Files\Azure Functions Core Tools'
-        try {
-          Write-Host 'Downloading Azure Functions Core Tools...' -ForegroundColor Yellow
-          Invoke-WebRequest -Uri $functionsUrl -OutFile $downloadPath
-          if (Test-Path $installPath) { Remove-Item -Path $installPath -Recurse -Force }
-          New-Item -ItemType Directory -Path $installPath -Force
-          Expand-Archive -Path $downloadPath -DestinationPath $installPath
-          $pathEntry = $installPath
-          $currentPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
-          $pathPattern = '*' + $pathEntry + '*'
-          if ($currentPath -notlike $pathPattern) { 
-            $newPath = $currentPath + ';' + $pathEntry
-            [Environment]::SetEnvironmentVariable('PATH', $newPath, 'Machine') 
-          }
-          Write-Host 'Azure Functions Core Tools installed successfully!' -ForegroundColor Green
-        } catch {
-          Write-Host 'Azure Functions Core Tools installation failed' -ForegroundColor Yellow
-        }
-        Write-Host 'System-level setup complete!' -ForegroundColor Green
-
+        Write-Host "System-level setup complete!" -ForegroundColor Green
 userTasks:
   - name: powershell
     description: Install VS Code extensions for AI Foundry SPA development
     parameters:
       command: |
-        Write-Host 'Installing VS Code extensions...' -ForegroundColor Yellow
-        code --install-extension ms-azuretools.vscode-bicep
+        # Install VS Code extensions for the user
+        Write-Host "Installing VS Code extensions..." -ForegroundColor Yellow
+        
+        # Infrastructure & Deployment
+        code --install-extension ms-vscode.vscode-bicep
+        
+        # Backend Development (C# Function App)
         code --install-extension ms-azuretools.vscode-azurefunctions
         code --install-extension ms-dotnettools.csharp
         code --install-extension ms-dotnettools.vscode-dotnet-runtime
+        
+        # Frontend Development (JavaScript/Vite)
         code --install-extension esbenp.prettier-vscode
-        code --install-extension dbaeumer.vscode-eslint
+        code --install-extension ms-vscode.vscode-eslint
+        code --install-extension ms-vscode.vscode-json
+        
+        # AI Development & Copilot
         code --install-extension GitHub.copilot
         code --install-extension GitHub.copilot-chat
-        code --install-extension ms-windows-ai-studio.windows-ai-studio
-        code --install-extension teamsdevapp.vscode-ai-foundry
+        code --install-extension ms-toolsai.vscode-ai-toolkit
+        
+        # Python Development (for tooling and scripting)
         code --install-extension ms-python.python
         code --install-extension ms-python.pylint
-        code --install-extension ms-vscode-remote.remote-containers
-        code --install-extension devcenter.ms-devbox
+        
+        # DevBox Support
+        code --install-extension ms-vscode.vscode-dev-containers
+        
+        # Docker Development
         code --install-extension ms-azuretools.vscode-docker
+        code --install-extension ms-vscode.vscode-docker
+        
+        # Source Control
         code --install-extension github.vscode-github-actions
-        Write-Host 'VS Code extensions installed successfully!' -ForegroundColor Green
+        
+        Write-Host "VS Code extensions installed successfully!" -ForegroundColor Green
   
   - name: powershell
-    description: Configure user-specific development environment
+    description: Configure user-specific development environment and tools
     parameters:
       command: |
+        # Install npm global packages for the current user
         npm install -g azurite@latest
-        $workspaceDir = 'C:\Workspaces'
-        $azuriteDir = 'C:\Azurite'
-        $npmCacheDir = 'C:\npm-cache'
-        $nugetCacheDir = 'C:\nuget-cache'
+        
+        # Note: @azure/static-web-apps-cli and azure-functions-core-tools are installed on-demand by deployment scripts
+        # This avoids duplication and ensures tools are available when needed
+        
+        # Verify Azure Functions Core Tools is available
+        if (Get-Command func -ErrorAction SilentlyContinue) {
+            $funcVersion = func --version
+            Write-Host "✅ Azure Functions Core Tools found: $funcVersion" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Azure Functions Core Tools not found via PATH" -ForegroundColor Yellow
+            Write-Host "   It may be installed but not in PATH, or you may need to install it" -ForegroundColor Gray
+        }
+        
+        # Create user workspace directories on DevDrive (Z:) for optimal performance
+        $workspaceDir = "Z:\Workspaces"
+        $azuriteDir = "Z:\Azurite"
+        $npmCacheDir = "Z:\npm-cache"
+        $nugetCacheDir = "Z:\nuget-cache"
+        
+        # Create directories on DevDrive Z:
         New-Item -ItemType Directory -Force -Path $workspaceDir
         New-Item -ItemType Directory -Force -Path $azuriteDir
         New-Item -ItemType Directory -Force -Path $npmCacheDir
         New-Item -ItemType Directory -Force -Path $nugetCacheDir
-        [Environment]::SetEnvironmentVariable('AZURE_STORAGE_EMULATOR_LOCATION', $azuriteDir, 'User')
-        [Environment]::SetEnvironmentVariable('WORKSPACES_DIR', $workspaceDir, 'User')
+        
+        # Set up user-specific environment variables to use DevDrive
+        [Environment]::SetEnvironmentVariable("AZURE_STORAGE_EMULATOR_LOCATION", $azuriteDir, "User")
+        [Environment]::SetEnvironmentVariable("WORKSPACES_DIR", $workspaceDir, "User")
+        
+        # Configure npm to use DevDrive cache for better performance
         npm config set cache $npmCacheDir
         npm config set registry https://registry.npmjs.org/
-        [Environment]::SetEnvironmentVariable('NUGET_PACKAGES', $nugetCacheDir, 'User')
+        
+        # Configure NuGet to use DevDrive cache
+        [Environment]::SetEnvironmentVariable("NUGET_PACKAGES", $nugetCacheDir, "User")
+        
+        # Configure Python for user development
         python -m pip install --user --upgrade pip
         python -m pip install --user virtualenv
-        if (Get-Command func -ErrorAction SilentlyContinue) {
-          $funcVersion = func --version
-          Write-Host "Azure Functions Core Tools found: $funcVersion" -ForegroundColor Green
-        } else {
-          Write-Host 'Azure Functions Core Tools not found via PATH' -ForegroundColor Yellow
-        }
-        $dockerPath = Join-Path ${env:ProgramFiles} 'Docker\Docker\Docker Desktop.exe'
+        
+        # Verify Docker Desktop installation and setup
+        $dockerPath = "${env:ProgramFiles}\Docker\Docker\Docker Desktop.exe"
         if (Test-Path $dockerPath) {
-          Write-Host 'Docker Desktop installed successfully!' -ForegroundColor Green
+            Write-Host "✅ Docker Desktop installed successfully!" -ForegroundColor Green
+            Write-Host "📋 Docker will be available after DevBox restart and Docker Desktop startup" -ForegroundColor Yellow
         } else {
-          Write-Host 'Docker Desktop installation may need completion' -ForegroundColor Yellow
+            Write-Host "⚠️  Docker Desktop installation may need completion" -ForegroundColor Yellow
         }
-        Write-Host 'DevBox Setup Complete' -ForegroundColor Green
-        Write-Host 'Next steps:' -ForegroundColor Yellow
-        Write-Host '1. Configure Git: git config --global user.name Your Name' -ForegroundColor Gray
-        Write-Host '2. Configure Git: git config --global user.email your.email@example.com' -ForegroundColor Gray
-        Write-Host '3. Sign in to Azure: az login' -ForegroundColor Gray
-        Write-Host "4. Repository cloned to: $workspaceDir" -ForegroundColor Gray
-        Write-Host "5. Azurite data stored in: $azuriteDir" -ForegroundColor Gray
-        Write-Host '6. Start Docker Desktop for containerized development' -ForegroundColor Gray
+        
+        Write-Host "=== User Development Environment Setup Complete ===" -ForegroundColor Green
+        Write-Host "Next steps:" -ForegroundColor Yellow
+        Write-Host "1. Configure Git with your credentials:" -ForegroundColor Gray
+        Write-Host "   git config --global user.name 'Your Name'" -ForegroundColor Gray
+        Write-Host "   git config --global user.email 'your.email@example.com'" -ForegroundColor Gray
+        Write-Host "2. Sign in to Azure: az login" -ForegroundColor Gray
+        Write-Host "3. Clone repository to: $workspaceDir" -ForegroundColor Gray
+        Write-Host "4. Azurite data will be stored in: $azuriteDir" -ForegroundColor Gray
+        Write-Host "5. Python and pip are available for development tooling" -ForegroundColor Gray
+        Write-Host "6. Start Docker Desktop for containerized development" -ForegroundColor Gray
+        Write-Host "7. Docker will be available for Azurite, Function App testing, and more" -ForegroundColor Gray
