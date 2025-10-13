@@ -7,8 +7,8 @@ Deploy the frontend of AI Foundry SPA to Azure Static Web App
 This script deploys the frontend portion of the AI Foundry SPA to an existing Azure Static Web App.
 Both StaticWebAppName and ResourceGroupName are required parameters.
 
-This script uses the same deployment method as the CI pipeline: first tries az staticwebapp create
-with --source, then falls back to SWA CLI if that fails (because the app already exists).
+This script is designed to work with Node.js versions > 20 by providing alternatives to the 
+Azure Static Web Apps CLI (SWA CLI) which is not compatible with Node.js > 20.
 
 For local development, use 'npm run dev' instead.
 
@@ -51,22 +51,6 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-# Refresh environment variables to ensure PATH is updated (cross-platform compatible)
-if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
-    # Windows: Merge Machine and User PATH variables
-    $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
-    $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-    $pathSeparator = [System.IO.Path]::PathSeparator
-    if ($machinePath -and $userPath) {
-        $env:PATH = $machinePath + $pathSeparator + $userPath
-    } elseif ($machinePath) {
-        $env:PATH = $machinePath
-    } elseif ($userPath) {
-        $env:PATH = $userPath
-    }
-}
-# On Linux/macOS, $env:PATH is already properly set by the shell
-
 Write-Host "🚀 AI Foundry SPA - Frontend Deployment" -ForegroundColor Green -BackgroundColor Black
 Write-Host "=======================================" -ForegroundColor Green
 
@@ -79,7 +63,8 @@ try {
     $account = az account show --output json 2>$null | ConvertFrom-Json
     Write-Host "✅ Azure CLI authenticated as: $($account.user.name)" -ForegroundColor Green
     Write-Host "📋 Subscription: $($account.name) ($($account.id))" -ForegroundColor Cyan
-} catch {
+}
+catch {
     Write-Error "❌ Azure CLI not authenticated. Please run 'az login' first."
     exit 1
 }
@@ -93,7 +78,8 @@ Write-Host "🔍 Verifying Static Web App '$StaticWebAppName' in resource group 
 try {
     $staticWebApp = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --output json | ConvertFrom-Json
     Write-Host "✅ Static Web App found: $($staticWebApp.name)" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Error "❌ Static Web App '$StaticWebAppName' not found in resource group '$ResourceGroupName'!"
     Write-Host "💡 To create the infrastructure first, run:" -ForegroundColor Yellow
     Write-Host "   az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location eastus2" -ForegroundColor White
@@ -160,10 +146,12 @@ if (-not $SkipBuild) {
         }
         
         Write-Host "✅ Frontend build completed for dev environment!" -ForegroundColor Green
-    } finally {
+    }
+    finally {
         Pop-Location
     }
-} else {
+}
+else {
     Write-Host "⏭️ Skipping frontend build..." -ForegroundColor Yellow
 }
 
@@ -176,107 +164,152 @@ if (-not (Test-Path $buildPath)) {
 
 Write-Host "📁 Using build output from: $buildPath" -ForegroundColor Cyan
 
-# Deploy to Static Web App using Azure CLI (same method as CI)
-Write-Host "🚀 Deploying frontend files to Azure Static Web App using Azure CLI..." -ForegroundColor Yellow
+# Deploy to Static Web App
+Write-Host "🚀 Deploying frontend files to Azure Static Web App..." -ForegroundColor Yellow
 
-# Try deploying using az staticwebapp create with --source (same as CI)
-Write-Host "📦 Attempting deployment with az staticwebapp create..." -ForegroundColor Cyan
-Write-Host "   Static Web App: $StaticWebAppName" -ForegroundColor Gray
-Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor Gray
-Write-Host "   Source Path: $buildPath" -ForegroundColor Gray
+# Get deployment token for the Static Web App
+Write-Host "🔑 Getting deployment token..." -ForegroundColor Cyan
+$deploymentToken = az staticwebapp secrets list --name $StaticWebAppName --resource-group $ResourceGroupName --query "properties.apiKey" --output tsv
 
-try {
-    # First try: Use az staticwebapp create with --source (this will fail if it exists, but might work for deployment)
-    az staticwebapp create --name $StaticWebAppName --resource-group $ResourceGroupName --source $buildPath --location $ResourceGroupName --branch "main" --token "$env:GITHUB_TOKEN" 2>$null
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ Deployment completed successfully with az staticwebapp create!" -ForegroundColor Green
-        $deploymentSuccess = $true
-    } else {
-        Write-Host "ℹ️  az staticwebapp create failed (likely because app exists), trying deployment to existing app..." -ForegroundColor Yellow
-        $deploymentSuccess = $false
-    }
-} catch {
-    Write-Host "ℹ️  az staticwebapp create failed, trying deployment to existing app..." -ForegroundColor Yellow
-    $deploymentSuccess = $false
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($deploymentToken)) {
+    Write-Error "❌ Failed to get deployment token for Static Web App!"
+    exit 1
 }
 
-# If create failed (because app exists), deploy to existing using SWA CLI
+# Deploy using Node.js-compatible method (alternative to SWA CLI for Node.js >20)
+Write-Host "🚀 Deploying to Static Web App using Node.js-compatible method..." -ForegroundColor Yellow
+
+# Check Node.js version first
+$nodeVersion = node --version 2>$null
+if ($nodeVersion) {
+    $nodeMajorVersion = [int]($nodeVersion -replace 'v(\d+)\..*', '$1')
+    Write-Host "📋 Node.js version: $nodeVersion (Major: $nodeMajorVersion)" -ForegroundColor Cyan
+}
+else {
+    Write-Host "⚠️  Could not detect Node.js version" -ForegroundColor Yellow
+    $nodeMajorVersion = 999 # Assume incompatible
+}
+
+# Main deployment logic
+$deploymentSuccess = $false
+
+# Try SWA CLI first if Node.js is compatible
+if ($nodeMajorVersion -le 20) {
+    Write-Host "✅ Node.js version is compatible with SWA CLI, using standard deployment..." -ForegroundColor Green
+    
+    # Use SWA CLI since Node.js is compatible
+    try {
+        # Check if SWA CLI is available
+        $swaVersion = npx --version 2>$null
+        if ($swaVersion) {
+            Write-Host "📦 Using npx to run SWA CLI..." -ForegroundColor Cyan
+            npx @azure/static-web-apps-cli@latest deploy $buildPath --deployment-token $deploymentToken --env "dev"
+            $deploymentSuccess = ($LASTEXITCODE -eq 0)
+        }
+        else {
+            Write-Host "❌ npx not available" -ForegroundColor Red
+        }
+    }
+    catch {
+        Write-Host "⚠️  SWA CLI deployment failed, trying alternative..." -ForegroundColor Yellow
+    }
+}
+else {
+    Write-Host "⚠️  Node.js version $nodeVersion is not compatible with SWA CLI (>20)" -ForegroundColor Yellow
+}
+
+# If primary method failed, try alternatives
 if (-not $deploymentSuccess) {
-    Write-Host "📦 Deploying to existing Static Web App using SWA CLI..." -ForegroundColor Cyan
+    Write-Host "🔄 Trying alternative deployment methods..." -ForegroundColor Yellow
     
-    # Get deployment token for the Static Web App
-    Write-Host "🔑 Getting deployment token..." -ForegroundColor Cyan
-    $deploymentToken = az staticwebapp secrets list --name $StaticWebAppName --resource-group $ResourceGroupName --query "properties.apiKey" --output tsv
-    
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($deploymentToken)) {
-        Write-Error "❌ Failed to get deployment token for Static Web App!"
-        exit 1
+    # Method 1: Use curl if available (most reliable)
+    if (Get-Command curl -ErrorAction SilentlyContinue) {
+        Write-Host "📦 Creating deployment package..." -ForegroundColor Cyan
+        
+        $tempZipPath = Join-Path $env:TEMP "swa-deployment-$(Get-Date -Format 'yyyyMMdd-HHmmss').zip"
+        
+        try {
+            # Create zip file using PowerShell
+            Compress-Archive -Path "$buildPath\*" -DestinationPath $tempZipPath -Force
+            
+            Write-Host "✅ Deployment package created" -ForegroundColor Green
+            
+            # Deploy using curl
+            Write-Host "🌐 Uploading to Azure Static Web Apps..." -ForegroundColor Cyan
+            
+            # Get the Static Web App default hostname for deployment endpoint
+            $staticWebApp = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --output json | ConvertFrom-Json
+            $deploymentEndpoint = "https://$($staticWebApp.defaultHostname.Replace('.azurestaticapps.net', '.scm.azurestaticapps.net'))/api/zipdeploy"
+            
+            Write-Host "   Endpoint: $deploymentEndpoint" -ForegroundColor Gray
+            
+            $curlArgs = @(
+                "--request", "POST"
+                "--url", $deploymentEndpoint
+                "--header", "Authorization: Bearer $deploymentToken"
+                "--header", "Content-Type: application/zip"
+                "--data-binary", "@$tempZipPath"
+                "--fail"
+                "--show-error"
+            )
+            
+            $curlOutput = & curl @curlArgs 2>&1
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Deployment completed successfully with curl!" -ForegroundColor Green
+                $deploymentSuccess = $true
+            }
+            else {
+                Write-Host "❌ Deployment failed with curl" -ForegroundColor Red
+                Write-Host "   Output: $curlOutput" -ForegroundColor Gray
+            }
+        }
+        finally {
+            if (Test-Path $tempZipPath) {
+                Remove-Item $tempZipPath -Force
+            }
+        }
     }
     
-    try {
-        # Ensure npm global packages are in PATH (cross-platform compatible)
-        $npmGlobalPath = npm config get prefix
-        if ($npmGlobalPath -and -not $env:PATH.Contains($npmGlobalPath)) {
-            $pathSeparator = [System.IO.Path]::PathSeparator
-            $env:PATH = "$npmGlobalPath$pathSeparator" + $env:PATH
-            Write-Host "✅ Added npm global path to PATH: $npmGlobalPath" -ForegroundColor Green
-        }
+    # Method 2: Use PowerShell Invoke-RestMethod as fallback
+    if (-not $deploymentSuccess) {
+        Write-Host "🔄 Trying PowerShell REST API..." -ForegroundColor Yellow
         
-        # Check if SWA CLI is already installed
-        Write-Host "🔍 Checking for SWA CLI..." -ForegroundColor Cyan
-        
-        $swaInstalled = $false
         try {
-            $swaVersion = swa --version 2>$null
-            if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
-                Write-Host "✅ SWA CLI already installed (version: $swaVersion)" -ForegroundColor Green
-                $swaInstalled = $true
-            }
-        } catch {
-            # SWA CLI not found, will install below
-        }
-        
-        if (-not $swaInstalled) {
-            # Install SWA CLI if not found
-            Write-Host "📦 Installing SWA CLI..." -ForegroundColor Cyan
-            npm install -g @azure/static-web-apps-cli
+            $tempZipPath = Join-Path $env:TEMP "swa-deployment-$(Get-Date -Format 'yyyyMMdd-HHmmss').zip"
             
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "❌ Failed to install SWA CLI!"
-                exit 1
+            # Create zip file
+            Compress-Archive -Path "$buildPath\*" -DestinationPath $tempZipPath -Force
+            
+            # Get deployment endpoint
+            $staticWebApp = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --output json | ConvertFrom-Json
+            $deploymentEndpoint = "https://$($staticWebApp.defaultHostname.Replace('.azurestaticapps.net', '.scm.azurestaticapps.net'))/api/zipdeploy"
+            
+            # Prepare headers
+            $headers = @{
+                "Authorization" = "Bearer $deploymentToken"
+                "Content-Type"  = "application/zip"
             }
             
-            # Verify SWA CLI is accessible after installation
-            try {
-                $swaVersion = swa --version 2>$null
-                if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($swaVersion)) {
-                    Write-Host "✅ SWA CLI installed successfully (version: $swaVersion)" -ForegroundColor Green
-                } else {
-                    Write-Error "❌ SWA CLI installed but not accessible!"
-                    exit 1
-                }
-            } catch {
-                Write-Error "❌ SWA CLI installed but not accessible!"
-                exit 1
-            }
-        }
-        
-        # Deploy using SWA CLI (same as CI)
-        Write-Host "🚀 Deploying with SWA CLI..." -ForegroundColor Cyan
-        swa deploy --app-location $buildPath --deployment-token $deploymentToken --env "default"
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Deployment completed successfully with SWA CLI!" -ForegroundColor Green
+            # Read file as bytes
+            $fileBytes = [System.IO.File]::ReadAllBytes($tempZipPath)
+            
+            Write-Host "🌐 Uploading via PowerShell REST API..." -ForegroundColor Cyan
+            
+            $null = Invoke-RestMethod -Uri $deploymentEndpoint -Method Post -Headers $headers -Body $fileBytes -ContentType "application/zip"
+            
+            Write-Host "✅ Deployment completed successfully with PowerShell!" -ForegroundColor Green
             $deploymentSuccess = $true
-        } else {
-            Write-Error "❌ SWA CLI deployment failed!"
-            $deploymentSuccess = $false
         }
-    } catch {
-        Write-Host "❌ SWA CLI deployment failed" -ForegroundColor Red
-        Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Gray
-        $deploymentSuccess = $false
+        catch {
+            Write-Host "❌ PowerShell REST API deployment failed" -ForegroundColor Red
+            Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Gray
+        }
+        finally {
+            if (Test-Path $tempZipPath) {
+                Remove-Item $tempZipPath -Force
+            }
+        }
     }
 }
 
@@ -284,18 +317,11 @@ if (-not $deploymentSuccess) {
     Write-Host ""
     Write-Host "❌ All deployment methods failed!" -ForegroundColor Red
     Write-Host ""
-    Write-Host "🛠️  Troubleshooting tips:" -ForegroundColor Yellow
-    Write-Host "   1. Verify the Static Web App exists and is accessible" -ForegroundColor White
-    Write-Host "   2. Check your permissions on the Static Web App resource" -ForegroundColor White
-    Write-Host "   3. Ensure the build output exists at: $buildPath" -ForegroundColor White
-    Write-Host "   4. Check Azure CLI authentication: az account show" -ForegroundColor White
-    Write-Host "   5. Verify Node.js is installed for SWA CLI" -ForegroundColor White
-    Write-Host "   6. Try deploying via Azure Portal as an alternative" -ForegroundColor White
-    Write-Host ""
-    Write-Host "🔧 Alternative deployment options:" -ForegroundColor Yellow
-    Write-Host "   • Use GitHub Actions for CI/CD deployment" -ForegroundColor White
-    Write-Host "   • Deploy via Visual Studio Code Azure Static Web Apps extension" -ForegroundColor White
-    Write-Host "   • Use Azure Portal manual upload" -ForegroundColor White
+    Write-Host "🛠️  Alternative deployment options:" -ForegroundColor Yellow
+    Write-Host "   1. Use Node.js 18 or 20 for SWA CLI compatibility" -ForegroundColor White
+    Write-Host "   2. Deploy via Azure Portal (upload zip file)" -ForegroundColor White
+    Write-Host "   3. Use GitHub Actions (recommended for CI/CD)" -ForegroundColor White
+    Write-Host "   4. Use Visual Studio Code Azure Static Web Apps extension" -ForegroundColor White
     Write-Host ""
     Write-Error "❌ Failed to deploy to Static Web App!"
     exit 1
