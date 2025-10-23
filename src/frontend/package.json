@@ -16,7 +16,7 @@
     "test:ci": "jest --coverage --watchAll=false --passWithNoTests=false"
   },
   "devDependencies": {
-    "@babel/core": "^7.27.4",
+    "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.27.2",
     "@testing-library/jest-dom": "^6.6.3",
     "babel-jest": "^30.0.2",
