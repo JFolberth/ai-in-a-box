@@ -601,7 +601,11 @@ jobs:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
     needs: [bicep-validation, ade-validation-summary]
+    # For scheduled runs: skip ADE validation and proceed directly to deployment
+    # For push/manual: require successful ADE validation or skip condition
     if: |
+      always() && 
+      needs.bicep-validation.result == 'success' &&
       (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
         github.event_name == 'workflow_dispatch' || 
