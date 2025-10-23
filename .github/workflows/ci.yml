@@ -99,7 +99,7 @@ jobs:
         cache-dependency-path: src/frontend/package-lock.json
       
     - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: frontend-dist
         path: ./src/frontend/dist/
@@ -348,7 +348,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Download backend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: backend-publish
         path: ./src/backend/publish/
@@ -723,7 +723,7 @@ jobs:
     
     steps:
     - name: Download backend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: backend-publish
         path: ./backend-artifacts/
@@ -845,7 +845,7 @@ jobs:
         cache-dependency-path: src/frontend/package-lock.json
         
     - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: frontend-dist
         path: ./src/frontend/dist/
@@ -962,13 +962,13 @@ jobs:
     
     steps:
     - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: frontend-dist
         path: ./artifacts/frontend/
         
     - name: Download backend artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: backend-publish
         path: ./artifacts/backend/
