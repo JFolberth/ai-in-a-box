@@ -25,7 +25,7 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
-    "axios": "^1.10.0"
+    "axios": "^1.12.2"
   },
   "overrides": {
     "test-exclude": "^7.0.1",
