@@ -2,6 +2,8 @@
  * Tests for message formatting and conversation logic
  */
 
+const sanitizeHtml = require('sanitize-html');
+
 describe('Message Formatting and Conversation Logic', () => {
   describe('Message Data Structure', () => {
     test('should create valid message objects', () => {
@@ -77,10 +79,8 @@ describe('Message Formatting and Conversation Logic', () => {
     test('should sanitize HTML content', () => {
       const dangerousContent = '<script>alert("xss")</script>Hello'
       
-      // Simulate basic HTML sanitization
-      const sanitized = dangerousContent
-        .replace(/<script.*?>.*?<\/script>/gi, '')
-        .replace(/<[^>]*>/g, '')
+      // Use sanitize-html for robust HTML sanitization
+      const sanitized = sanitizeHtml(dangerousContent, { allowedTags: [] });
       
       expect(sanitized).toBe('Hello')
       expect(sanitized).not.toContain('<script>')
