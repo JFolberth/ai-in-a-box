@@ -79,7 +79,8 @@ describe('Message Formatting and Conversation Logic', () => {
       
       // Simulate basic HTML sanitization
       const sanitized = dangerousContent
-        .replace(/<script.*?>.*?<\/script>/gi, '')
+        // Improved regex for script tag: also matches closing tags with whitespace/attributes (for test purposes only).
+        .replace(/<script\b[^>]*>([\s\S]*?)<\/script[\s\S]*?>/gi, '')
         .replace(/<[^>]*>/g, '')
       
       expect(sanitized).toBe('Hello')
