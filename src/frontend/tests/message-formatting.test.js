@@ -78,9 +78,14 @@ describe('Message Formatting and Conversation Logic', () => {
       const dangerousContent = '<script>alert("xss")</script>Hello'
       
       // Simulate basic HTML sanitization
-      const sanitized = dangerousContent
-        .replace(/<script.*?>.*?<\/script>/gi, '')
-        .replace(/<[^>]*>/g, '')
+      // Apply repeated removal of script blocks
+      let sanitized = dangerousContent;
+      let previous;
+      do {
+        previous = sanitized;
+        sanitized = sanitized.replace(/<script.*?>.*?<\/script>/gi, '');
+      } while (sanitized !== previous);
+      sanitized = sanitized.replace(/<[^>]*>/g, '');
       
       expect(sanitized).toBe('Hello')
       expect(sanitized).not.toContain('<script>')
