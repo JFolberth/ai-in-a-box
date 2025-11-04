@@ -192,12 +192,23 @@ class ModernChatApp {
   }
 
   formatMessage(content) {
-    // Basic markdown-like formatting
-    return content
+    // Escape HTML special chars before formatting
+    const escaped = this.escapeHtml(content);
+    // Basic markdown-like formatting (safe)
+    return escaped
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/`(.*?)`/g, '<code>$1</code>')
-      .replace(/\n/g, '<br>')
+      .replace(/\n/g, '<br>');
+  }
+
+  escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   showTypingIndicator() {
