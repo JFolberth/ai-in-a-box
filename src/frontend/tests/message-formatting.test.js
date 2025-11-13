@@ -83,7 +83,7 @@ describe('Message Formatting and Conversation Logic', () => {
       let previous;
       do {
         previous = sanitized;
-        sanitized = sanitized.replace(/<script\b[^>]*>([\s\S]*?)<\/script[\s\S]*?>/gi, '');
+        sanitized = sanitized.replace(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi, '');
       } while (sanitized !== previous);
       sanitized = sanitized.replace(/<[^>]*>/g, '');
       expect(sanitized).toBe('Hello')
