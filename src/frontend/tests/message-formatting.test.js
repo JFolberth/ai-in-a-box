@@ -77,11 +77,13 @@ describe('Message Formatting and Conversation Logic', () => {
     test('should sanitize HTML content', () => {
       const dangerousContent = '<script>alert("xss")</script>Hello'
       
-      // Simulate basic HTML sanitization
-      const sanitized = dangerousContent
-        .replace(/<script.*?>.*?<\/script>/gi, '')
-        .replace(/<[^>]*>/g, '')
-      
+      // Sanitize HTML using DOMPurify
+      const { JSDOM } = require('jsdom');
+      const createDOMPurify = require('dompurify');
+      const window = (new JSDOM('')).window;
+      const DOMPurify = createDOMPurify(window);
+
+      const sanitized = DOMPurify.sanitize(dangerousContent, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
       expect(sanitized).toBe('Hello')
       expect(sanitized).not.toContain('<script>')
     })
