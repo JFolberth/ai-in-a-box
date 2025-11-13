@@ -24,6 +24,11 @@ on:
         required: false
         type: boolean
         default: false
+      artifact-name:
+        description: 'Name of the infrastructure artifact to download'
+        required: false
+        type: string
+        default: 'infrastructure'
     outputs:
       frontend-resource-group-name:
         description: 'Frontend Resource Group Name'
@@ -68,8 +73,11 @@ jobs:
       deployment-status: ${{ steps.deploy.outputs.deployment-status }}
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
+    - name: Download infrastructure artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ./infra/
       
     - name: Azure CLI Login
       uses: azure/login@v2
