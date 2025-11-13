@@ -29,7 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       result: ${{ steps.build.outputs.result }}
-    
+    permissions:
+      contents: read   
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
