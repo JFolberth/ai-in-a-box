@@ -96,6 +96,9 @@ jobs:
       contents: read
       id-token: write
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      
     - name: Download infrastructure artifacts
       uses: actions/download-artifact@v6
       with:
@@ -355,6 +358,9 @@ jobs:
       validation-status: ${{ steps.test-deployed-backend.outputs.status }}
     
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      
     - name: Download infrastructure artifacts
       uses: actions/download-artifact@v6
       with:
