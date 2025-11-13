@@ -34,20 +34,23 @@ src/frontend/
 ## Test Categories
 
 ### 1. Basic Functionality Tests (`basic.test.js`)
+
 - String and array operations
-- Date and math operations  
+- Date and math operations
 - Date assertions use UTC accessors to avoid timezone differences
 - Object manipulation
 - JSON serialization/deserialization
 - Promise and async operation handling
 
 ### 2. Storage Tests (`storage.test.js`)
+
 - localStorage save/load operations
 - Conversation history persistence
 - Error handling for storage failures
 - Data serialization validation
 
 ### 3. DOM Utilities Tests (`dom-utils.test.js`)
+
 - Element creation and manipulation
 - CSS class management
 - Event handling
@@ -56,6 +59,7 @@ src/frontend/
 - Attribute management
 
 ### 4. Message Formatting Tests (`message-formatting.test.js`)
+
 - Message data structure validation
 - Content processing and formatting
 - Conversation history management
@@ -64,6 +68,7 @@ src/frontend/
 - Typing indicator state management
 
 ### 5. Integration Tests (`integration.test.js`)
+
 - User input processing workflows
 - Message state management
 - UI state transitions
@@ -102,6 +107,7 @@ npm test -- --testNamePattern="should handle"
 ## Test Configuration
 
 ### Jest Configuration (`jest.config.js`)
+
 - jsdom test environment for DOM testing
 - Babel transformation for ES6 support
 - Setup files for test environment
@@ -109,6 +115,7 @@ npm test -- --testNamePattern="should handle"
 - Test file patterns
 
 ### Setup Files
+
 - `test-utils/setup.js`: Mock setup for console, localStorage, Date, Math
 - `test-utils/env-setup.js`: Environment variables and global polyfills (TextEncoder/TextDecoder)
 - `test-utils/mocks.js`: Utility functions for mocking
@@ -117,6 +124,7 @@ npm test -- --testNamePattern="should handle"
 ## Mocking Strategy
 
 ### Browser APIs
+
 - `localStorage`: Mocked for storage testing
 - `console`: Mocked to reduce test noise
 - `Date.now()`: Mocked for consistent timestamps
@@ -124,6 +132,7 @@ npm test -- --testNamePattern="should handle"
 - `TextEncoder`/`TextDecoder`: Polyfilled for jsdom compatibility
 
 ### DOM APIs
+
 - Element creation and manipulation
 - Event handling
 - Class list operations
@@ -132,24 +141,28 @@ npm test -- --testNamePattern="should handle"
 ## Test Best Practices
 
 ### 1. Test Structure
+
 - Use descriptive test names
 - Group related tests with `describe` blocks
 - Include both happy path and error scenarios
 - Test edge cases and boundary conditions
 
 ### 2. Mocking
+
 - Mock external dependencies
 - Use consistent mock data
 - Reset mocks between tests
 - Avoid over-mocking
 
 ### 3. Assertions
+
 - Use specific matchers
 - Test behavior, not implementation
 - Validate error conditions
 - Check state changes
 
 ### 4. Test Data
+
 - Use fixtures for complex data
 - Keep test data minimal and relevant
 - Use factories for dynamic data generation
@@ -165,6 +178,7 @@ Tests are automatically executed in the CI pipeline:
 ```
 
 ### CI Requirements
+
 - All tests must pass
 - Tests run in non-interactive mode
 - Coverage reports are generated
@@ -173,6 +187,7 @@ Tests are automatically executed in the CI pipeline:
 ## Coverage Reporting
 
 Coverage reports are generated in multiple formats:
+
 - **Console**: Text summary during test runs
 - **HTML**: Detailed coverage report in `coverage/` directory
 - **LCOV**: Machine-readable format for CI integration
@@ -180,12 +195,14 @@ Coverage reports are generated in multiple formats:
 ## Debugging Tests
 
 ### Common Issues
+
 1. **Import/Export Errors**: Ensure Babel is configured correctly
 2. **Mock Issues**: Check mock setup in `test-utils/setup.js`
 3. **Async Test Failures**: Use proper async/await patterns
 4. **DOM Errors**: Verify jsdom environment setup
 
 ### Debugging Commands
+
 ```bash
 # Run single test with verbose output
 npm test -- --testPathPattern=integration.test.js --verbose
@@ -200,11 +217,13 @@ npm test -- --testNamePattern="should validate message length"
 ## Adding New Tests
 
 ### 1. Test File Creation
+
 - Create new test files in `tests/` directory
 - Use descriptive filenames (e.g., `new-feature.test.js`)
 - Follow existing test structure patterns
 
 ### 2. Test Organization
+
 ```javascript
 describe('Feature Name', () => {
   describe('Sub-feature', () => {
@@ -216,6 +235,7 @@ describe('Feature Name', () => {
 ```
 
 ### 3. Mock Usage
+
 ```javascript
 // Use existing mocks from setup
 expect(window.localStorage.setItem).toHaveBeenCalled()
@@ -235,6 +255,7 @@ mockFunction.mockReturnValue('test value')
 ## Future Enhancements
 
 ### Potential Additions
+
 - Visual regression testing
 - End-to-end testing with Playwright/Cypress
 - Performance testing
@@ -242,6 +263,7 @@ mockFunction.mockReturnValue('test value')
 - Component-specific testing
 
 ### Test Coverage Goals
+
 - Increase integration with actual source files
 - Add more complex scenario testing
 - Enhance error condition coverage
@@ -250,12 +272,14 @@ mockFunction.mockReturnValue('test value')
 ## Troubleshooting
 
 ### Common Test Failures
+
 1. **TypeError: Cannot read property**: Check mock setup
 2. **ReferenceError**: Verify imports and environment setup
 3. **Timeout errors**: Increase Jest timeout for async tests
 4. **Mock assertion failures**: Ensure mocks are cleared between tests
 
 ### Getting Help
+
 - Check Jest documentation for specific issues
 - Review existing test patterns for guidance
 - Ensure all dependencies are installed
