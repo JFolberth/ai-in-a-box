@@ -29,6 +29,8 @@ jobs:
     name: Validate PowerShell Scripts on Windows
     runs-on: windows-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code

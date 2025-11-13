@@ -47,6 +47,8 @@ jobs:
     name: Infrastructure Validation
     uses: ./.github/workflows/shared-bicep-validation.yml
     secrets: inherit
+    permissions:
+      contents: read
 
   frontend-build:
     name: Frontend Build and Test
@@ -56,6 +58,8 @@ jobs:
       upload-artifacts: true
       artifact-name: frontend-dist
     secrets: inherit
+    permissions:
+      contents: read
 
   backend-build:
     name: Backend Build and Test
@@ -65,6 +69,8 @@ jobs:
       upload-artifacts: true
       artifact-name: backend-publish
     secrets: inherit
+    permissions:
+      contents: read
 
   # ============================================================================
   # ADE END-TO-END VALIDATION JOBS
@@ -86,7 +92,9 @@ jobs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
       validation-status: ${{ steps.test-frontend-application.outputs.status }}
-    
+    permissions:
+      contents: read
+      id-token: write
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
@@ -553,6 +561,8 @@ jobs:
     if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     outputs:
       validation-status: ${{ steps.summary.outputs.status }}
+    permissions:
+      contents: read
     
     steps:
     - name: Validation Summary
@@ -603,6 +613,9 @@ jobs:
     needs: [bicep-validation, ade-validation-summary]
     # For scheduled runs: skip ADE validation and proceed directly to deployment
     # For push/manual: require successful ADE validation or skip condition
+    permissions:
+      contents: read
+      id-token: write
     if: |
       always() && 
       needs.bicep-validation.result == 'success' &&
@@ -630,7 +643,6 @@ jobs:
     if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
-      actions: read
     outputs:
       agent-id: ${{ steps.deploy-agent.outputs.agent-id }}
       agent-name: ${{ steps.deploy-agent.outputs.agent-name }}
@@ -719,7 +731,7 @@ jobs:
     if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
-      actions: read
+      id-token: write
     
     steps:
     - name: Download backend artifacts
@@ -832,7 +844,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [frontend-build, deploy-dev-infrastructure]
     if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
-    
+    permissions:
+      contents: read
+      id-token: write
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
@@ -959,7 +973,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [bicep-validation, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
     if: always()
-    
+    permissions:
+      contents: read
+
     steps:
     - name: Download frontend artifacts
       uses: actions/download-artifact@v6
