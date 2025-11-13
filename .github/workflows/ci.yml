@@ -641,8 +641,6 @@ jobs:
       location: 'eastus2'
       validate-only: false
       artifact-name: 'infrastructure'
-      location: 'eastus2'
-      validate-only: false
     secrets: inherit
 
   deploy-agent:
