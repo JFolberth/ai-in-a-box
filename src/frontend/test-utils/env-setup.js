@@ -1,3 +1,8 @@
+// Polyfill TextEncoder/TextDecoder for jsdom
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 // Environment variables setup for tests
 process.env.VITE_AI_FOUNDRY_AGENT_NAME = 'TestBot'
 process.env.VITE_BACKEND_URL = 'http://localhost:7071/api'

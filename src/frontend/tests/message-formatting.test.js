@@ -77,10 +77,8 @@ describe('Message Formatting and Conversation Logic', () => {
     test('should sanitize HTML content', () => {
       const dangerousContent = '<script>alert("xss")</script>Hello'
       
-      // Sanitize HTML using DOMPurify
-      const { JSDOM } = require('jsdom');
+      // Sanitize HTML using DOMPurify with global window from jsdom test environment
       const createDOMPurify = require('dompurify');
-      const window = (new JSDOM('')).window;
       const DOMPurify = createDOMPurify(window);
 
       const sanitized = DOMPurify.sanitize(dangerousContent, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
