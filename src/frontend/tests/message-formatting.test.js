@@ -78,11 +78,14 @@ describe('Message Formatting and Conversation Logic', () => {
       const dangerousContent = '<script>alert("xss")</script>Hello'
       
       // Simulate basic HTML sanitization
-      const sanitized = dangerousContent
-        // Improved regex for script tag: also matches closing tags with whitespace/attributes (for test purposes only).
-        .replace(/<script\b[^>]*>([\s\S]*?)<\/script[\s\S]*?>/gi, '')
-        .replace(/<[^>]*>/g, '')
-      
+      let sanitized = dangerousContent;
+      // Remove script tags (repeat until gone for complete sanitization).
+      let previous;
+      do {
+        previous = sanitized;
+        sanitized = sanitized.replace(/<script\b[^>]*>([\s\S]*?)<\/script[\s\S]*?>/gi, '');
+      } while (sanitized !== previous);
+      sanitized = sanitized.replace(/<[^>]*>/g, '');
       expect(sanitized).toBe('Hello')
       expect(sanitized).not.toContain('<script>')
     })
