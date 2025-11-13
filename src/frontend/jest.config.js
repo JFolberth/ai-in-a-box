@@ -47,6 +47,11 @@ export default {
     '^.+\\.js$': 'babel-jest'
   },
   
+  // Transform jsdom and its dependencies
+  transformIgnorePatterns: [
+    'node_modules/(?!(jsdom|parse5|entities|domexception|whatwg-.*)/)'
+  ],
+  
   // Verbose output
   verbose: true
 }
