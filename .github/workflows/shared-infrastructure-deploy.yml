@@ -54,7 +54,9 @@ jobs:
   deploy-infrastructure:
     name: Deploy Infrastructure to ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       frontend-resource-group-name: ${{ steps.extract-outputs.outputs.frontend-resource-group-name }}
       backend-resource-group-name: ${{ steps.extract-outputs.outputs.backend-resource-group-name }}
