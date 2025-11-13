@@ -25,7 +25,7 @@ src/frontend/
 │   └── integration.test.js        # Application workflow tests
 ├── test-utils/
 │   ├── setup.js                   # Test environment setup
-│   ├── env-setup.js              # Environment variable mocking
+│   ├── env-setup.js              # Environment variable mocking & polyfills
 │   ├── mocks.js                   # Mock utilities
 │   └── fixtures.js               # Test data fixtures
 └── jest.config.js                 # Jest configuration
@@ -36,6 +36,7 @@ src/frontend/
 ### 1. Basic Functionality Tests (`basic.test.js`)
 - String and array operations
 - Date and math operations  
+- Date assertions use UTC accessors to avoid timezone differences
 - Object manipulation
 - JSON serialization/deserialization
 - Promise and async operation handling
@@ -109,7 +110,7 @@ npm test -- --testNamePattern="should handle"
 
 ### Setup Files
 - `test-utils/setup.js`: Mock setup for console, localStorage, Date, Math
-- `test-utils/env-setup.js`: Environment variable configuration
+- `test-utils/env-setup.js`: Environment variables and global polyfills (TextEncoder/TextDecoder)
 - `test-utils/mocks.js`: Utility functions for mocking
 - `test-utils/fixtures.js`: Sample data for tests
 
@@ -120,6 +121,7 @@ npm test -- --testNamePattern="should handle"
 - `console`: Mocked to reduce test noise
 - `Date.now()`: Mocked for consistent timestamps
 - `Math.random()`: Mocked for predictable IDs
+- `TextEncoder`/`TextDecoder`: Polyfilled for jsdom compatibility
 
 ### DOM APIs
 - Element creation and manipulation
