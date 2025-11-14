@@ -57,6 +57,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    environment: 
+      name: ${{ inputs.environment }}
     outputs:
       frontend-resource-group-name: ${{ steps.extract-outputs.outputs.frontend-resource-group-name }}
       backend-resource-group-name: ${{ steps.extract-outputs.outputs.backend-resource-group-name }}
