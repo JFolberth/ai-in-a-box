@@ -175,7 +175,6 @@ jobs:
         fi
         pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$TARGET_FUNCTION_URL" -Comprehensive
         echo "test-status=success" >> $GITHUB_OUTPUT
-        echo "value=${TARGET_FUNCTION_URL}" >> $GITHUB_OUTPUT
         
 
     - name: Backend deployment summary
