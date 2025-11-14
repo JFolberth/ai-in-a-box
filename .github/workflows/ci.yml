@@ -43,9 +43,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  bicep-validation:
-    name: Infrastructure Validation
-    uses: ./.github/workflows/shared-bicep-validation.yml
+  bicep-build:
+    name: Infrastructure Build
+    uses: ./.github/workflows/shared-bicep-build.yml
     secrets: inherit
     permissions:
       contents: read
@@ -98,6 +98,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
+      
+    - name: Download infrastructure artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: infrastructure
+        path: ./infra/
       
     - name: Setup Node.js
       uses: actions/setup-node@v6
@@ -341,7 +347,7 @@ jobs:
   deploy-ade-backend-validation:
     name: ADE Backend Environment
     runs-on: ubuntu-latest
-    needs: [bicep-validation, backend-build]
+    needs: [bicep-build, backend-build]
     if: ${{ github.event_name != 'scheduled' }}
     permissions:
       contents: read
@@ -355,6 +361,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
+      
+    - name: Download infrastructure artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: infrastructure
+        path: ./infra/     
         
     - name: Azure CLI Login
       uses: azure/login@v2
@@ -535,7 +547,7 @@ jobs:
   deploy-dev-infrastructure:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
-    needs: [bicep-validation, ade-validation-summary]
+    needs: [bicep-build, ade-validation-summary]
     # For scheduled runs: skip ADE validation and proceed directly to deployment
     # For push/manual: require successful ADE validation or skip condition
     permissions:
@@ -554,6 +566,7 @@ jobs:
       parameters-file: 'infra/dev-orchestrator.parameters.bicepparam'
       location: 'eastus2'
       validate-only: false
+      artifact-name: 'infrastructure'
     secrets: inherit
 
   deploy-agent:
@@ -798,7 +811,7 @@ jobs:
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [bicep-validation, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
+    needs: [bicep-build, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
     if: always()
     permissions:
       contents: read
@@ -814,8 +827,8 @@ jobs:
         if [ "${{ needs.bicep-validation.result }}" = "success" ]; then
           echo "### ✅ Bicep Infrastructure Validation Successful" >> $GITHUB_STEP_SUMMARY
         else
-          echo "### ❌ Bicep Infrastructure Validation Failed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ needs.bicep-validation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### ❌ Bicep Infrastructure Build Failed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ needs.bicep-build.result }}" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
