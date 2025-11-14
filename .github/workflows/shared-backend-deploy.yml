@@ -75,7 +75,7 @@ jobs:
       name: ${{ inputs.environment }}
       url: ${{ inputs.function-app-url }}
     outputs:
-      test-status: ${{ steps.run-backend-tests.outputs.status }}
+      test-status: ${{ steps.run-backend-tests.outputs.test-status }}
 
     steps:
     - name: Checkout repository
