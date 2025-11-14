@@ -839,7 +839,7 @@ jobs:
         else
           echo "### ❌ Frontend Build Failed" >> $GITHUB_STEP_SUMMARY
         fi
-        
+        if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Backend summary
