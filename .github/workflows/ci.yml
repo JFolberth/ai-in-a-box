@@ -464,6 +464,9 @@ jobs:
     needs: [deploy-ade-backend-validation]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     uses: ./.github/workflows/shared-backend-deploy.yml
+    permissions: 
+      contents: read
+      id-token: write
     with:
       artifact-name: backend-publish
       artifact-download-path: backend-artifacts
@@ -650,118 +653,25 @@ jobs:
 
   deploy-backend-code:
     name: Deploy Backend Code
-    runs-on: ubuntu-latest
     needs: [backend-build, deploy-dev-infrastructure, deploy-agent]
     if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
       id-token: write
-    
-    steps:
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: backend-publish
-        path: ./backend-artifacts/
-        
-    - name: Azure CLI Login
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-    - name: Validate Infrastructure Outputs
-      run: |
-        echo "🔍 Validating infrastructure deployment outputs..."
-        
-        FUNCTION_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}"
-        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}"
-        
-        if [ "$FUNCTION_APP_NAME" = "not-found" ] || [ -z "$FUNCTION_APP_NAME" ]; then
-          echo "❌ Backend Function App name not found in infrastructure outputs"
-          exit 1
-        fi
-        
-        if [ "$RESOURCE_GROUP_NAME" = "not-found" ] || [ -z "$RESOURCE_GROUP_NAME" ]; then
-          echo "❌ Backend Resource Group name not found in infrastructure outputs"
-          exit 1
-        fi
-        
-        echo "✅ Infrastructure outputs validated:"
-        echo "  - Function App: $FUNCTION_APP_NAME"
-        echo "  - Resource Group: $RESOURCE_GROUP_NAME"
-        
-    - name: Prepare deployment package
-      run: |
-        echo "📦 Preparing backend deployment package..."
-        
-        # Verify the deployment zip exists
-        if [ ! -f "./backend-artifacts/backend-deployment.zip" ]; then
-          echo "❌ Backend deployment zip not found!"
-          echo "Contents of backend-artifacts directory:"
-          ls -la ./backend-artifacts/
-          exit 1
-        fi
-        
-        # Verify the zip contains the required .azurefunctions directory
-        echo "🔍 Verifying deployment package contents..."
-        unzip -l ./backend-artifacts/backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/" || {
-          echo "❌ .azurefunctions directory not found in deployment package!"
-          exit 1
-        }
-        
-        echo "✅ Deployment package validated successfully"
-        echo "📋 Package contents summary:"
-        unzip -l ./backend-artifacts/backend-deployment.zip | head -10
-        
-    - name: Deploy Backend Code to Function App
-      uses: Azure/functions-action@v1
-      with:
-        app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
-        package: './backend-artifacts/backend-deployment.zip'
-        
-    - name: Update Function App Settings with Agent ID
-      run: |
-        echo "🔧 Updating Function App settings with AI Foundry agent configuration..."
-        
-        FUNCTION_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}"
-        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}"
-        AGENT_ID="${{ needs.deploy-agent.outputs.agent-id }}"
-        AGENT_NAME="${{ needs.deploy-agent.outputs.agent-name }}"
-        
-        if [ -z "$AGENT_ID" ]; then
-          echo "⚠️ Agent ID not available from deployment step - Function App will use default fallback"
-        else
-          echo "🔧 Updating Function App settings..."
-          az functionapp config appsettings set \
-            --name "$FUNCTION_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP_NAME" \
-            --settings \
-              "AI_FOUNDRY_AGENT_ID=$AGENT_ID" \
-              "AI_FOUNDRY_AGENT_NAME=$AGENT_NAME"
-          
-          echo "✅ Function App settings updated successfully:"
-          echo "  - Agent ID: $AGENT_ID"
-          echo "  - Agent Name: $AGENT_NAME"
-        fi
-        
-    - name: Backend Deployment Summary
-      run: |
-        echo "## 🚀 Backend Code Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
-        echo "- **Function App**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Resource Group**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Function App URL**: [${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }})" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🤖 AI Foundry Agent Configuration" >> $GITHUB_STEP_SUMMARY
-        echo "- **Agent ID**: \`${{ needs.deploy-agent.outputs.agent-id }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Agent Name**: \`${{ needs.deploy-agent.outputs.agent-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Action Used**: Azure/functions-action@v1" >> $GITHUB_STEP_SUMMARY
-        echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deploy Method**: Native GitHub Action" >> $GITHUB_STEP_SUMMARY
-        echo "- **Configuration Update**: Function App settings updated with agent configuration" >> $GITHUB_STEP_SUMMARY
+    uses: ./.github/workflows/shared-backend-deploy.yml
+    with:
+      artifact-name: backend-publish
+      artifact-download-path: backend-artifacts
+      function-app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
+      resource-group-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}
+      function-app-url: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}
+      environment-name: 'Dev'
+      run-tests: true
+      agent-id: ${{ needs.deploy-agent.outputs.agent-id }}
+      agent-name: ${{ needs.deploy-agent.outputs.agent-name }}
+      update-agent-settings: true
+      environment: 'dev'
+    secrets: inherit
 
   deploy-frontend-code:
     name: Deploy Frontend Code
