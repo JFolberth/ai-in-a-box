@@ -86,7 +86,7 @@ jobs:
   deploy-ade-frontend-validation:
     name: ADE Frontend E2E Validation
     runs-on: ubuntu-latest
-    needs: [bicep-validation, frontend-build]
+    needs: [bicep-build, frontend-build]
     if: ${{ github.event_name != 'scheduled' }}
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
