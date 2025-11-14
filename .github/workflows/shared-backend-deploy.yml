@@ -55,15 +55,10 @@ on:
       AZURE_CREDENTIALS:
         required: true
     outputs:
-      deployment-status:
-        description: "Status of the zip deployment"
-        value: ${{ jobs.deploy-backend.outputs.deployment-status }}
       test-status:
         description: "Result of post-deployment tests"
         value: ${{ jobs.deploy-backend.outputs.test-status }}
-      function-app-url:
-        description: "Function App URL leveraged during deployment"
-        value: ${{ jobs.deploy-backend.outputs.function-app-url }}
+
 
 jobs:
   deploy-backend:
@@ -80,9 +75,7 @@ jobs:
       name: ${{ inputs.environment }}
       url: ${{ inputs.function-app-url }}
     outputs:
-      deployment-status: ${{ steps.deployment-status.outputs.status }}
-      test-status: ${{ steps.publish-test-status.outputs.status }}
-      function-app-url: ${{ steps.capture-function-url.outputs.value }}
+      test-status: ${{ steps.run-backend-tests.outputs.status }}
 
     steps:
     - name: Checkout repository
@@ -151,6 +144,7 @@ jobs:
         fi
 
     - name: Run post-deployment backend tests
+      id: run-backend-tests
       if: ${{ inputs.run-tests }}
       env:
         TARGET_FUNCTION_URL: ${{ env.TARGET_FUNCTION_URL }}
