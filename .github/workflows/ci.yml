@@ -525,8 +525,8 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Infrastructure Deployment**: ADE environments created successfully" >> $GITHUB_STEP_SUMMARY
-    echo "- **Frontend Code Deployment**: Static Web App deployed and tested" >> $GITHUB_STEP_SUMMARY
-    echo "- **Backend Code Deployment**: Function App deployed and tested" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Code Deployment**: Static Web App deployed and tested" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Code Deployment**: Function App deployed and tested" >> $GITHUB_STEP_SUMMARY
         echo "- **Application Testing**: End-to-end functionality verified" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🕒 Automatic Cleanup" >> $GITHUB_STEP_SUMMARY
