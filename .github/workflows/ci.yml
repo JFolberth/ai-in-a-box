@@ -8,7 +8,7 @@ name: CI - Build and Test
 # - Use concurrency groups to cancel previous runs
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'src/**'
       - '.github/workflows/**'
@@ -29,7 +29,7 @@ on:
   schedule:
     - cron: '0 3 * * 0'
   pull_request:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'src/**'
       - '.github/workflows/**'
@@ -87,7 +87,7 @@ jobs:
     name: ADE Frontend E2E Validation
     runs-on: ubuntu-latest
     needs: [bicep-validation, frontend-build]
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: ${{ github.event_name != 'scheduled' }}
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
@@ -342,7 +342,7 @@ jobs:
     name: ADE Backend Environment
     runs-on: ubuntu-latest
     needs: [bicep-validation, backend-build]
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: ${{ github.event_name != 'scheduled' }}
     permissions:
       contents: read
       id-token: write
@@ -462,7 +462,6 @@ jobs:
   deploy-ade-backend-code:
     name: ADE Backend Code Deployment
     needs: [deploy-ade-backend-validation]
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     uses: ./.github/workflows/shared-backend-deploy.yml
     permissions: 
       contents: read
@@ -482,7 +481,6 @@ jobs:
     name: ADE E2E Validation Summary
     runs-on: ubuntu-latest
     needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation, deploy-ade-backend-code]
-    if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     outputs:
       validation-status: ${{ steps.summary.outputs.status }}
     permissions:
@@ -547,13 +545,8 @@ jobs:
       always() && 
       needs.bicep-validation.result == 'success' &&
       (
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
-        github.event_name == 'workflow_dispatch' || 
-        github.event_name == 'schedule'
-      ) && (
-        github.event_name == 'schedule' || 
-        needs.ade-validation-summary.outputs.validation-status == 'success' || 
-        needs.ade-validation-summary.result == 'skipped'
+        github.event_name != 'scheduled' &&
+        needs.ade-validation-summary.outputs.validation-status == 'success'
       )
     with:
       environment: 'dev'
@@ -567,7 +560,6 @@ jobs:
     name: Deploy AI Foundry Agent
     runs-on: ubuntu-latest
     needs: [deploy-dev-infrastructure]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
     outputs:
@@ -654,7 +646,6 @@ jobs:
   deploy-backend-code:
     name: Deploy Backend Code
     needs: [backend-build, deploy-dev-infrastructure, deploy-agent]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
       id-token: write
@@ -677,7 +668,6 @@ jobs:
     name: Deploy Frontend Code
     runs-on: ubuntu-latest
     needs: [frontend-build, deploy-dev-infrastructure]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
       id-token: write
