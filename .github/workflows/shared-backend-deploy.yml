@@ -180,14 +180,9 @@ jobs:
           exit 1
         fi
         pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$TARGET_FUNCTION_URL" -Comprehensive
-        echo "TEST_STATUS=success" >> $GITHUB_ENV
-
-    - name: Publish Tests and Capture Outputs
-      id: publish-tests-outputs
-      run: |
-        echo "status=${TEST_STATUS}" >> $GITHUB_OUTPUT
-        echo "status=success" >> $GITHUB_OUTPUT
+        echo "test-status=success" >> $GITHUB_OUTPUT
         echo "value=${TARGET_FUNCTION_URL}" >> $GITHUB_OUTPUT
+        
 
     - name: Backend deployment summary
       run: |
@@ -206,8 +201,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Deployment" >> $GITHUB_STEP_SUMMARY
         echo "- **Zip Package**: \`${{ inputs.artifact-download-path }}/backend-deployment.zip\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deployment Status**: \`${{ steps.deployment-status.outputs.status }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Test Status**: \`${{ steps.publish-test-status.outputs.status }}\`" >> $GITHUB_STEP_SUMMARY
+
         if [ ${{ inputs.update-agent-settings }} ]; then
           AGENT_ID="${{ inputs.agent-id }}"
           if [ -z "$AGENT_ID" ]; then
