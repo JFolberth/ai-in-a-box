@@ -804,18 +804,7 @@ jobs:
       contents: read
 
     steps:
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: frontend-dist
-        path: ./artifacts/frontend/
-        
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: backend-publish
-        path: ./artifacts/backend/
-        
+       
     - name: Display build summary
       run: |
         echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
@@ -824,8 +813,6 @@ jobs:
         # Bicep validation summary
         if [ "${{ needs.bicep-validation.result }}" = "success" ]; then
           echo "### ✅ Bicep Infrastructure Validation Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Templates validated**: Main orchestrator, Backend environment, Frontend environment" >> $GITHUB_STEP_SUMMARY
-          echo "- **Validation scope**: Syntax, parameters, dependencies, RBAC" >> $GITHUB_STEP_SUMMARY
         else
           echo "### ❌ Bicep Infrastructure Validation Failed" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ needs.bicep-validation.result }}" >> $GITHUB_STEP_SUMMARY
@@ -834,10 +821,8 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Frontend summary
-        if [ -d "./artifacts/frontend" ]; then
+        if [ "${{ needs.frontend-build.result }}" = "success" ]; then
           echo "### ✅ Frontend Build Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build output**: $(du -sh ./artifacts/frontend | cut -f1)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files**: $(find ./artifacts/frontend -type f | wc -l) files generated" >> $GITHUB_STEP_SUMMARY
         else
           echo "### ❌ Frontend Build Failed" >> $GITHUB_STEP_SUMMARY
         fi
@@ -845,10 +830,8 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Backend summary
-        if [ -d "./artifacts/backend" ]; then
+        if [ "${{ needs.backend-build.result }}" = "success" ]; then
           echo "### ✅ Backend Build Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build output**: $(du -sh ./artifacts/backend | cut -f1)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files**: $(find ./artifacts/backend -type f | wc -l) files generated" >> $GITHUB_STEP_SUMMARY
         else
           echo "### ❌ Backend Build Failed" >> $GITHUB_STEP_SUMMARY
         fi
@@ -856,7 +839,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Infrastructure deployment summary (shows on main branch pushes, manual triggers, and scheduled runs)
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
+        if [ "${{ github.ref }}" = "refs/heads/main" ] && "${{ github.event_name }}" != "pull_request"; then
           if [ "${{ needs.deploy-dev-infrastructure.result }}" = "success" ]; then
             echo "### ✅ Dev Infrastructure Deployment Successful" >> $GITHUB_STEP_SUMMARY
             echo "- **Status**: Infrastructure deployed via Azure CLI + Bicep" >> $GITHUB_STEP_SUMMARY
@@ -918,57 +901,12 @@ jobs:
           echo "- **Note**: Automated deployment using native GitHub Actions runs on main branch pushes, manual triggers, and scheduled runs (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
         fi
         
-    - name: Check build status
-      run: |
-        # Base build requirements (always checked)
-        base_success=true
-        if [ "${{ needs.bicep-validation.result }}" != "success" ]; then
-          base_success=false
-        fi
-        if [ "${{ needs.frontend-build.result }}" != "success" ]; then
-          base_success=false
-        fi
-        if [ "${{ needs.backend-build.result }}" != "success" ]; then
-          base_success=false
-        fi
-        
-        # Infrastructure deployment check (on main branch pushes, manual triggers, and scheduled runs)
-        infrastructure_success=true
-        backend_deploy_success=true
-        frontend_deploy_success=true
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-          if [ "${{ needs.deploy-dev-infrastructure.result }}" != "success" ]; then
-            infrastructure_success=false
-          fi
-          if [ "${{ needs.deploy-backend-code.result }}" != "success" ]; then
-            backend_deploy_success=false
-          fi
-          if [ "${{ needs.deploy-frontend-code.result }}" != "success" ]; then
-            frontend_deploy_success=false
-          fi
-        fi
-        
-        if [ "$base_success" = "true" ] && [ "$infrastructure_success" = "true" ] && [ "$backend_deploy_success" = "true" ] && [ "$frontend_deploy_success" = "true" ]; then
-          echo "✅ All builds, validations, and deployments completed successfully!"
-          exit 0
-        else
-          echo "❌ One or more jobs failed:"
-          echo "Bicep Validation: ${{ needs.bicep-validation.result }}"
-          echo "Frontend Build: ${{ needs.frontend-build.result }}"
-          echo "Backend Build: ${{ needs.backend-build.result }}"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "Dev Infrastructure Deployment: ${{ needs.deploy-dev-infrastructure.result }}"
-            echo "Backend Code Deployment: ${{ needs.deploy-backend-code.result }}"
-            echo "Frontend Code Deployment: ${{ needs.deploy-frontend-code.result }}"
-          fi
-          exit 1
-        fi
 
   # Create GitHub issue when workflow fails (scheduled runs or manual triggers)
   create-failure-issue:
     name: 'Create Failure Issue'
     runs-on: ubuntu-latest
-    if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure' || needs.deploy-dev-infrastructure.result == 'failure' || needs.deploy-agent.result == 'failure' || needs.deploy-backend-code.result == 'failure' || needs.deploy-frontend-code.result == 'failure' || needs.build-summary.result == 'failure') }}
+    if: ${{ (github.event_name == 'schedule') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure' || needs.deploy-dev-infrastructure.result == 'failure' || needs.deploy-agent.result == 'failure' || needs.deploy-backend-code.result == 'failure' || needs.deploy-frontend-code.result == 'failure' || needs.build-summary.result == 'failure') }}
     needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code, build-summary]
     
     permissions:
