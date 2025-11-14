@@ -47,6 +47,10 @@ on:
         required: false
         type: boolean
         default: false
+      environment:
+        description: "Deployment environment name for GitHub environment"
+        required: false
+        type: string
     secrets:
       AZURE_CREDENTIALS:
         required: true
@@ -72,6 +76,9 @@ jobs:
       TARGET_RESOURCE_GROUP: ""
       TARGET_FUNCTION_URL: ""
       TEST_STATUS: "skipped"
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.function-app-url }}
     outputs:
       deployment-status: ${{ steps.deployment-status.outputs.status }}
       test-status: ${{ steps.publish-test-status.outputs.status }}

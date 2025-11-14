@@ -464,9 +464,6 @@ jobs:
     needs: [deploy-ade-backend-validation]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     uses: ./.github/workflows/shared-backend-deploy.yml
-    environment:
-      name: 'ade'
-      url: ${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}
     with:
       artifact-name: backend-publish
       artifact-download-path: backend-artifacts
@@ -474,6 +471,7 @@ jobs:
       resource-group-name: ${{ needs.deploy-ade-backend-validation.outputs.resource-group-name }}
       function-app-url: ${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}
       environment-name: ${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}
+      envirnment: ade
       run-tests: true
     secrets: inherit
 
