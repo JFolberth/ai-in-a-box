@@ -339,7 +339,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
   deploy-ade-backend-validation:
-    name: ADE Backend E2E Validation
+    name: ADE Backend Environment
     runs-on: ubuntu-latest
     needs: [bicep-validation, backend-build]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
@@ -349,17 +349,12 @@ jobs:
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
-      validation-status: ${{ steps.test-deployed-backend.outputs.status }}
+      function-app-name: ${{ steps.validate-infrastructure.outputs.function-app-name }}
+      function-app-url: ${{ steps.validate-infrastructure.outputs.function-app-url }}
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
-      
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: backend-publish
-        path: ./src/backend/publish/
         
     - name: Azure CLI Login
       uses: azure/login@v2
@@ -459,105 +454,33 @@ jobs:
         
         echo "✅ Backend infrastructure validation passed - Function App created: $FUNCTION_APP_NAME"
 
-    - name: Deploy Backend Code to ADE Function App
-      run: |
-        echo "🚀 Deploying backend code to ADE Function App..."
-        
-        # Get ADE environment name and construct Function App details
-        ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
-        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
-        
-        # Find Function App by resource type
-        FUNCTION_APP_NAME=$(az functionapp list \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
-          --output tsv)
-        
-        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
-          echo "❌ Function App not found for deployment"
-          exit 1
-        fi
-        
-        echo "📦 Deploying to Function App: $FUNCTION_APP_NAME"
-        
-        # Verify the deployment zip exists (from downloaded artifacts)
-        if [ ! -f "./src/backend/publish/backend-deployment.zip" ]; then
-          echo "❌ Backend deployment zip not found!"
-          echo "Contents of backend publish directory:"
-          ls -la ./src/backend/publish/
-          exit 1
-        fi
-        
-        # Deploy using Azure CLI
-        echo "📋 Deploying backend code to $FUNCTION_APP_NAME..."
-        az functionapp deployment source config-zip \
-          --resource-group "$RESOURCE_GROUP" \
-          --name "$FUNCTION_APP_NAME" \
-          --src "./src/backend/publish/backend-deployment.zip"
-        
-        echo "✅ Backend code deployed successfully to ADE environment!"
-
-    - name: Test Deployed Backend Application
-      id: test-deployed-backend
-      run: |
-        echo "🧪 Testing deployed backend application..."
-        
-        # Get ADE environment name and construct Function App URL
         ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
         FUNCTION_APP_URL="https://func-${ADE_ENV_NAME}-bk-dev-eus2.azurewebsites.net"
-        
-        echo "🔗 Testing Function App at: $FUNCTION_APP_URL"
-        
-        # Wait for deployment to fully complete
-        echo "⏳ Waiting for deployment to complete..."
-        sleep 60
-        
-        # Test health endpoint with retry logic
-        echo "🏥 Testing Health Endpoint with retry logic..."
-        max_attempts=15
-        attempt=1
-        health_passed=false
-        
-        while [ $attempt -le $max_attempts ]; do
-          echo "🔍 Health check attempt $attempt/$max_attempts..."
-          
-          if curl -f -s "$FUNCTION_APP_URL/api/health" -o /dev/null; then
-            echo "✅ Health endpoint responding!"
-            health_passed=true
-            break
-          else
-            echo "⏳ Health endpoint not ready yet (attempt $attempt/$max_attempts)..."
-            if [ $attempt -lt $max_attempts ]; then
-              sleep 30
-            fi
-          fi
-          
-          attempt=$((attempt + 1))
-        done
-        
-        if [ "$health_passed" = false ]; then
-          echo "❌ Health endpoint failed after $max_attempts attempts"
-          exit 1
-        fi
-        
-        # Test comprehensive endpoints using PowerShell script
-        echo "🧪 Running comprehensive endpoint tests on deployed application..."
-        pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$FUNCTION_APP_URL" -Comprehensive
-        
-        if [ $? -eq 0 ]; then
-          echo "✅ Backend application deployment and testing completed successfully!"
-          # Set final validation status
-          echo "status=success" >> $GITHUB_OUTPUT
-        else
-          echo "❌ Backend application tests failed after deployment"
-          echo "status=failed" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+        echo "function-app-name=$FUNCTION_APP_NAME" >> $GITHUB_OUTPUT
+        echo "function-app-url=$FUNCTION_APP_URL" >> $GITHUB_OUTPUT
+
+  deploy-ade-backend-code:
+    name: ADE Backend Code Deployment
+    needs: [deploy-ade-backend-validation]
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    uses: ./.github/workflows/shared-backend-deploy.yml
+    environment:
+      name: 'ade'
+      url: ${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}
+    with:
+      artifact-name: backend-publish
+      artifact-download-path: backend-artifacts
+      function-app-name: ${{ needs.deploy-ade-backend-validation.outputs.function-app-name }}
+      resource-group-name: ${{ needs.deploy-ade-backend-validation.outputs.resource-group-name }}
+      function-app-url: ${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}
+      environment-name: ${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}
+      run-tests: true
+    secrets: inherit
 
   ade-validation-summary:
     name: ADE E2E Validation Summary
     runs-on: ubuntu-latest
-    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation]
+    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation, deploy-ade-backend-code]
     if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     outputs:
       validation-status: ${{ steps.summary.outputs.status }}
@@ -570,17 +493,17 @@ jobs:
       run: |
         echo "📋 ADE End-to-End Validation Summary"
         echo "===================================="
-        
+
         FRONTEND_STATUS="${{ needs.deploy-ade-frontend-validation.outputs.validation-status }}"
-        BACKEND_STATUS="${{ needs.deploy-ade-backend-validation.outputs.validation-status }}"
-        
+        BACKEND_STATUS="${{ needs.deploy-ade-backend-code.outputs.test-status }}"
+
         echo "Frontend Deployment & Testing: $FRONTEND_STATUS"
         echo "Backend Deployment & Testing: $BACKEND_STATUS"
-        
+
         if [ "$FRONTEND_STATUS" = "success" ] && [ "$BACKEND_STATUS" = "success" ]; then
           echo "✅ All ADE end-to-end validations passed!"
           echo "   - Infrastructure deployed successfully"
-          echo "   - Application code deployed successfully" 
+          echo "   - Application code deployed successfully"
           echo "   - Applications tested and functional"
           echo "status=success" >> $GITHUB_OUTPUT
         else
@@ -596,11 +519,14 @@ jobs:
         echo "### 📋 Environment Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Frontend Environment**: \`${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${{ needs.deploy-ade-backend-code.outputs.function-app-url }}" ]; then
+          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-code.outputs.function-app-url }}](${{ needs.deploy-ade-backend-code.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Infrastructure Deployment**: ADE environments created successfully" >> $GITHUB_STEP_SUMMARY
-        echo "- **Frontend Code Deployment**: Static Web App deployed and tested" >> $GITHUB_STEP_SUMMARY
-        echo "- **Backend Code Deployment**: Function App deployed and tested" >> $GITHUB_STEP_SUMMARY
+    echo "- **Frontend Code Deployment**: Static Web App deployed and tested" >> $GITHUB_STEP_SUMMARY
+    echo "- **Backend Code Deployment**: Function App deployed and tested" >> $GITHUB_STEP_SUMMARY
         echo "- **Application Testing**: End-to-end functionality verified" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🕒 Automatic Cleanup" >> $GITHUB_STEP_SUMMARY
