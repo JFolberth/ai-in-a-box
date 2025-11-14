@@ -195,7 +195,7 @@ jobs:
         echo "### Deployment" >> $GITHUB_STEP_SUMMARY
         echo "- **Zip Package**: \`${{ inputs.artifact-download-path }}/backend-deployment.zip\`" >> $GITHUB_STEP_SUMMARY
 
-        if [ ${{ inputs.update-agent-settings }} ]; then
+        if [ "${{ inputs.update-agent-settings }}" = "true" ]; then
           AGENT_ID="${{ inputs.agent-id }}"
           if [ -z "$AGENT_ID" ]; then
             AGENT_ID="N/A"
