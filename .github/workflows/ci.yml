@@ -543,8 +543,10 @@ jobs:
       id-token: write
     if: |
       
-        github.event_name != 'scheduled' &&
-        needs.ade-validation-summary.outputs.validation-status == 'success'
+        ( github.event_name != 'scheduled' &&
+        needs.ade-validation-summary.outputs.validation-status == 'success' )
+        &&
+        github.ref == 'refs/heads/main'
       
     with:
       environment: 'dev'

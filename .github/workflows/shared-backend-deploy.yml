@@ -182,19 +182,11 @@ jobs:
         pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$TARGET_FUNCTION_URL" -Comprehensive
         echo "TEST_STATUS=success" >> $GITHUB_ENV
 
-    - name: Publish test status
-      id: publish-test-status
+    - name: Publish Tests and Capture Outputs
+      id: publish-tests-outputs
       run: |
         echo "status=${TEST_STATUS}" >> $GITHUB_OUTPUT
-
-    - name: Capture deployment status
-      id: deployment-status
-      run: |
         echo "status=success" >> $GITHUB_OUTPUT
-
-    - name: Capture function URL
-      id: capture-function-url
-      run: |
         echo "value=${TARGET_FUNCTION_URL}" >> $GITHUB_OUTPUT
 
     - name: Backend deployment summary
