@@ -43,9 +43,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  bicep-validation:
-    name: Infrastructure Validation
-    uses: ./.github/workflows/shared-bicep-validation.yml
+  bicep-build:
+    name: Infrastructure Build
+    uses: ./.github/workflows/shared-bicep-build.yml
     secrets: inherit
     permissions:
       contents: read
@@ -86,7 +86,7 @@ jobs:
   deploy-ade-frontend-validation:
     name: ADE Frontend E2E Validation
     runs-on: ubuntu-latest
-    needs: [bicep-validation, frontend-build]
+    needs: [bicep-build, frontend-build]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
@@ -98,6 +98,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
+      
+    - name: Download infrastructure artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: infrastructure
+        path: ./infra/
       
     - name: Setup Node.js
       uses: actions/setup-node@v6
@@ -341,7 +347,7 @@ jobs:
   deploy-ade-backend-validation:
     name: ADE Backend E2E Validation
     runs-on: ubuntu-latest
-    needs: [bicep-validation, backend-build]
+    needs: [bicep-build, backend-build]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     permissions:
       contents: read
@@ -354,6 +360,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
+      
+    - name: Download infrastructure artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: infrastructure
+        path: ./infra/
       
     - name: Download backend artifacts
       uses: actions/download-artifact@v6
@@ -610,7 +622,7 @@ jobs:
   deploy-dev-infrastructure:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
-    needs: [bicep-validation, ade-validation-summary]
+    needs: [bicep-build, ade-validation-summary]
     # For scheduled runs: skip ADE validation and proceed directly to deployment
     # For push/manual: require successful ADE validation or skip condition
     permissions:
@@ -618,7 +630,7 @@ jobs:
       id-token: write
     if: |
       always() && 
-      needs.bicep-validation.result == 'success' &&
+      needs.bicep-build.result == 'success' &&
       (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
         github.event_name == 'workflow_dispatch' || 
@@ -634,6 +646,7 @@ jobs:
       parameters-file: 'infra/dev-orchestrator.parameters.bicepparam'
       location: 'eastus2'
       validate-only: false
+      artifact-name: 'infrastructure'
     secrets: inherit
 
   deploy-agent:
@@ -971,7 +984,7 @@ jobs:
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [bicep-validation, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
+    needs: [bicep-build, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
     if: always()
     permissions:
       contents: read
@@ -994,14 +1007,15 @@ jobs:
         echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        # Bicep validation summary
-        if [ "${{ needs.bicep-validation.result }}" = "success" ]; then
-          echo "### ✅ Bicep Infrastructure Validation Successful" >> $GITHUB_STEP_SUMMARY
+        # Bicep build summary
+        if [ "${{ needs.bicep-build.result }}" = "success" ]; then
+          echo "### ✅ Bicep Infrastructure Build Successful" >> $GITHUB_STEP_SUMMARY
           echo "- **Templates validated**: Main orchestrator, Backend environment, Frontend environment" >> $GITHUB_STEP_SUMMARY
           echo "- **Validation scope**: Syntax, parameters, dependencies, RBAC" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact created**: Infrastructure files packaged for deployment" >> $GITHUB_STEP_SUMMARY
         else
-          echo "### ❌ Bicep Infrastructure Validation Failed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ needs.bicep-validation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### ❌ Bicep Infrastructure Build Failed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ needs.bicep-build.result }}" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -1095,7 +1109,7 @@ jobs:
       run: |
         # Base build requirements (always checked)
         base_success=true
-        if [ "${{ needs.bicep-validation.result }}" != "success" ]; then
+        if [ "${{ needs.bicep-build.result }}" != "success" ]; then
           base_success=false
         fi
         if [ "${{ needs.frontend-build.result }}" != "success" ]; then
@@ -1126,7 +1140,7 @@ jobs:
           exit 0
         else
           echo "❌ One or more jobs failed:"
-          echo "Bicep Validation: ${{ needs.bicep-validation.result }}"
+          echo "Bicep Build: ${{ needs.bicep-build.result }}"
           echo "Frontend Build: ${{ needs.frontend-build.result }}"
           echo "Backend Build: ${{ needs.backend-build.result }}"
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
