@@ -424,8 +424,8 @@ jobs:
         if [ -n "${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}" ]; then
           echo "- **Frontend Static Web App URL**: [${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}](${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
         fi
-        if [ -n "${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}" ]; then
-          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}](${{ needs.deploy-ade-backend-validation.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${{ needs.deploy-ade-backend-code.outputs.function-app-url }}" ]; then
+          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-code.outputs.function-app-url }}](${{ needs.deploy-ade-backend-code.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
