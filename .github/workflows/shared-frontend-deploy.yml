@@ -143,15 +143,17 @@ jobs:
         if [ -n "$BUILD_ENV" ]; then
           while IFS= read -r line; do
             if [ -n "$line" ]; then
-              KEY="${line%%=*}"
-              VALUE="${line#*=}"
-              if [ -z "$KEY" ]; then
-                continue
-              fi
-              if [ "$KEY" = "$VALUE" ]; then
-                export "$line"
-              else
+              # Only process lines that contain an '=' character
+              if [[ "$line" == *=* ]]; then
+                KEY="${line%%=*}"
+                VALUE="${line#*=}"
+                if [ -z "$KEY" ]; then
+                  continue
+                fi
                 export "$KEY=$VALUE"
+              else
+                # Skip invalid lines without '='
+                continue
               fi
             fi
           done <<< "$BUILD_ENV"
