@@ -841,7 +841,7 @@ jobs:
         fi
         if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+        fi
         # Backend summary
         if [ "${{ needs.backend-build.result }}" = "success" ]; then
           echo "### ✅ Backend Build Successful" >> $GITHUB_STEP_SUMMARY
