@@ -1,0 +1,211 @@
+name: Shared Backend Zip Deploy
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: "Name of the backend artifact to download"
+        required: false
+        type: string
+        default: backend-publish
+      artifact-download-path:
+        description: "Path to download the backend artifact"
+        required: false
+        type: string
+        default: backend-artifacts
+      function-app-name:
+        description: "Target Function App name"
+        required: true
+        type: string
+      resource-group-name:
+        description: "Target resource group name"
+        required: true
+        type: string
+      function-app-url:
+        description: "Function App base URL (required when run-tests is true)"
+        required: false
+        type: string
+      environment-name:
+        description: "Friendly environment name for summaries"
+        required: false
+        type: string
+      run-tests:
+        description: "Whether to run post-deployment tests"
+        required: false
+        type: boolean
+        default: true
+      agent-id:
+        description: "AI Foundry agent ID to apply"
+        required: false
+        type: string
+      agent-name:
+        description: "AI Foundry agent name to apply"
+        required: false
+        type: string
+      update-agent-settings:
+        description: "Update Function App settings with agent information"
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: "Deployment environment name for GitHub environment"
+        required: false
+        type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+    outputs:
+      test-status:
+        description: "Result of post-deployment tests"
+        value: ${{ jobs.deploy-backend.outputs.test-status }}
+
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TARGET_FUNCTION_APP: ""
+      TARGET_RESOURCE_GROUP: ""
+      TARGET_FUNCTION_URL: ""
+      TEST_STATUS: "skipped"
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.function-app-url }}
+    outputs:
+      test-status: ${{ steps.run-backend-tests.outputs.test-status }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Download backend artifact
+      uses: actions/download-artifact@v6
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.artifact-download-path }}
+
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Validate deployment inputs
+      run: |
+        if [ -z "${{ inputs.function-app-name }}" ]; then
+          echo "❌ function-app-name input is required"
+          exit 1
+        fi
+        if [ -z "${{ inputs.resource-group-name }}" ]; then
+          echo "❌ resource-group-name input is required"
+          exit 1
+        fi
+        echo "TARGET_FUNCTION_APP=${{ inputs.function-app-name }}" >> $GITHUB_ENV
+        echo "TARGET_RESOURCE_GROUP=${{ inputs.resource-group-name }}" >> $GITHUB_ENV
+        echo "TARGET_FUNCTION_URL=${{ inputs.function-app-url }}" >> $GITHUB_ENV
+
+    - name: Verify deployment package
+      run: |
+        PACKAGE_PATH="${{ inputs.artifact-download-path }}/backend-deployment.zip"
+        if [ ! -f "$PACKAGE_PATH" ]; then
+          echo "❌ Backend deployment zip not found at $PACKAGE_PATH"
+          ls -la "${{ inputs.artifact-download-path }}"
+          exit 1
+        fi
+        echo "🔍 Verifying deployment package contents..."
+        unzip -l "$PACKAGE_PATH" | grep -E "\.azurefunctions|azurefunctions/" || {
+          echo "❌ .azurefunctions directory not found in deployment package!"
+          exit 1
+        }
+        echo "✅ Deployment package validated successfully"
+
+    - name: Deploy backend code to Function App
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.TARGET_FUNCTION_APP }}
+        package: '${{ inputs.artifact-download-path }}/backend-deployment.zip'
+
+    - name: Update Function App settings with agent info
+      if: ${{ inputs.update-agent-settings }}
+      run: |
+        if [ -z "${{ inputs.agent-id }}" ]; then
+          echo "⚠️ Agent ID not provided - skipping Function App setting update"
+        else
+          echo "🔧 Updating Function App settings with AI Foundry agent configuration..."
+          az functionapp config appsettings set \
+            --name "${{ env.TARGET_FUNCTION_APP }}" \
+            --resource-group "${{ env.TARGET_RESOURCE_GROUP }}" \
+            --settings \
+              "AI_FOUNDRY_AGENT_ID=${{ inputs.agent-id }}" \
+              "AI_FOUNDRY_AGENT_NAME=${{ inputs.agent-name }}"
+          echo "✅ Function App settings updated"
+        fi
+
+    - name: Run post-deployment backend tests
+      id: run-backend-tests
+      if: ${{ inputs.run-tests }}
+      env:
+        TARGET_FUNCTION_URL: ${{ env.TARGET_FUNCTION_URL }}
+      run: |
+        if [ -z "$TARGET_FUNCTION_URL" ]; then
+          echo "❌ function-app-url input is required when run-tests is true"
+          exit 1
+        fi
+        echo "🧪 Testing deployed backend application at $TARGET_FUNCTION_URL"
+        sleep 60
+        max_attempts=15
+        attempt=1
+        health_passed=false
+        while [ $attempt -le $max_attempts ]; do
+          if curl -f -s "$TARGET_FUNCTION_URL/api/health" -o /dev/null; then
+            health_passed=true
+            break
+          else
+            if [ $attempt -lt $max_attempts ]; then
+              sleep 30
+            fi
+          fi
+          attempt=$((attempt + 1))
+        done
+        if [ "$health_passed" = false ]; then
+          echo "❌ Health endpoint failed after $max_attempts attempts"
+          exit 1
+        fi
+        pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$TARGET_FUNCTION_URL" -Comprehensive
+        echo "test-status=success" >> $GITHUB_OUTPUT
+        
+
+    - name: Backend deployment summary
+      run: |
+        echo "## 🚀 Backend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${{ inputs.environment-name }}" ]; then
+          echo "### Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ inputs.environment-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "### Function App" >> $GITHUB_STEP_SUMMARY
+        echo "- **Name**: \`${{ env.TARGET_FUNCTION_APP }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: \`${{ env.TARGET_RESOURCE_GROUP }}\`" >> $GITHUB_STEP_SUMMARY
+        if [ -n "$TARGET_FUNCTION_URL" ]; then
+          echo "- **URL**: [$TARGET_FUNCTION_URL]($TARGET_FUNCTION_URL)" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "- **Zip Package**: \`${{ inputs.artifact-download-path }}/backend-deployment.zip\`" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ inputs.update-agent-settings }}" = "true" ]; then
+          AGENT_ID="${{ inputs.agent-id }}"
+          if [ -z "$AGENT_ID" ]; then
+            AGENT_ID="N/A"
+          fi
+          AGENT_NAME="${{ inputs.agent-name }}"
+          if [ -z "$AGENT_NAME" ]; then
+            AGENT_NAME="N/A"
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### AI Foundry Agent" >> $GITHUB_STEP_SUMMARY
+          echo "- **Agent ID**: \`$AGENT_ID\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Agent Name**: \`$AGENT_NAME\`" >> $GITHUB_STEP_SUMMARY
+        fi

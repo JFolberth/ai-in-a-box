@@ -8,7 +8,7 @@ name: CI - Build and Test
 # - Use concurrency groups to cancel previous runs
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'src/**'
       - '.github/workflows/**'
@@ -29,7 +29,7 @@ on:
   schedule:
     - cron: '0 3 * * 0'
   pull_request:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'src/**'
       - '.github/workflows/**'
@@ -87,7 +87,7 @@ jobs:
     name: ADE Frontend E2E Validation
     runs-on: ubuntu-latest
     needs: [bicep-build, frontend-build]
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: ${{ github.event_name != 'scheduled' }}
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
@@ -345,17 +345,18 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
   deploy-ade-backend-validation:
-    name: ADE Backend E2E Validation
+    name: ADE Backend Environment
     runs-on: ubuntu-latest
     needs: [bicep-build, backend-build]
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: ${{ github.event_name != 'scheduled' }}
     permissions:
       contents: read
       id-token: write
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
-      validation-status: ${{ steps.test-deployed-backend.outputs.status }}
+      function-app-name: ${{ steps.validate-infrastructure.outputs.function-app-name }}
+      function-app-url: ${{ steps.validate-infrastructure.outputs.function-app-url }}
     
     steps:
     - name: Checkout repository
@@ -365,13 +366,7 @@ jobs:
       uses: actions/download-artifact@v6
       with:
         name: infrastructure
-        path: ./infra/
-      
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: backend-publish
-        path: ./src/backend/publish/
+        path: ./infra/     
         
     - name: Azure CLI Login
       uses: azure/login@v2
@@ -471,106 +466,33 @@ jobs:
         
         echo "✅ Backend infrastructure validation passed - Function App created: $FUNCTION_APP_NAME"
 
-    - name: Deploy Backend Code to ADE Function App
-      run: |
-        echo "🚀 Deploying backend code to ADE Function App..."
-        
-        # Get ADE environment name and construct Function App details
-        ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
-        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
-        
-        # Find Function App by resource type
-        FUNCTION_APP_NAME=$(az functionapp list \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
-          --output tsv)
-        
-        if [ -z "$FUNCTION_APP_NAME" ] || [ "$FUNCTION_APP_NAME" = "null" ]; then
-          echo "❌ Function App not found for deployment"
-          exit 1
-        fi
-        
-        echo "📦 Deploying to Function App: $FUNCTION_APP_NAME"
-        
-        # Verify the deployment zip exists (from downloaded artifacts)
-        if [ ! -f "./src/backend/publish/backend-deployment.zip" ]; then
-          echo "❌ Backend deployment zip not found!"
-          echo "Contents of backend publish directory:"
-          ls -la ./src/backend/publish/
-          exit 1
-        fi
-        
-        # Deploy using Azure CLI
-        echo "📋 Deploying backend code to $FUNCTION_APP_NAME..."
-        az functionapp deployment source config-zip \
-          --resource-group "$RESOURCE_GROUP" \
-          --name "$FUNCTION_APP_NAME" \
-          --src "./src/backend/publish/backend-deployment.zip"
-        
-        echo "✅ Backend code deployed successfully to ADE environment!"
-
-    - name: Test Deployed Backend Application
-      id: test-deployed-backend
-      run: |
-        echo "🧪 Testing deployed backend application..."
-        
-        # Get ADE environment name and construct Function App URL
         ADE_ENV_NAME="${{ steps.create-ade.outputs.ade-environment-name }}"
         FUNCTION_APP_URL="https://func-${ADE_ENV_NAME}-bk-dev-eus2.azurewebsites.net"
-        
-        echo "🔗 Testing Function App at: $FUNCTION_APP_URL"
-        
-        # Wait for deployment to fully complete
-        echo "⏳ Waiting for deployment to complete..."
-        sleep 60
-        
-        # Test health endpoint with retry logic
-        echo "🏥 Testing Health Endpoint with retry logic..."
-        max_attempts=15
-        attempt=1
-        health_passed=false
-        
-        while [ $attempt -le $max_attempts ]; do
-          echo "🔍 Health check attempt $attempt/$max_attempts..."
-          
-          if curl -f -s "$FUNCTION_APP_URL/api/health" -o /dev/null; then
-            echo "✅ Health endpoint responding!"
-            health_passed=true
-            break
-          else
-            echo "⏳ Health endpoint not ready yet (attempt $attempt/$max_attempts)..."
-            if [ $attempt -lt $max_attempts ]; then
-              sleep 30
-            fi
-          fi
-          
-          attempt=$((attempt + 1))
-        done
-        
-        if [ "$health_passed" = false ]; then
-          echo "❌ Health endpoint failed after $max_attempts attempts"
-          exit 1
-        fi
-        
-        # Test comprehensive endpoints using PowerShell script
-        echo "🧪 Running comprehensive endpoint tests on deployed application..."
-        pwsh -File tests/core/Test-FunctionEndpoints.ps1 -BaseUrl "$FUNCTION_APP_URL" -Comprehensive
-        
-        if [ $? -eq 0 ]; then
-          echo "✅ Backend application deployment and testing completed successfully!"
-          # Set final validation status
-          echo "status=success" >> $GITHUB_OUTPUT
-        else
-          echo "❌ Backend application tests failed after deployment"
-          echo "status=failed" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+        echo "function-app-name=$FUNCTION_APP_NAME" >> $GITHUB_OUTPUT
+        echo "function-app-url=$FUNCTION_APP_URL" >> $GITHUB_OUTPUT
+
+  deploy-ade-backend-code:
+    name: ADE Backend Code Deployment
+    needs: [deploy-ade-backend-validation]
+    uses: ./.github/workflows/shared-backend-deploy.yml
+    permissions: 
+      contents: read
+      id-token: write
+    with:
+      artifact-name: backend-publish
+      artifact-download-path: backend-artifacts
+      function-app-name: ${{ needs.deploy-ade-backend-validation.outputs.function-app-name }}
+      resource-group-name: ${{ needs.deploy-ade-backend-validation.outputs.resource-group-name }}
+      function-app-url: ${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}
+      environment-name: ${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}
+      environment: ade
+      run-tests: true
+    secrets: inherit
 
   ade-validation-summary:
     name: ADE E2E Validation Summary
     runs-on: ubuntu-latest
-    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation]
-    if: always() && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation, deploy-ade-backend-code]
     outputs:
       validation-status: ${{ steps.summary.outputs.status }}
     permissions:
@@ -582,17 +504,17 @@ jobs:
       run: |
         echo "📋 ADE End-to-End Validation Summary"
         echo "===================================="
-        
+
         FRONTEND_STATUS="${{ needs.deploy-ade-frontend-validation.outputs.validation-status }}"
-        BACKEND_STATUS="${{ needs.deploy-ade-backend-validation.outputs.validation-status }}"
-        
+        BACKEND_STATUS="${{ needs.deploy-ade-backend-code.outputs.test-status }}"
+
         echo "Frontend Deployment & Testing: $FRONTEND_STATUS"
         echo "Backend Deployment & Testing: $BACKEND_STATUS"
-        
+
         if [ "$FRONTEND_STATUS" = "success" ] && [ "$BACKEND_STATUS" = "success" ]; then
           echo "✅ All ADE end-to-end validations passed!"
           echo "   - Infrastructure deployed successfully"
-          echo "   - Application code deployed successfully" 
+          echo "   - Application code deployed successfully"
           echo "   - Applications tested and functional"
           echo "status=success" >> $GITHUB_OUTPUT
         else
@@ -608,6 +530,9 @@ jobs:
         echo "### 📋 Environment Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Frontend Environment**: \`${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${{ needs.deploy-ade-backend-code.outputs.function-app-url }}" ]; then
+          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-code.outputs.function-app-url }}](${{ needs.deploy-ade-backend-code.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Infrastructure Deployment**: ADE environments created successfully" >> $GITHUB_STEP_SUMMARY
@@ -629,17 +554,12 @@ jobs:
       contents: read
       id-token: write
     if: |
-      always() && 
-      needs.bicep-build.result == 'success' &&
-      (
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
-        github.event_name == 'workflow_dispatch' || 
-        github.event_name == 'schedule'
-      ) && (
-        github.event_name == 'schedule' || 
-        needs.ade-validation-summary.outputs.validation-status == 'success' || 
-        needs.ade-validation-summary.result == 'skipped'
-      )
+      
+        ( github.event_name != 'scheduled' &&
+        needs.ade-validation-summary.outputs.validation-status == 'success' )
+        &&
+        github.ref == 'refs/heads/main'
+      
     with:
       environment: 'dev'
       bicep-template: 'infra/main-orchestrator.bicep'
@@ -653,13 +573,13 @@ jobs:
     name: Deploy AI Foundry Agent
     runs-on: ubuntu-latest
     needs: [deploy-dev-infrastructure]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
     outputs:
       agent-id: ${{ steps.deploy-agent.outputs.agent-id }}
       agent-name: ${{ steps.deploy-agent.outputs.agent-name }}
-    
+    environment:
+      name: dev
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
@@ -739,124 +659,31 @@ jobs:
 
   deploy-backend-code:
     name: Deploy Backend Code
-    runs-on: ubuntu-latest
     needs: [backend-build, deploy-dev-infrastructure, deploy-agent]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
     permissions:
       contents: read
       id-token: write
-    
-    steps:
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: backend-publish
-        path: ./backend-artifacts/
-        
-    - name: Azure CLI Login
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-    - name: Validate Infrastructure Outputs
-      run: |
-        echo "🔍 Validating infrastructure deployment outputs..."
-        
-        FUNCTION_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}"
-        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}"
-        
-        if [ "$FUNCTION_APP_NAME" = "not-found" ] || [ -z "$FUNCTION_APP_NAME" ]; then
-          echo "❌ Backend Function App name not found in infrastructure outputs"
-          exit 1
-        fi
-        
-        if [ "$RESOURCE_GROUP_NAME" = "not-found" ] || [ -z "$RESOURCE_GROUP_NAME" ]; then
-          echo "❌ Backend Resource Group name not found in infrastructure outputs"
-          exit 1
-        fi
-        
-        echo "✅ Infrastructure outputs validated:"
-        echo "  - Function App: $FUNCTION_APP_NAME"
-        echo "  - Resource Group: $RESOURCE_GROUP_NAME"
-        
-    - name: Prepare deployment package
-      run: |
-        echo "📦 Preparing backend deployment package..."
-        
-        # Verify the deployment zip exists
-        if [ ! -f "./backend-artifacts/backend-deployment.zip" ]; then
-          echo "❌ Backend deployment zip not found!"
-          echo "Contents of backend-artifacts directory:"
-          ls -la ./backend-artifacts/
-          exit 1
-        fi
-        
-        # Verify the zip contains the required .azurefunctions directory
-        echo "🔍 Verifying deployment package contents..."
-        unzip -l ./backend-artifacts/backend-deployment.zip | grep -E "\.azurefunctions|azurefunctions/" || {
-          echo "❌ .azurefunctions directory not found in deployment package!"
-          exit 1
-        }
-        
-        echo "✅ Deployment package validated successfully"
-        echo "📋 Package contents summary:"
-        unzip -l ./backend-artifacts/backend-deployment.zip | head -10
-        
-    - name: Deploy Backend Code to Function App
-      uses: Azure/functions-action@v1
-      with:
-        app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
-        package: './backend-artifacts/backend-deployment.zip'
-        
-    - name: Update Function App Settings with Agent ID
-      run: |
-        echo "🔧 Updating Function App settings with AI Foundry agent configuration..."
-        
-        FUNCTION_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}"
-        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}"
-        AGENT_ID="${{ needs.deploy-agent.outputs.agent-id }}"
-        AGENT_NAME="${{ needs.deploy-agent.outputs.agent-name }}"
-        
-        if [ -z "$AGENT_ID" ]; then
-          echo "⚠️ Agent ID not available from deployment step - Function App will use default fallback"
-        else
-          echo "🔧 Updating Function App settings..."
-          az functionapp config appsettings set \
-            --name "$FUNCTION_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP_NAME" \
-            --settings \
-              "AI_FOUNDRY_AGENT_ID=$AGENT_ID" \
-              "AI_FOUNDRY_AGENT_NAME=$AGENT_NAME"
-          
-          echo "✅ Function App settings updated successfully:"
-          echo "  - Agent ID: $AGENT_ID"
-          echo "  - Agent Name: $AGENT_NAME"
-        fi
-        
-    - name: Backend Deployment Summary
-      run: |
-        echo "## 🚀 Backend Code Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
-        echo "- **Function App**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Resource Group**: \`${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Function App URL**: [${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }})" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🤖 AI Foundry Agent Configuration" >> $GITHUB_STEP_SUMMARY
-        echo "- **Agent ID**: \`${{ needs.deploy-agent.outputs.agent-id }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Agent Name**: \`${{ needs.deploy-agent.outputs.agent-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Action Used**: Azure/functions-action@v1" >> $GITHUB_STEP_SUMMARY
-        echo "- **Build Artifacts**: Pre-built from CI pipeline" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deploy Method**: Native GitHub Action" >> $GITHUB_STEP_SUMMARY
-        echo "- **Configuration Update**: Function App settings updated with agent configuration" >> $GITHUB_STEP_SUMMARY
+    uses: ./.github/workflows/shared-backend-deploy.yml
+    with:
+      artifact-name: backend-publish
+      artifact-download-path: backend-artifacts
+      function-app-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-name }}
+      resource-group-name: ${{ needs.deploy-dev-infrastructure.outputs.backend-resource-group-name }}
+      function-app-url: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}
+      environment-name: 'Dev'
+      run-tests: true
+      agent-id: ${{ needs.deploy-agent.outputs.agent-id }}
+      agent-name: ${{ needs.deploy-agent.outputs.agent-name }}
+      update-agent-settings: true
+      environment: 'dev'
+    secrets: inherit
 
   deploy-frontend-code:
     name: Deploy Frontend Code
     runs-on: ubuntu-latest
     needs: [frontend-build, deploy-dev-infrastructure]
-    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && needs.deploy-dev-infrastructure.outputs.deployment-status == 'Succeeded'
+    environment:
+      name: dev
     permissions:
       contents: read
       id-token: write
@@ -981,182 +808,13 @@ jobs:
         echo "- **Build Artifacts**: Frontend rebuilt during deployment with correct backend URL" >> $GITHUB_STEP_SUMMARY
         echo "- **Deploy Method**: Native GitHub Actions with Azure CLI" >> $GITHUB_STEP_SUMMARY
         echo "- **Environment Variables**: VITE_BACKEND_URL set from infrastructure outputs at build time" >> $GITHUB_STEP_SUMMARY
-  build-summary:
-    name: Build Summary
-    runs-on: ubuntu-latest
-    needs: [bicep-build, frontend-build, backend-build, deploy-dev-infrastructure, deploy-backend-code, deploy-frontend-code]
-    if: always()
-    permissions:
-      contents: read
-
-    steps:
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: frontend-dist
-        path: ./artifacts/frontend/
-        
-    - name: Download backend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: backend-publish
-        path: ./artifacts/backend/
-        
-    - name: Display build summary
-      run: |
-        echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Bicep build summary
-        if [ "${{ needs.bicep-build.result }}" = "success" ]; then
-          echo "### ✅ Bicep Infrastructure Build Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Templates validated**: Main orchestrator, Backend environment, Frontend environment" >> $GITHUB_STEP_SUMMARY
-          echo "- **Validation scope**: Syntax, parameters, dependencies, RBAC" >> $GITHUB_STEP_SUMMARY
-          echo "- **Artifact created**: Infrastructure files packaged for deployment" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "### ❌ Bicep Infrastructure Build Failed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ needs.bicep-build.result }}" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Frontend summary
-        if [ -d "./artifacts/frontend" ]; then
-          echo "### ✅ Frontend Build Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build output**: $(du -sh ./artifacts/frontend | cut -f1)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files**: $(find ./artifacts/frontend -type f | wc -l) files generated" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "### ❌ Frontend Build Failed" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Backend summary
-        if [ -d "./artifacts/backend" ]; then
-          echo "### ✅ Backend Build Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build output**: $(du -sh ./artifacts/backend | cut -f1)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files**: $(find ./artifacts/backend -type f | wc -l) files generated" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "### ❌ Backend Build Failed" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Infrastructure deployment summary (shows on main branch pushes, manual triggers, and scheduled runs)
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-          if [ "${{ needs.deploy-dev-infrastructure.result }}" = "success" ]; then
-            echo "### ✅ Dev Infrastructure Deployment Successful" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: Infrastructure deployed via Azure CLI + Bicep" >> $GITHUB_STEP_SUMMARY
-            echo "- **Environment**: dev (eastus2)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Template**: main-orchestrator.bicep" >> $GITHUB_STEP_SUMMARY
-            echo "- **Parameters**: dev-orchestrator.parameters.bicepparam" >> $GITHUB_STEP_SUMMARY
-            echo "- **Scope**: Subscription-level deployment to multiple resource groups" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-dev-infrastructure.result }}" = "failure" ]; then
-            echo "### ❌ Dev Infrastructure Deployment Failed" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: ${{ needs.deploy-dev-infrastructure.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-dev-infrastructure.result }}" = "skipped" ]; then
-            echo "### ⏭️ Dev Infrastructure Deployment Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "- **Reason**: Infrastructure deployment runs on main branch pushes, manual triggers, and scheduled runs" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Backend code deployment summary
-          if [ "${{ needs.deploy-backend-code.result }}" = "success" ]; then
-            echo "### ✅ Backend Code Deployment Successful" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: Backend Function App code deployed in parallel with frontend" >> $GITHUB_STEP_SUMMARY
-            echo "- **Method**: Azure/functions-action@v1 (Native GitHub Action)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Dependency**: Triggered after successful infrastructure deployment" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-backend-code.result }}" = "failure" ]; then
-            echo "### ❌ Backend Code Deployment Failed" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: ${{ needs.deploy-backend-code.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-backend-code.result }}" = "skipped" ]; then
-            echo "### ⏭️ Backend Code Deployment Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "- **Reason**: Skipped due to infrastructure deployment failure or not on main branch" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Frontend code deployment summary  
-          if [ "${{ needs.deploy-frontend-code.result }}" = "success" ]; then
-            echo "### ✅ Frontend Code Deployment Successful" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: Frontend Static Web App code deployed in parallel with backend" >> $GITHUB_STEP_SUMMARY
-            echo "- **Method**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Dependency**: Triggered after successful infrastructure deployment" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-frontend-code.result }}" = "failure" ]; then
-            echo "### ❌ Frontend Code Deployment Failed" >> $GITHUB_STEP_SUMMARY
-            echo "- **Status**: ${{ needs.deploy-frontend-code.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Note**: Check job logs for detailed error information" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.deploy-frontend-code.result }}" = "skipped" ]; then
-            echo "### ⏭️ Frontend Code Deployment Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "- **Reason**: Skipped due to infrastructure deployment failure or not on main branch" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
-        echo "- Review build artifacts if needed" >> $GITHUB_STEP_SUMMARY
-        echo "- Run local tests: \`npm test\` (frontend) and \`dotnet test\` (backend)" >> $GITHUB_STEP_SUMMARY
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-          echo "- **Automated Deployment**: Infrastructure and application code deployed automatically using native GitHub Actions (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Local Development**: Use deployment scripts in \`deploy-scripts/\` for local testing only" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "- **Local Development**: Use deployment scripts in \`deploy-scripts/\` for local testing only" >> $GITHUB_STEP_SUMMARY
-          echo "- **Note**: Automated deployment using native GitHub Actions runs on main branch pushes, manual triggers, and scheduled runs (Backend and Frontend in parallel)" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-    - name: Check build status
-      run: |
-        # Base build requirements (always checked)
-        base_success=true
-        if [ "${{ needs.bicep-build.result }}" != "success" ]; then
-          base_success=false
-        fi
-        if [ "${{ needs.frontend-build.result }}" != "success" ]; then
-          base_success=false
-        fi
-        if [ "${{ needs.backend-build.result }}" != "success" ]; then
-          base_success=false
-        fi
-        
-        # Infrastructure deployment check (on main branch pushes, manual triggers, and scheduled runs)
-        infrastructure_success=true
-        backend_deploy_success=true
-        frontend_deploy_success=true
-        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-          if [ "${{ needs.deploy-dev-infrastructure.result }}" != "success" ]; then
-            infrastructure_success=false
-          fi
-          if [ "${{ needs.deploy-backend-code.result }}" != "success" ]; then
-            backend_deploy_success=false
-          fi
-          if [ "${{ needs.deploy-frontend-code.result }}" != "success" ]; then
-            frontend_deploy_success=false
-          fi
-        fi
-        
-        if [ "$base_success" = "true" ] && [ "$infrastructure_success" = "true" ] && [ "$backend_deploy_success" = "true" ] && [ "$frontend_deploy_success" = "true" ]; then
-          echo "✅ All builds, validations, and deployments completed successfully!"
-          exit 0
-        else
-          echo "❌ One or more jobs failed:"
-          echo "Bicep Build: ${{ needs.bicep-build.result }}"
-          echo "Frontend Build: ${{ needs.frontend-build.result }}"
-          echo "Backend Build: ${{ needs.backend-build.result }}"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "Dev Infrastructure Deployment: ${{ needs.deploy-dev-infrastructure.result }}"
-            echo "Backend Code Deployment: ${{ needs.deploy-backend-code.result }}"
-            echo "Frontend Code Deployment: ${{ needs.deploy-frontend-code.result }}"
-          fi
-          exit 1
-        fi
 
   # Create GitHub issue when workflow fails (scheduled runs or manual triggers)
   create-failure-issue:
     name: 'Create Failure Issue'
     runs-on: ubuntu-latest
-    if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure' || needs.deploy-dev-infrastructure.result == 'failure' || needs.deploy-agent.result == 'failure' || needs.deploy-backend-code.result == 'failure' || needs.deploy-frontend-code.result == 'failure' || needs.build-summary.result == 'failure') }}
-    needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code, build-summary]
+    if: ${{ (github.event_name == 'schedule') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure') }}
+    needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code]
     
     permissions:
       issues: write
@@ -1192,9 +850,6 @@ jobs:
           fi
           if [ "${{ needs.deploy-frontend-code.result }}" = "failure" ]; then
             FAILED_JOBS="${FAILED_JOBS}- Frontend Code Deployment\n"
-          fi
-          if [ "${{ needs.build-summary.result }}" = "failure" ]; then
-            FAILED_JOBS="${FAILED_JOBS}- Build Summary\n"
           fi
           
           echo "failed_jobs=${FAILED_JOBS}" >> $GITHUB_OUTPUT
@@ -1243,7 +898,6 @@ jobs:
             - Agent Deployment: ${{ needs.deploy-agent.result }}
             - Backend Code Deployment: ${{ needs.deploy-backend-code.result }}
             - Frontend Code Deployment: ${{ needs.deploy-frontend-code.result }}
-            - Build Summary: ${{ needs.build-summary.result }}
             
             ---
             *This issue was automatically created by the CI workflow failure detection.*`;
