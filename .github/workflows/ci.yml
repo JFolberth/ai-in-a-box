@@ -808,12 +808,13 @@ jobs:
         echo "- **Build Artifacts**: Frontend rebuilt during deployment with correct backend URL" >> $GITHUB_STEP_SUMMARY
         echo "- **Deploy Method**: Native GitHub Actions with Azure CLI" >> $GITHUB_STEP_SUMMARY
         echo "- **Environment Variables**: VITE_BACKEND_URL set from infrastructure outputs at build time" >> $GITHUB_STEP_SUMMARY
+
   # Create GitHub issue when workflow fails (scheduled runs or manual triggers)
   create-failure-issue:
     name: 'Create Failure Issue'
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'schedule') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure' || needs.deploy-dev-infrastructure.result == 'failure' || needs.deploy-agent.result == 'failure' || needs.deploy-backend-code.result == 'failure' || needs.deploy-frontend-code.result == 'failure' || needs.build-summary.result == 'failure') }}
-    needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code, build-summary]
+    if: ${{ (github.event_name == 'schedule') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure') }}
+    needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code]
     
     permissions:
       issues: write
