@@ -54,7 +54,7 @@ jobs:
     name: Frontend Build and Test
     uses: ./.github/workflows/shared-frontend-build.yml
     with:
-      node-version: ${{ vars.NODE_VERSION || '20' }}
+      node-version: '20'
       upload-artifacts: true
       artifact-name: frontend-dist
     secrets: inherit
@@ -84,14 +84,16 @@ jobs:
   # - Validates complete deployment pipeline before main branch deployment
   
   deploy-ade-frontend-validation:
-    name: ADE Frontend E2E Validation
+    name: ADE Frontend Environment
     runs-on: ubuntu-latest
     needs: [bicep-build, frontend-build]
     if: ${{ github.event_name != 'scheduled' }}
     outputs:
       ade-environment-name: ${{ steps.create-ade.outputs.ade-environment-name }}
       resource-group-name: ${{ steps.create-ade.outputs.resource-group-name }}
-      validation-status: ${{ steps.test-frontend-application.outputs.status }}
+      static-web-app-name: ${{ steps.validate-infrastructure.outputs.static-web-app-name }}
+      static-web-app-url: ${{ steps.validate-infrastructure.outputs.static-web-app-url }}
+      validation-status: ${{ steps.validate-infrastructure.outputs.status }}
     permissions:
       contents: read
       id-token: write
@@ -105,19 +107,6 @@ jobs:
         name: infrastructure
         path: ./infra/
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ vars.NODE_VERSION || '20' }}
-        cache: 'npm'
-        cache-dependency-path: src/frontend/package-lock.json
-      
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: frontend-dist
-        path: ./src/frontend/dist/
-        
     - name: Azure CLI Login
       uses: azure/login@v2
       with:
@@ -195,8 +184,8 @@ jobs:
           exit 1
         fi
     
-    - name: Validate Frontend Deployment
-      id: validate-deployment
+    - name: Validate Frontend Infrastructure
+      id: validate-infrastructure
       run: |
         echo "🔍 Validating frontend deployment in ADE environment..."
         
@@ -213,136 +202,39 @@ jobs:
           echo "❌ No Static Web App found in resource group: $RESOURCE_GROUP"
           exit 1
         fi
-        
+
         echo "✅ Frontend infrastructure validation passed - Static Web App: $STATIC_WEB_APP_NAME"
-
-    - name: Install SWA CLI
-      run: |
-        echo "📦 Installing Azure Static Web Apps CLI..."
-        npm install -g @azure/static-web-apps-cli
-
-    - name: Deploy Frontend Code to ADE Static Web App
-      run: |
-        echo "🚀 Deploying frontend code to ADE Static Web App..."
-        
-        # Get resource group and Static Web App name from previous steps
-        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
-        STATIC_WEB_APP_NAME=$(az staticwebapp list \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
-          --output tsv)
-        
-        if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" = "null" ]; then
-          echo "❌ Static Web App not found for deployment"
-          exit 1
-        fi
-        
-        echo "📦 Deploying to Static Web App: $STATIC_WEB_APP_NAME"
-        
-        # For ADE environments, rebuild frontend with demonstration/testing backend URL
-        echo "🔧 Rebuilding frontend for ADE environment..."
-        cd src/frontend
-        
-        # Set environment variables for ADE build (uses simulation mode for testing)
-        export VITE_BACKEND_URL="https://demo-backend.azure.com/api"
-        export VITE_USE_BACKEND=false
-        export VITE_PUBLIC_MODE=false
-        export VITE_AI_FOUNDRY_AGENT_NAME="AI in A Box (ADE Test)"
-        
-        echo "Building ADE frontend with demonstration settings:"
-        echo "  VITE_BACKEND_URL=$VITE_BACKEND_URL"
-        echo "  VITE_USE_BACKEND=$VITE_USE_BACKEND"
-        echo "  VITE_PUBLIC_MODE=$VITE_PUBLIC_MODE"
-        
-        # Install dependencies and rebuild
-        npm ci
-        npm run build:dev
-        
-        # Go back to root
-        cd ../..
-        
-        # Get deployment token for the Static Web App
-        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
-          --name "$STATIC_WEB_APP_NAME" \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "properties.apiKey" \
-          --output tsv)
-        
-        if [ -z "$DEPLOYMENT_TOKEN" ] || [ "$DEPLOYMENT_TOKEN" = "null" ]; then
-          echo "❌ Failed to get deployment token for Static Web App"
-          exit 1
-        fi
-        
-        # Deploy using SWA CLI
-        swa deploy \
-          --app-location "./src/frontend/dist" \
-          --deployment-token "$DEPLOYMENT_TOKEN" \
-          --env "default"
-        
-        echo "✅ Frontend code deployed successfully to ADE environment!"
-
-    - name: Test Frontend Application
-      id: test-frontend-application
-      run: |
-        echo "🧪 Testing deployed frontend application..."
-        
-        # Get resource group and Static Web App details
-        RESOURCE_GROUP="${{ steps.create-ade.outputs.resource-group-name }}"
-        STATIC_WEB_APP_NAME=$(az staticwebapp list \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "[0].name" \
-          --output tsv)
-        
-        # Get Static Web App URL
-        STATIC_WEB_APP_HOSTNAME=$(az staticwebapp show \
-          --name "$STATIC_WEB_APP_NAME" \
-          --resource-group "$RESOURCE_GROUP" \
-          --query "defaultHostname" \
-          --output tsv)
-        
-        if [ -z "$STATIC_WEB_APP_HOSTNAME" ] || [ "$STATIC_WEB_APP_HOSTNAME" = "null" ]; then
-          echo "❌ Failed to get Static Web App hostname"
-          exit 1
-        fi
-        
-        STATIC_WEB_APP_URL="https://$STATIC_WEB_APP_HOSTNAME"
-        echo "🔗 Testing application at: $STATIC_WEB_APP_URL"
-        
-        # Wait for deployment to propagate
-        sleep 30
-        
-        # Test that the application loads
-        echo "🏥 Testing application accessibility..."
-        max_attempts=10
-        attempt=1
-        app_accessible=false
-        
-        while [ $attempt -le $max_attempts ]; do
-          echo "🔍 Accessibility test attempt $attempt/$max_attempts..."
-          
-          if curl -f -s "$STATIC_WEB_APP_URL" -o /dev/null; then
-            echo "✅ Frontend application is accessible!"
-            app_accessible=true
-            break
-          else
-            echo "⏳ Application not ready yet (attempt $attempt/$max_attempts)..."
-            if [ $attempt -lt $max_attempts ]; then
-              sleep 30
-            fi
-          fi
-          
-          attempt=$((attempt + 1))
-        done
-        
-        if [ "$app_accessible" = false ]; then
-          echo "❌ Frontend application failed accessibility test after $max_attempts attempts"
-          exit 1
-        fi
-        
-        echo "✅ Frontend application deployment and testing completed successfully!"
-        
-        # Set final validation status
+        echo "static-web-app-name=$STATIC_WEB_APP_NAME" >> $GITHUB_OUTPUT
+        echo "static-web-app-url=https://$STATIC_WEB_APP_HOSTNAME" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
+
+
+  deploy-ade-frontend-code:
+    name: ADE Frontend Code Deployment
+    needs: [deploy-ade-frontend-validation]
+    uses: ./.github/workflows/shared-frontend-deploy.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      artifact-name: frontend-dist
+      artifact-download-path: frontend-dist
+      static-web-app-name: ${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-name }}
+      resource-group-name: ${{ needs.deploy-ade-frontend-validation.outputs.resource-group-name }}
+      static-web-app-url: ${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}
+      environment-name: ${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}
+      environment: ade
+      build-mode: rebuild
+      frontend-root: src/frontend
+      build-command: npm run build:dev
+      build-env: |
+        VITE_BACKEND_URL=https://demo-backend.azure.com/api
+        VITE_USE_BACKEND=false
+        VITE_PUBLIC_MODE=false
+        VITE_AI_FOUNDRY_AGENT_NAME=AI in A Box (ADE Test)
+      run-tests: true
+    secrets: inherit
+
 
   deploy-ade-backend-validation:
     name: ADE Backend Environment
@@ -492,7 +384,7 @@ jobs:
   ade-validation-summary:
     name: ADE E2E Validation Summary
     runs-on: ubuntu-latest
-    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation, deploy-ade-backend-code]
+    needs: [deploy-ade-frontend-validation, deploy-ade-frontend-code, deploy-ade-backend-validation, deploy-ade-backend-code]
     outputs:
       validation-status: ${{ steps.summary.outputs.status }}
     permissions:
@@ -504,8 +396,7 @@ jobs:
       run: |
         echo "📋 ADE End-to-End Validation Summary"
         echo "===================================="
-
-        FRONTEND_STATUS="${{ needs.deploy-ade-frontend-validation.outputs.validation-status }}"
+        FRONTEND_STATUS="${{ needs.deploy-ade-frontend-code.outputs.test-status }}"
         BACKEND_STATUS="${{ needs.deploy-ade-backend-code.outputs.test-status }}"
 
         echo "Frontend Deployment & Testing: $FRONTEND_STATUS"
@@ -530,8 +421,11 @@ jobs:
         echo "### 📋 Environment Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Frontend Environment**: \`${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
-        if [ -n "${{ needs.deploy-ade-backend-code.outputs.function-app-url }}" ]; then
-          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-code.outputs.function-app-url }}](${{ needs.deploy-ade-backend-code.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
+        if [ -n "${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}" ]; then
+          echo "- **Frontend Static Web App URL**: [${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}](${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -n "${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}" ]; then
+          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-validation.outputs.function-app-url }}](${{ needs.deploy-ade-backend-validation.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
@@ -680,134 +574,31 @@ jobs:
 
   deploy-frontend-code:
     name: Deploy Frontend Code
-    runs-on: ubuntu-latest
     needs: [frontend-build, deploy-dev-infrastructure]
-    environment:
-      name: dev
+    uses: ./.github/workflows/shared-frontend-deploy.yml
     permissions:
       contents: read
       id-token: write
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ vars.NODE_VERSION || '20' }}
-        cache: 'npm'
-        cache-dependency-path: src/frontend/package-lock.json
-        
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v6
-      with:
-        name: frontend-dist
-        path: ./src/frontend/dist/
-        
-    - name: Azure CLI Login
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-    - name: Validate Infrastructure Outputs
-      run: |
-        echo "🔍 Validating infrastructure deployment outputs..."
-        
-        STATIC_WEB_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}"
-        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}"
-        BACKEND_URL="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}"
-        
-        if [ "$STATIC_WEB_APP_NAME" = "not-found" ] || [ -z "$STATIC_WEB_APP_NAME" ]; then
-          echo "❌ Frontend Static Web App name not found in infrastructure outputs"
-          exit 1
-        fi
-        
-        if [ "$RESOURCE_GROUP_NAME" = "not-found" ] || [ -z "$RESOURCE_GROUP_NAME" ]; then
-          echo "❌ Frontend Resource Group name not found in infrastructure outputs"
-          exit 1
-        fi
-        
-        echo "✅ Infrastructure outputs validated:"
-        echo "  - Static Web App: $STATIC_WEB_APP_NAME"
-        echo "  - Resource Group: $RESOURCE_GROUP_NAME"
-        echo "  - Backend URL: $BACKEND_URL"
-        
-    - name: Install SWA CLI
-      run: |
-        echo "📦 Installing Azure Static Web Apps CLI..."
-        npm install -g @azure/static-web-apps-cli
-
-    - name: Deploy Frontend Code to Static Web App
-      run: |
-        echo "🚀 Deploying frontend code to Static Web App..."
-        
-        # Get infrastructure outputs
-        STATIC_WEB_APP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}"
-        RESOURCE_GROUP_NAME="${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}"
-        BACKEND_URL="${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api"
-        
-        echo "📦 Deploying to Static Web App: $STATIC_WEB_APP_NAME"
-        echo "🔗 Backend API URL: $BACKEND_URL"
-        
-        # Install dependencies and rebuild with correct backend URL
-        echo "🔧 Rebuilding frontend with correct backend URL..."
-        cd src/frontend
-        
-        # Set environment variables for the build
-        export VITE_BACKEND_URL="$BACKEND_URL"
-        export VITE_USE_BACKEND=true
-        export VITE_PUBLIC_MODE=true
-        export VITE_AI_FOUNDRY_AGENT_NAME="AI in A Box"
-        
-        echo "Building with:"
-        echo "  VITE_BACKEND_URL=$VITE_BACKEND_URL"
-        echo "  VITE_USE_BACKEND=$VITE_USE_BACKEND"
-        echo "  VITE_PUBLIC_MODE=$VITE_PUBLIC_MODE"
-        
-        # Install dependencies (use cache if available)
-        npm ci
-        
-        # Build the frontend with the correct backend URL
-        npm run build:dev
-        
-        # Go back to root
-        cd ../..
-        
-        # Get deployment token for the Static Web App
-        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
-          --name "$STATIC_WEB_APP_NAME" \
-          --resource-group "$RESOURCE_GROUP_NAME" \
-          --query "properties.apiKey" \
-          --output tsv)
-        
-        if [ -z "$DEPLOYMENT_TOKEN" ] || [ "$DEPLOYMENT_TOKEN" = "null" ]; then
-          echo "❌ Failed to get deployment token for Static Web App"
-          exit 1
-        fi
-        
-        # Deploy using SWA CLI
-        swa deploy \
-          --app-location "./src/frontend/dist" \
-          --deployment-token "$DEPLOYMENT_TOKEN" \
-          --env "default"
-        
-        echo "✅ Frontend code deployed successfully!"
-        
-    - name: Frontend Deployment Summary
-      run: |
-        echo "## 🌐 Frontend Code Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
-        echo "- **Static Web App**: \`${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Resource Group**: \`${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Application URL**: [${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-url }}](${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
-        echo "- **Backend Integration**: ${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔧 Deployment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Action Used**: Azure CLI + SWA CLI (Native Azure Commands)" >> $GITHUB_STEP_SUMMARY
-        echo "- **Build Artifacts**: Frontend rebuilt during deployment with correct backend URL" >> $GITHUB_STEP_SUMMARY
-        echo "- **Deploy Method**: Native GitHub Actions with Azure CLI" >> $GITHUB_STEP_SUMMARY
-        echo "- **Environment Variables**: VITE_BACKEND_URL set from infrastructure outputs at build time" >> $GITHUB_STEP_SUMMARY
+    with:
+      artifact-name: frontend-dist
+      artifact-download-path: frontend-dist
+      static-web-app-name: ${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-name }}
+      resource-group-name: ${{ needs.deploy-dev-infrastructure.outputs.frontend-resource-group-name }}
+      static-web-app-url: ${{ needs.deploy-dev-infrastructure.outputs.frontend-static-web-app-url }}
+      environment: dev
+      environment-name: Dev Frontend
+      node-version: '20'
+      build-mode: rebuild
+      frontend-root: src/frontend
+      build-command: npm run build:dev
+      build-env: |
+        VITE_BACKEND_URL=${{ needs.deploy-dev-infrastructure.outputs.backend-function-app-url }}/api
+        VITE_USE_BACKEND=true
+        VITE_PUBLIC_MODE=true
+        VITE_AI_FOUNDRY_AGENT_NAME=AI in A Box
+      rebuild-output-path: dist
+      run-tests: true
+    secrets: inherit
 
   # Create GitHub issue when workflow fails (scheduled runs or manual triggers)
   create-failure-issue:

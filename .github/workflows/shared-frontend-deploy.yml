@@ -1,0 +1,293 @@
+name: Shared Frontend Deploy
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: "Name of the frontend artifact to download"
+        required: false
+        type: string
+        default: frontend-dist
+      artifact-download-path:
+        description: "Path to download the frontend artifact"
+        required: false
+        type: string
+        default: frontend-dist
+      static-web-app-name:
+        description: "Target Static Web App name"
+        required: true
+        type: string
+      resource-group-name:
+        description: "Target resource group name"
+        required: true
+        type: string
+      static-web-app-url:
+        description: "Static Web App URL (optional, will be discovered if omitted)"
+        required: false
+        type: string
+      environment-name:
+        description: "Friendly environment name for summaries"
+        required: false
+        type: string
+      environment:
+        description: "GitHub environment name"
+        required: false
+        type: string
+      node-version:
+        description: "Node.js version to use for optional rebuilds"
+        required: false
+        type: string
+        default: '20'
+      build-mode:
+        description: "Deployment source: 'artifact' (use downloaded build) or 'rebuild' (rebuild from source)"
+        required: false
+        type: string
+        default: artifact
+      frontend-root:
+        description: "Path to the frontend project root (used when build-mode is 'rebuild')"
+        required: false
+        type: string
+        default: src/frontend
+      rebuild-output-path:
+        description: "Relative path (from frontend root) to the build output folder"
+        required: false
+        type: string
+        default: dist
+      build-command:
+        description: "Command to build the frontend when build-mode is 'rebuild'"
+        required: false
+        type: string
+        default: npm run build:dev
+      build-env:
+        description: "Optional newline-delimited list of KEY=VALUE pairs exported during rebuild"
+        required: false
+        type: string
+      swa-environment:
+        description: "Static Web Apps environment slot (defaults to 'default')"
+        required: false
+        type: string
+        default: default
+      run-tests:
+        description: "Whether to run post-deployment availability checks"
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+    outputs:
+      deployment-status:
+        description: "Status of the Static Web App deployment"
+        value: ${{ jobs.deploy-frontend.outputs.deployment-status }}
+      test-status:
+        description: "Result of post-deployment availability checks"
+        value: ${{ jobs.deploy-frontend.outputs.test-status }}
+      static-web-app-url:
+        description: "Resolved Static Web App URL"
+        value: ${{ jobs.deploy-frontend.outputs.static-web-app-url }}
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.static-web-app-url }}
+    env:
+      TEST_STATUS: skipped
+    outputs:
+      deployment-status: ${{ steps.publish-deployment-status.outputs.value }}
+      test-status: ${{ steps.publish-test-status.outputs.status }}
+      static-web-app-url: ${{ steps.resolve-swa-url.outputs.value }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Download frontend artifact
+      uses: actions/download-artifact@v6
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.artifact-download-path }}
+
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: ${{ inputs.frontend-root }}/package-lock.json
+
+    - name: Install SWA CLI
+      run: npm install -g @azure/static-web-apps-cli
+
+    - name: Install frontend dependencies (rebuild)
+      if: ${{ inputs.build-mode == 'rebuild' }}
+      working-directory: ${{ inputs.frontend-root }}
+      run: npm ci
+
+    - name: Rebuild frontend (optional)
+      if: ${{ inputs.build-mode == 'rebuild' }}
+      working-directory: ${{ inputs.frontend-root }}
+      env:
+        BUILD_ENV: ${{ inputs.build-env }}
+        BUILD_COMMAND: ${{ inputs.build-command }}
+      run: |
+        set -e
+        if [ -n "$BUILD_ENV" ]; then
+          while IFS= read -r line; do
+            if [ -n "$line" ]; then
+              KEY="${line%%=*}"
+              VALUE="${line#*=}"
+              if [ -z "$KEY" ]; then
+                continue
+              fi
+              if [ "$KEY" = "$VALUE" ]; then
+                export "$line"
+              else
+                export "$KEY=$VALUE"
+              fi
+            fi
+          done <<< "$BUILD_ENV"
+        fi
+        BUILD_CMD=${BUILD_COMMAND:-"npm run build:dev"}
+        echo "🔧 Running build command: $BUILD_CMD"
+        eval "$BUILD_CMD"
+
+    - name: Determine deployment path
+      id: deployment-path
+      run: |
+        if [ "${{ inputs.build-mode }}" = "rebuild" ]; then
+          echo "value=${{ inputs.frontend-root }}/${{ inputs.rebuild-output-path }}" >> $GITHUB_OUTPUT
+        else
+          echo "value=${{ inputs.artifact-download-path }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Deploy frontend to Static Web App
+      id: deploy
+      env:
+        STATIC_WEB_APP_NAME: ${{ inputs.static-web-app-name }}
+        RESOURCE_GROUP_NAME: ${{ inputs.resource-group-name }}
+        DEPLOY_PATH: ${{ steps.deployment-path.outputs.value }}
+        SWA_ENVIRONMENT: ${{ inputs.swa-environment }}
+      run: |
+        if [ -z "$STATIC_WEB_APP_NAME" ]; then
+          echo "❌ static-web-app-name input is required"
+          exit 1
+        fi
+        if [ -z "$RESOURCE_GROUP_NAME" ]; then
+          echo "❌ resource-group-name input is required"
+          exit 1
+        fi
+        if [ -z "$DEPLOY_PATH" ]; then
+          echo "❌ Deployment path could not be determined"
+          exit 1
+        fi
+        DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+          --name "$STATIC_WEB_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP_NAME" \
+          --query "properties.apiKey" \
+          --output tsv)
+        if [ -z "$DEPLOYMENT_TOKEN" ] || [ "$DEPLOYMENT_TOKEN" = "null" ]; then
+          echo "❌ Failed to retrieve deployment token"
+          exit 1
+        fi
+        echo "🚀 Deploying frontend from $DEPLOY_PATH to $STATIC_WEB_APP_NAME (slot: $SWA_ENVIRONMENT)"
+        swa deploy \
+          --app-location "$DEPLOY_PATH" \
+          --deployment-token "$DEPLOYMENT_TOKEN" \
+          --env "$SWA_ENVIRONMENT"
+        echo "value=success" >> $GITHUB_OUTPUT
+
+    - name: Publish deployment status
+      id: publish-deployment-status
+      run: echo "value=success" >> $GITHUB_OUTPUT
+
+    - name: Resolve Static Web App URL
+      id: resolve-swa-url
+      env:
+        PROVIDED_URL: ${{ inputs.static-web-app-url }}
+        STATIC_WEB_APP_NAME: ${{ inputs.static-web-app-name }}
+        RESOURCE_GROUP_NAME: ${{ inputs.resource-group-name }}
+      run: |
+        if [ -n "$PROVIDED_URL" ]; then
+          echo "value=$PROVIDED_URL" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        HOSTNAME=$(az staticwebapp show \
+          --name "$STATIC_WEB_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP_NAME" \
+          --query "defaultHostname" \
+          --output tsv)
+        if [ -z "$HOSTNAME" ] || [ "$HOSTNAME" = "null" ]; then
+          echo "❌ Unable to resolve Static Web App hostname"
+          exit 1
+        fi
+        echo "value=https://$HOSTNAME" >> $GITHUB_OUTPUT
+
+    - name: Verify frontend availability
+      if: ${{ inputs.run-tests }}
+      env:
+        TARGET_URL: ${{ steps.resolve-swa-url.outputs.value }}
+      run: |
+        if [ -z "$TARGET_URL" ]; then
+          echo "❌ Static Web App URL not available for testing"
+          exit 1
+        fi
+        echo "🧪 Verifying frontend availability at $TARGET_URL"
+        sleep 30
+        max_attempts=10
+        attempt=1
+        accessible=false
+        while [ $attempt -le $max_attempts ]; do
+          echo "🔍 Attempt $attempt/$max_attempts"
+          if curl -f -s "$TARGET_URL" -o /dev/null; then
+            accessible=true
+            break
+          fi
+          if [ $attempt -lt $max_attempts ]; then
+            sleep 30
+          fi
+          attempt=$((attempt + 1))
+        done
+        if [ "$accessible" = false ]; then
+          echo "❌ Frontend did not become available"
+          exit 1
+        fi
+        echo "TEST_STATUS=success" >> $GITHUB_ENV
+
+    - name: Publish test status
+      id: publish-test-status
+      run: echo "status=${TEST_STATUS}" >> $GITHUB_OUTPUT
+
+    - name: Frontend deployment summary
+      env:
+        ENV_NAME: ${{ inputs.environment-name }}
+        STATIC_WEB_APP_NAME: ${{ inputs.static-web-app-name }}
+        RESOURCE_GROUP_NAME: ${{ inputs.resource-group-name }}
+        FINAL_URL: ${{ steps.resolve-swa-url.outputs.value }}
+        DEPLOY_STATUS: ${{ steps.publish-deployment-status.outputs.value }}
+        TEST_RESULT: ${{ steps.publish-test-status.outputs.status }}
+      run: |
+        echo "## 🌐 Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -n "$ENV_NAME" ]; then
+          echo "### Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- $ENV_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "### Static Web App" >> $GITHUB_STEP_SUMMARY
+        echo "- **Name**: \`$STATIC_WEB_APP_NAME\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: \`$RESOURCE_GROUP_NAME\`" >> $GITHUB_STEP_SUMMARY
+        if [ -n "$FINAL_URL" ]; then
+          echo "- **URL**: [$FINAL_URL]($FINAL_URL)" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: \`$DEPLOY_STATUS\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Tests**: \`$TEST_RESULT\`" >> $GITHUB_STEP_SUMMARY
