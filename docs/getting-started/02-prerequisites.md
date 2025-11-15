@@ -67,11 +67,11 @@ Make sure you have these permissions in your Azure subscription:
 - **Install**: [Download from nodejs.org](https://nodejs.org/) (choose LTS version)
 - **Verify**: Run `node --version` (should be 20.0+ or later)
 
-**4. .NET 8 SDK** (Optional - for local backend development)
+**4. .NET 10 SDK** (Optional - for local backend development)
 - **Purpose**: Run Azure Functions locally during development
-- **Install**: [Download from Microsoft](https://dotnet.microsoft.com/download/dotnet/8.0)
-- **Verify**: Run `dotnet --version` (should be 8.0+ or later)
-- **⚠️ Important**: The backend project targets `net8.0` framework and **requires .NET 8 SDK specifically**
+- **Install**: [Download from Microsoft](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **Verify**: Run `dotnet --version` (should be 10.0+ or later)
+- **⚠️ Important**: The backend project targets `net10.0` framework and **requires .NET 10 SDK specifically**
 
 **5. Azure Functions Core Tools** (Optional - for local backend development)
 - **Purpose**: Run and debug Azure Functions locally
@@ -112,7 +112,7 @@ Before starting the deployment, verify you have:
 
 ### For Local Development (Optional):
 - [ ] Node.js 20+ installed (`node --version`)
-- [ ] **.NET 8 SDK** installed (`dotnet --version` should show 8.x)
+- [ ] **.NET 10 SDK** installed (`dotnet --version` should show 10.x)
 - [ ] Azure Functions Core Tools installed (`func --version`)
 
 ## 💰 Cost Estimates
@@ -178,19 +178,19 @@ npm --version
 ```
 
 ### Issue: ".NET build errors or version conflicts"
-**Solution**: Ensure you have .NET 8 SDK installed specifically
+**Solution**: Ensure you have .NET 10 SDK installed specifically
 ```bash
 # Check current .NET version
 dotnet --version
-# Should show 8.x.x (e.g., 8.0.118)
+# Should show 10.x.x (e.g., 10.0.100)
 
-# If you have an older version, download .NET 8 SDK
-# https://dotnet.microsoft.com/download/dotnet/8.0
+# If you have an older version, download .NET 10 SDK
+# https://dotnet.microsoft.com/download/dotnet/10.0
 
 # List all installed SDKs
 dotnet --list-sdks
 ```
-**Note**: The backend project targets `net8.0` framework and will not build with .NET 6 or 7.
+**Note**: The backend project targets `net10.0` framework and will not build with .NET 6, 7, or 8.
 
 ## 🚦 Next Steps
 
