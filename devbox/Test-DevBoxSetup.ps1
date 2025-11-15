@@ -99,7 +99,7 @@ Write-Host "================================" -ForegroundColor Yellow
 
 Test-Command "node" "Node.js Runtime"
 Test-Command "npm" "NPM Package Manager"
-Test-Command "dotnet" ".NET 8 SDK"
+Test-Command "dotnet" ".NET 10 SDK"
 Test-Command "az" "Azure CLI"
 Test-Command "python" "Python 3.12"
 Test-Command "pip" "Python Package Manager"

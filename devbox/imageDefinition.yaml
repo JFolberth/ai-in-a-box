@@ -28,9 +28,9 @@ tasks:
     parameters:
       package: Microsoft.AzureCLI
   - name: winget
-    description: Install .NET 8 SDK for Azure Functions backend
+    description: Install .NET 10 SDK for Azure Functions backend
     parameters:
-      package: Microsoft.DotNet.SDK.8
+      package: Microsoft.DotNet.SDK.10
   - name: winget
     description: Install Node.js 20 LTS for frontend development
     parameters:

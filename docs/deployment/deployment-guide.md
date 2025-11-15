@@ -113,7 +113,7 @@ The project includes **two focused deployment scripts** for code-only deployment
 - Existing Azure Functions app (infrastructure already deployed)
 - Existing Resource Group
 - Azure CLI authentication
-- .NET 8 SDK
+- .NET 10 SDK
 
 **Parameters**:
 - `FunctionAppName` (required) - Name of the Azure Functions app

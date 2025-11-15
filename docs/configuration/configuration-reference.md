@@ -213,7 +213,7 @@ The Static Web App is configured for optimal SPA performance:
 ```
 
 #### Runtime Configuration
-- **.NET 8 Isolated** runtime
+- **.NET 10 Isolated** runtime
 - **Azure Functions v4** host
 - **HTTP trigger** with CORS support
 - **System-assigned managed identity**

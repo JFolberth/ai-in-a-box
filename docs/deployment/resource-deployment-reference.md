@@ -77,7 +77,7 @@ The infrastructure uses abbreviated region codes for consistent naming:
 
 | Resource Type | Naming Pattern | Purpose | Key Configuration |
 |---------------|----------------|---------|-------------------|
-| **Function App** | `func-{nameSuffix}` | AI Foundry proxy API | .NET 8 isolated, managed identity |
+| **Function App** | `func-{nameSuffix}` | AI Foundry proxy API | .NET 10 isolated, managed identity |
 | **App Service Plan** | `asp-{nameSuffix}` | Function hosting plan | Flex Consumption (FC1) |
 | **Storage Account** | `st{nameSuffixShort}` | Function App storage | Standard_LRS, HTTPS only |
 | **Application Insights** | `appi-{nameSuffix}` | Backend monitoring | Connected to Log Analytics workspace |
