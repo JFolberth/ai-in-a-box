@@ -78,7 +78,7 @@ on:
     outputs:
       deployment-status:
         description: "Status of the Static Web App deployment"
-        value: ${{ jobs.deploy-frontend.outputs.deployment-status }}
+        value: ${{ jobs.deploy-frontend.outputs.deployment_status }}
 
 jobs:
   deploy-frontend:
@@ -93,6 +93,7 @@ jobs:
       TEST_STATUS: skipped
     outputs:
       static-web-app-url: ${{ steps.deploy.outputs.static_web_app_url }}
+      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
 
     steps:
     - name: Checkout repository
@@ -197,7 +198,7 @@ jobs:
           --app-location "$DEPLOY_PATH" \
           --deployment-token "$DEPLOYMENT_TOKEN" \
           --env "$SWA_ENVIRONMENT"
-        echo "value=success" >> $GITHUB_OUTPUT
+        echo "deployment_status=success" >> $GITHUB_OUTPUT
         echo "static_web_app_url=https://$HOSTNAME" >> $GITHUB_OUTPUT
 
 
