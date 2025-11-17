@@ -10,7 +10,7 @@ The DevBox configuration (`imageDefinition.yaml`) installs and configures:
 These run during DevBox provisioning:
 - **Node.js LTS** - JavaScript runtime for frontend development
 - **Visual Studio Code** - Primary IDE with extensions
-- **.NET 10 SDK** - For C# Azure Functions backend development
+- **.NET 8 SDK** - For C# Azure Functions backend development
 - **Git** - Source control management
 - **Azure CLI** - Infrastructure deployment and management
 - **Azure Functions Core Tools** - Local Function App development and testing
@@ -220,7 +220,7 @@ After DevBox creation, verify the following components:
 
 #### System-Level Tools
 - [ ] **Node.js 20**: `node --version` (should show v20.x.x)
-- [ ] **.NET 10 SDK**: `dotnet --version` (should show 10.0.x)
+- [ ] **.NET 8 SDK**: `dotnet --version` (should show 8.0.x)
 - [ ] **Azure CLI**: `az --version` (should show Azure CLI version)
 - [ ] **Azure Functions Core Tools**: `func --version` (should show v4.x.x)
 - [ ] **Python 3.12**: `python --version` (should show Python 3.12.x)

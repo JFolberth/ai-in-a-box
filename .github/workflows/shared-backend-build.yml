@@ -7,7 +7,7 @@ on:
         description: '.NET version to use'
         required: false
         type: string
-        default: '10.0.x'
+        default: '8.0.x'
       upload-artifacts:
         description: 'Whether to upload build artifacts'
         required: false

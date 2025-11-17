@@ -101,7 +101,7 @@ cd ai-in-a-box
 
 Before starting, ensure you have:
 - **Azure CLI** installed and authenticated
-- **.NET 10 SDK** for backend development
+- **.NET 8 SDK** for backend development
 - **Node.js 20+** for frontend development
 - **Azure subscription** with appropriate permissions
 

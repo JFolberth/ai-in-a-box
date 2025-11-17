@@ -227,7 +227,7 @@ module functionApp 'br/public:avm/res/web/site:0.19.3' = {
       }
       runtime: {
         name: 'dotnet-isolated'
-        version: '10.0'
+        version: '8.0'
       }
       scaleAndConcurrency: {
         instanceMemoryMB: 512
@@ -243,7 +243,7 @@ module functionApp 'br/public:avm/res/web/site:0.19.3' = {
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
       use32BitWorkerProcess: false
-      netFrameworkVersion: 'v10.0'
+      netFrameworkVersion: 'v8.0'
       cors: {
         allowedOrigins: ['*']
         supportCredentials: false

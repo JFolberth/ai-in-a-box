@@ -17,8 +17,8 @@ This guide helps you set up a local development environment where you can:
 
 **Required Tools:**
 - **[Node.js 20+](https://nodejs.org/)** and npm (for frontend development)
-- **[.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)** (for backend Azure Functions development)
-  - **⚠️ Important**: Must be .NET 10 specifically - the project targets `net10.0` framework
+- **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** (for backend Azure Functions development)
+  - **⚠️ Important**: Must be .NET 8 specifically - the project targets `net8.0` framework
 - **[Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)** with Azure Bicep and DevCenter extensions
 - **[Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)** (for local Azure Functions development)
 - **[Git](https://git-scm.com/)** (for version control)
@@ -36,8 +36,8 @@ This guide helps you set up a local development environment where you can:
 # Node.js (using winget)
 winget install OpenJS.NodeJS.LTS
 
-# .NET 10 SDK
-winget install Microsoft.DotNet.SDK.10
+# .NET 8 SDK
+winget install Microsoft.DotNet.SDK.8
 
 # Azure CLI
 winget install Microsoft.AzureCLI
@@ -60,7 +60,7 @@ az extension add --name bicep
 # Node.js (using Homebrew)
 brew install node@20
 
-# .NET 10 SDK
+# .NET 8 SDK
 brew install --cask dotnet-sdk
 
 # Azure CLI
@@ -84,10 +84,10 @@ az extension add --name bicep
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# .NET 10 SDK
+# .NET 8 SDK
 wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 sudo dpkg -i packages-microsoft-prod.deb
-sudo apt-get update && sudo apt-get install -y dotnet-sdk-10.0
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0
 
 # Azure CLI
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -111,7 +111,7 @@ az extension add --name bicep
 # Verify installations
 node --version      # Should be 20.0+ or later
 npm --version       # Should be 9.0+ or later
-dotnet --version    # Should be 10.0+ or later
+dotnet --version    # Should be 8.0+ or later
 func --version      # Should be 4.0+ or later
 az --version        # Should be 2.50+ or later
 git --version       # Any recent version

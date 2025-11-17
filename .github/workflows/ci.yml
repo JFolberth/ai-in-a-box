@@ -65,7 +65,7 @@ jobs:
     name: Backend Build and Test
     uses: ./.github/workflows/shared-backend-build.yml
     with:
-      dotnet-version: ${{ vars.DOTNET_VERSION || '10.0.x' }}
+      dotnet-version: ${{ vars.DOTNET_VERSION || '8.0.x' }}
       upload-artifacts: true
       artifact-name: backend-publish
     secrets: inherit

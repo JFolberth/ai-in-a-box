@@ -11,7 +11,7 @@ This guide provides comprehensive setup instructions for local development and A
 
 ### Development Tools
 1. **[Node.js](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-overview) 20+**: For frontend development
-2. **[.NET 10 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10)**: For backend [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) development
+2. **[.NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8)**: For backend [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/) development
 3. **[Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) v4**: For local Azure Functions development
 
 ## 🚀 Quick Start
