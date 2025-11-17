@@ -88,7 +88,7 @@ jobs:
       id-token: write
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ inputs.static-web-app-url }}
+      url: ${{ steps.deploy.outputs.static_web_app_url }}
     env:
       TEST_STATUS: skipped
     outputs:
