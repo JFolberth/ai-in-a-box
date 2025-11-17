@@ -198,9 +198,21 @@ jobs:
           --app-location "$DEPLOY_PATH" \
           --deployment-token "$DEPLOYMENT_TOKEN" \
           --env "$SWA_ENVIRONMENT"
+
+         # Resolve the actual URL
+
+        HOSTNAME=$(az staticwebapp show \
+          --name "$STATIC_WEB_APP_NAME" \
+          --resource-group "$RESOURCE_GROUP_NAME" \
+          --query "defaultHostname" \
+          --output tsv)
+
+        if [ -z "$HOSTNAME" ] || [ "$HOSTNAME" = "null" ]; then
+          echo "❌ Failed to resolve Static Web App hostname"
+          exit 1
+        fi
         echo "deployment_status=success" >> $GITHUB_OUTPUT
         echo "static_web_app_url=https://$HOSTNAME" >> $GITHUB_OUTPUT
-
 
     - name: Frontend deployment summary
       env:
