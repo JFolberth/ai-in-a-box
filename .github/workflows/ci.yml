@@ -384,7 +384,7 @@ jobs:
   ade-validation-summary:
     name: ADE E2E Validation Summary
     runs-on: ubuntu-latest
-    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation, deploy-ade-backend-code]
+    needs: [deploy-ade-frontend-validation, deploy-ade-backend-validation, deploy-ade-backend-code, deploy-ade-frontend-code]
     outputs:
       validation-status: ${{ steps.summary.outputs.status }}
     permissions:
