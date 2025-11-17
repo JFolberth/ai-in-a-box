@@ -199,32 +199,7 @@ jobs:
           --deployment-token "$DEPLOYMENT_TOKEN" \
           --env "$SWA_ENVIRONMENT"
         echo "value=success" >> $GITHUB_OUTPUT
-
-    - name: Publish deployment status
-      id: publish-deployment-status
-      run: echo "value=success" >> $GITHUB_OUTPUT
-
-    - name: Resolve Static Web App URL
-      id: resolve-swa-url
-      env:
-        PROVIDED_URL: ${{ inputs.static-web-app-url }}
-        STATIC_WEB_APP_NAME: ${{ inputs.static-web-app-name }}
-        RESOURCE_GROUP_NAME: ${{ inputs.resource-group-name }}
-      run: |
-        if [ -n "$PROVIDED_URL" ]; then
-          echo "value=$PROVIDED_URL" >> $GITHUB_OUTPUT
-          exit 0
-        fi
-        HOSTNAME=$(az staticwebapp show \
-          --name "$STATIC_WEB_APP_NAME" \
-          --resource-group "$RESOURCE_GROUP_NAME" \
-          --query "defaultHostname" \
-          --output tsv)
-        if [ -z "$HOSTNAME" ] || [ "$HOSTNAME" = "null" ]; then
-          echo "❌ Unable to resolve Static Web App hostname"
-          exit 1
-        fi
-        echo "value=https://$HOSTNAME" >> $GITHUB_OUTPUT
+        echo "static_web_app_url=https://$HOSTNAME" >> $GITHUB_OUTPUT
 
 
     - name: Frontend deployment summary
@@ -232,8 +207,8 @@ jobs:
         ENV_NAME: ${{ inputs.environment-name }}
         STATIC_WEB_APP_NAME: ${{ inputs.static-web-app-name }}
         RESOURCE_GROUP_NAME: ${{ inputs.resource-group-name }}
-        FINAL_URL: ${{ steps.resolve-swa-url.outputs.value }}
-        DEPLOY_STATUS: ${{ steps.publish-deployment-status.outputs.value }}
+        FINAL_URL: ${{ steps.deploy.outputs.static_web_app_url }}
+
 
       run: |
         echo "## 🌐 Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY

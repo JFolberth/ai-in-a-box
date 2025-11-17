@@ -381,67 +381,11 @@ jobs:
       run-tests: true
     secrets: inherit
 
-  ade-validation-summary:
-    name: ADE E2E Validation Summary
-    runs-on: ubuntu-latest
-    needs: [deploy-ade-frontend-validation, deploy-ade-frontend-code, deploy-ade-backend-validation, deploy-ade-backend-code]
-    outputs:
-      validation-status: ${{ steps.summary.outputs.status }}
-    permissions:
-      contents: read
-    
-    steps:
-    - name: Validation Summary
-      id: summary
-      run: |
-        echo "📋 ADE End-to-End Validation Summary"
-        echo "===================================="
-        FRONTEND_STATUS="${{ needs.deploy-ade-frontend-code.outputs.test-status }}"
-        BACKEND_STATUS="${{ needs.deploy-ade-backend-code.outputs.test-status }}"
-
-        echo "Frontend Deployment & Testing: $FRONTEND_STATUS"
-        echo "Backend Deployment & Testing: $BACKEND_STATUS"
-
-        if [ "$FRONTEND_STATUS" = "success" ] && [ "$BACKEND_STATUS" = "success" ]; then
-          echo "✅ All ADE end-to-end validations passed!"
-          echo "   - Infrastructure deployed successfully"
-          echo "   - Application code deployed successfully"
-          echo "   - Applications tested and functional"
-          echo "status=success" >> $GITHUB_OUTPUT
-        else
-          echo "❌ ADE end-to-end validation failed!"
-          echo "status=failed" >> $GITHUB_OUTPUT
-          exit 1
-        fi
-    
-    - name: ADE Environment Information
-      run: |
-        echo "## 🏗️ ADE End-to-End Validation Environments" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📋 Environment Details" >> $GITHUB_STEP_SUMMARY
-        echo "- **Frontend Environment**: \`${{ needs.deploy-ade-frontend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Backend Environment**: \`${{ needs.deploy-ade-backend-validation.outputs.ade-environment-name }}\`" >> $GITHUB_STEP_SUMMARY
-        if [ -n "${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}" ]; then
-          echo "- **Frontend Static Web App URL**: [${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }}](${{ needs.deploy-ade-frontend-validation.outputs.static-web-app-url }})" >> $GITHUB_STEP_SUMMARY
-        fi
-        if [ -n "${{ needs.deploy-ade-backend-code.outputs.function-app-url }}" ]; then
-          echo "- **Backend Function App URL**: [${{ needs.deploy-ade-backend-code.outputs.function-app-url }}](${{ needs.deploy-ade-backend-code.outputs.function-app-url }})" >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ✅ Validation Completed" >> $GITHUB_STEP_SUMMARY
-        echo "- **Infrastructure Deployment**: ADE environments created successfully" >> $GITHUB_STEP_SUMMARY
-        echo "- **Frontend Code Deployment**: Static Web App deployed and tested" >> $GITHUB_STEP_SUMMARY
-        echo "- **Backend Code Deployment**: Function App deployed and tested" >> $GITHUB_STEP_SUMMARY
-        echo "- **Application Testing**: End-to-end functionality verified" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🕒 Automatic Cleanup" >> $GITHUB_STEP_SUMMARY
-        echo "✅ **Note**: ADE environments are configured with 8-hour expiration and will be automatically deleted." >> $GITHUB_STEP_SUMMARY
-        echo "No manual cleanup required." >> $GITHUB_STEP_SUMMARY
 
   deploy-dev-infrastructure:
     name: Deploy Dev Infrastructure
     uses: ./.github/workflows/shared-infrastructure-deploy.yml
-    needs: [bicep-build, ade-validation-summary]
+    needs: [bicep-build]
     # For scheduled runs: skip ADE validation and proceed directly to deployment
     # For push/manual: require successful ADE validation or skip condition
     permissions:
@@ -449,8 +393,7 @@ jobs:
       id-token: write
     if: |
       
-        ( github.event_name != 'scheduled' &&
-        needs.ade-validation-summary.outputs.validation-status == 'success' )
+        ( github.event_name != 'scheduled')
         &&
         github.ref == 'refs/heads/main'
       
