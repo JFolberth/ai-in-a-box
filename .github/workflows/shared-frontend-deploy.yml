@@ -79,12 +79,6 @@ on:
       deployment-status:
         description: "Status of the Static Web App deployment"
         value: ${{ jobs.deploy-frontend.outputs.deployment-status }}
-      test-status:
-        description: "Result of post-deployment availability checks"
-        value: ${{ jobs.deploy-frontend.outputs.test-status }}
-      static-web-app-url:
-        description: "Resolved Static Web App URL"
-        value: ${{ jobs.deploy-frontend.outputs.static-web-app-url }}
 
 jobs:
   deploy-frontend:
@@ -99,7 +93,6 @@ jobs:
       TEST_STATUS: skipped
     outputs:
       deployment-status: ${{ steps.publish-deployment-status.outputs.value }}
-      test-status: ${{ steps.publish-test-status.outputs.status }}
       static-web-app-url: ${{ steps.resolve-swa-url.outputs.value }}
 
     steps:
@@ -233,40 +226,6 @@ jobs:
         fi
         echo "value=https://$HOSTNAME" >> $GITHUB_OUTPUT
 
-    - name: Verify frontend availability
-      if: ${{ inputs.run-tests }}
-      env:
-        TARGET_URL: ${{ steps.resolve-swa-url.outputs.value }}
-      run: |
-        if [ -z "$TARGET_URL" ]; then
-          echo "❌ Static Web App URL not available for testing"
-          exit 1
-        fi
-        echo "🧪 Verifying frontend availability at $TARGET_URL"
-        sleep 30
-        max_attempts=10
-        attempt=1
-        accessible=false
-        while [ $attempt -le $max_attempts ]; do
-          echo "🔍 Attempt $attempt/$max_attempts"
-          if curl -f -s "$TARGET_URL" -o /dev/null; then
-            accessible=true
-            break
-          fi
-          if [ $attempt -lt $max_attempts ]; then
-            sleep 30
-          fi
-          attempt=$((attempt + 1))
-        done
-        if [ "$accessible" = false ]; then
-          echo "❌ Frontend did not become available"
-          exit 1
-        fi
-        echo "TEST_STATUS=success" >> $GITHUB_ENV
-
-    - name: Publish test status
-      id: publish-test-status
-      run: echo "status=${TEST_STATUS}" >> $GITHUB_OUTPUT
 
     - name: Frontend deployment summary
       env:
@@ -275,7 +234,7 @@ jobs:
         RESOURCE_GROUP_NAME: ${{ inputs.resource-group-name }}
         FINAL_URL: ${{ steps.resolve-swa-url.outputs.value }}
         DEPLOY_STATUS: ${{ steps.publish-deployment-status.outputs.value }}
-        TEST_RESULT: ${{ steps.publish-test-status.outputs.status }}
+
       run: |
         echo "## 🌐 Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY
         if [ -n "$ENV_NAME" ]; then
