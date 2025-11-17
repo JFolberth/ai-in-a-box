@@ -92,8 +92,7 @@ jobs:
     env:
       TEST_STATUS: skipped
     outputs:
-      deployment-status: ${{ steps.publish-deployment-status.outputs.value }}
-      static-web-app-url: ${{ steps.resolve-swa-url.outputs.value }}
+      static-web-app-url: ${{ steps.deploy.outputs.static_web_app_url }}
 
     steps:
     - name: Checkout repository

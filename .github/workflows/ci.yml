@@ -547,7 +547,7 @@ jobs:
   create-failure-issue:
     name: 'Create Failure Issue'
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'schedule') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure') }}
+    if: ${{ (github.event_name == 'schedule') && (needs.frontend-build.result == 'failure' || needs.backend-build.result == 'failure' || needs.deploy-dev-infrastructure.result == 'failure' || needs.deploy-agent.result == 'failure' || needs.deploy-backend-code.result == 'failure' || needs.deploy-frontend-code.result == 'failure') }}
     needs: [frontend-build, backend-build, deploy-dev-infrastructure, deploy-agent, deploy-backend-code, deploy-frontend-code]
     
     permissions:
