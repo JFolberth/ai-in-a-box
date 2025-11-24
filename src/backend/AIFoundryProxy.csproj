@@ -9,7 +9,7 @@
   <ItemGroup>
     <Compile Remove="tests/**" />
   </ItemGroup>  <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.6" />
     <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.7" />
