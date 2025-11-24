@@ -28,7 +28,7 @@ jobs:
       contents: read
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Azure CLI Login
       uses: azure/login@v2

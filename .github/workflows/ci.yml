@@ -99,7 +99,7 @@ jobs:
       id-token: write
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Download infrastructure artifacts
       uses: actions/download-artifact@v6
@@ -252,7 +252,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Download infrastructure artifacts
       uses: actions/download-artifact@v6
@@ -474,7 +474,7 @@ jobs:
       name: dev
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Azure CLI Login
       uses: azure/login@v2
