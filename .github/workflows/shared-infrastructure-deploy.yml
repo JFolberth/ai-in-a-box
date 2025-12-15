@@ -76,7 +76,7 @@ jobs:
     
     steps:
     - name: Download infrastructure artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: ${{ inputs.artifact-name }}
         path: ./infra/
@@ -257,7 +257,7 @@ jobs:
     
     - name: Upload Deployment Artifacts
       if: ${{ inputs.validate-only == false && steps.deploy.outputs.deployment-status == 'Succeeded' }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: infrastructure-deployment-result-${{ inputs.environment }}
         path: deployment-result.json
