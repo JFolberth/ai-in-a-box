@@ -128,7 +128,7 @@ jobs:
         echo "All validated Bicep files packaged as \`${{ inputs.artifact-name }}\` artifact for deployment reuse." >> $GITHUB_STEP_SUMMARY
     
     - name: Upload infrastructure build artifacts
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.artifact-name }}
         path: infra/

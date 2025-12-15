@@ -87,7 +87,7 @@ jobs:
       
     - name: Upload backend build artifacts
       if: ${{ inputs.upload-artifacts }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.artifact-name }}
         path: src/backend/backend-deployment.zip
