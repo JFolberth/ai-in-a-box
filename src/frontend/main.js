@@ -11,6 +11,7 @@ class ModernChatApp {
     this.bindEvents()
     this.initializeUI()
     this.loadConversationHistory()
+    this.initializePonyMagic()
   }
 
   initializeElements() {
@@ -49,6 +50,47 @@ class ModernChatApp {
     
     // Focus on input
     this.elements.userInput.focus()
+  }
+
+  initializePonyMagic() {
+    // Add cursor sparkle trail
+    document.addEventListener('mousemove', (e) => {
+      if (Math.random() < 0.3) { // 30% chance for sparkle
+        this.createSparkle(e.clientX, e.clientY)
+      }
+    })
+    
+    // Add random case to some text elements occasionally
+    this.addRandomCaseText()
+  }
+
+  createSparkle(x, y) {
+    const sparkle = document.createElement('div')
+    sparkle.className = 'sparkle-cursor'
+    sparkle.style.left = x + 'px'
+    sparkle.style.top = y + 'px'
+    document.body.appendChild(sparkle)
+    
+    // Remove sparkle after animation
+    setTimeout(() => {
+      if (sparkle.parentNode) {
+        sparkle.parentNode.removeChild(sparkle)
+      }
+    }, 1000)
+  }
+
+  // Make some text "kid-styled" with random case
+  addRandomCaseText() {
+    const elements = document.querySelectorAll('.chat-title span, .welcome-message h2')
+    elements.forEach(el => {
+      if (Math.random() < 0.6) { // 60% chance
+        const text = el.textContent
+        const randomCaseText = text.split('').map(char => 
+          Math.random() < 0.3 ? char.toLowerCase() : char.toUpperCase()
+        ).join('')
+        el.textContent = randomCaseText
+      }
+    })
   }
 
   handleInputChange() {
@@ -168,7 +210,7 @@ class ModernChatApp {
     if (role === 'user') {
       avatar.innerHTML = '<i class="fas fa-user"></i>'
     } else if (role === 'assistant') {
-      avatar.innerHTML = '<i class="fas fa-robot"></i>'
+      avatar.innerHTML = '<i class="fas fa-horse"></i>'
     } else if (role === 'error') {
       avatar.innerHTML = '<i class="fas fa-exclamation-triangle"></i>'
       messageDiv.className = 'message error-message'
@@ -253,15 +295,15 @@ class ModernChatApp {
   clearConversation() {
     if (this.conversationHistory.length === 0) return
     
-    if (confirm('Are you sure you want to clear the conversation? This cannot be undone.')) {
+    if (confirm('Are you SURE you want to start over?! 🦄 All our magical conversations will disappear! 😱💔')) {
       this.conversationHistory = []
       this.elements.messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">
-            <i class="fas fa-comments"></i>
+            <i class="fas fa-horse"></i>
           </div>
-          <h2>Welcome to AI Foundry Chat</h2>
-          <p>Start a conversation with the AI in A Box Assistant. Ask questions and get helpful information on a variety of topics.</p>
+          <h2>🌟 wElCoMe To PoNy ChAt TiMe! 🌟</h2>
+          <p>Hi there, BEST FRIEND! 🦄✨ Tell your magical pony buddy what you're thinking about! I love talking about EVERYTHING and I'm super excited to be your friend! 💖🌈</p>
         </div>
       `
       this.saveConversationHistory()
@@ -270,21 +312,21 @@ class ModernChatApp {
 
   exportConversation() {
     if (this.conversationHistory.length === 0) {
-      alert('No conversation to export.')
+      alert('No pony conversations to save yet! 🦄💔 Start chatting first!')
       return
     }
     
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
-    const filename = `ai-chat-export-${timestamp}.txt`
+    const filename = `my-magical-pony-chat-${timestamp}.txt`
     
-    let exportText = `AI Foundry Chat Export\n`
-    exportText += `Generated: ${new Date().toLocaleString()}\n`
-    exportText += `Messages: ${this.conversationHistory.length}\n`
-    exportText += `\n${'='.repeat(50)}\n\n`
+    let exportText = `🦄 MY MAGICAL PONY CHAT EXPORT! 🌈\n`
+    exportText += `✨ Created: ${new Date().toLocaleString()} ✨\n`
+    exportText += `💖 Total Messages: ${this.conversationHistory.length} 💖\n`
+    exportText += `\n${'🌟'.repeat(25)}\n\n`
     
     this.conversationHistory.forEach((message, index) => {
-      const role = message.role === 'user' ? 'You' : 
-                   message.role === 'assistant' ? 'AI in A Box' : 'System'
+      const role = message.role === 'user' ? '👤 You' : 
+                   message.role === 'assistant' ? '🦄 Your Magical Pony Friend' : '⚠️ System'
       exportText += `[${message.timestamp}] ${role}:\n${message.content}\n\n`
     })
     
