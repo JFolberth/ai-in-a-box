@@ -101,7 +101,7 @@ resource aiFoundryInstance 'Microsoft.CognitiveServices/accounts@2025-07-01-prev
 // =========== APPLICATION INSIGHTS (AVM) ===========
 
 // Application Insights for backend monitoring using AVM
-module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
+module applicationInsights 'br/public:avm/res/insights/component:0.7.1' = {
   name: 'backend-applicationInsights-${regionReference[location]}'
   params: {
     name: resourceNames.applicationInsights
@@ -122,7 +122,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = {
 // =========== FUNCTION APP STORAGE ACCOUNT (AVM) ===========
 
 // Storage account for Function App runtime requirements
-module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
+module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.31.0' = {
   name: 'backend-functionStorageAccount-${regionReference[location]}'
   params: {
     name: resourceNames.functionStorageAccount
@@ -181,25 +181,11 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
   }
 }
 
-/*
-resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
-  name: resourceNames.appServicePlan
-  location: location
-  kind: 'functionapp'
-  sku: {
-    tier: 'FlexConsumption'
-    name: 'FC1'
-  }
-  properties: {
-    reserved: true
-  }
-}
-*/
 
 // =========== AZURE FUNCTION APP (AVM) ===========
 
 // Function App for AI Foundry backend proxy using AVM
-module functionApp 'br/public:avm/res/web/site:0.19.3' = {
+module functionApp 'br/public:avm/res/web/site:0.19.4' = {
   name: 'backend-functionApp-${regionReference[location]}'
   params: {
     name: resourceNames.functionApp
