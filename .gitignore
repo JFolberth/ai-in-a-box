@@ -469,3 +469,4 @@ infra/**/*.json
 !infra/**/*parameters.json
 !infra/**/ade.parameters.json
 !infra/**/manifest.schema.json
+*.sln
