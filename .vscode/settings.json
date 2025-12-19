@@ -30,5 +30,8 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.formatting.provider": "black",
-    "azureFunctions.projectSubpath": "src\\backend"
+    "azureFunctions.projectSubpath": "src\\backend",
+    "dotnet.automaticallyCreateSolutionInWorkspace": false,
+    "dotnet.preferCSharpExtension": true,
+    "omnisharp.disableMSBuildDiagnosticWarning": true
 }

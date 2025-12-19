@@ -80,7 +80,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02
 // =========== APPLICATION INSIGHTS (AVM) ===========
 
 // Application Insights for frontend monitoring using AVM
-module applicationInsights 'br/public:avm/res/insights/component:0.6.1' = {
+module applicationInsights 'br/public:avm/res/insights/component:0.7.1' = {
   name: 'frontend-applicationInsights-${regionReference[location]}'
   params: {
     name: resourceNames.applicationInsights
