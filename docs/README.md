@@ -2,8 +2,6 @@
 
 *Your complete guide to understanding, deploying, and customizing the AI Foundry SPA.*
 
-> ⚠️ **Regional Requirement**: Azure AI Foundry hosted agents are currently only available in the **North Central US (northcentralus)** region. All deployments must use this region.
-
 ## 🚀 New to AI Foundry? Start Here!
 
 If you're new to Azure AI Foundry or want to understand what this project does, follow this beginner-friendly journey:
