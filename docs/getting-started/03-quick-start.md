@@ -303,7 +303,7 @@ $agentId = "asst_generated_agent_id_here"
 
 ### Deploy Frontend Static Web App
 
-```bash
+```powershell
 # Deploy frontend application
 ./deploy-scripts/deploy-frontend-spa-code.ps1 `
   -StaticWebAppName "$staticWebAppName" `
