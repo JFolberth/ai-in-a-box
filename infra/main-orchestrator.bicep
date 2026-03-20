@@ -171,7 +171,7 @@ var effectiveAiFoundryProjectName = createAiFoundryResourceGroup
 // =========== RESOURCE GROUPS ===========
 
 // Frontend Resource Group using AVM module
-module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = {
+module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
   name: 'frontend-rg-deployment-${regionReference[location]}'
   params: {
     name: frontendResourceGroupName
@@ -184,7 +184,7 @@ module frontendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' 
 }
 
 // Backend Resource Group using AVM module
-module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = {
+module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
   name: 'backend-rg-deployment-${regionReference[location]}'
   params: {
     name: backendResourceGroupName
@@ -197,7 +197,7 @@ module backendResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' =
 }
 
 // AI Foundry Resource Group (conditional deployment)
-module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = if (createAiFoundryResourceGroup) {
+module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = if (createAiFoundryResourceGroup) {
   name: 'aifoundry-rg-deployment-${regionReference[location]}'
   params: {
     name: newAiFoundryResourceGroupName
@@ -210,7 +210,7 @@ module newAiFoundryResourceGroup 'br/public:avm/res/resources/resource-group:0.4
 }
 
 // Log Analytics Resource Group (conditional deployment)
-module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.2' = if (createLogAnalyticsWorkspace) {
+module newLogAnalyticsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = if (createLogAnalyticsWorkspace) {
   name: 'loganalytics-rg-deployment-${regionReference[location]}'
   params: {
     name: newLogAnalyticsResourceGroupName

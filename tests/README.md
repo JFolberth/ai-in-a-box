@@ -22,8 +22,6 @@ tests/
 │   ├── extract-ade-parameters.sh     # 🔍 ADE parameter extraction utility
 │   ├── extract-ade-outputs.sh        # 📤 ADE output extraction utility
 │   └── test-function-access.sh       # 🔒 Cross-platform RBAC validation
-└── archive/                          # Legacy and deprecated scripts
-    └── [previous versions and deprecated scripts]
 ```
 
 ## 🎯 Core Test Scripts (Primary Usage)
@@ -312,7 +310,6 @@ Example GitHub Actions integration:
 - **Consolidated functionality**: No more duplicates
 - **Consistent naming**: Standardized conventions
 - **Better maintainability**: Easier to find and update scripts
-- **Cleaner archive**: Legacy scripts preserved but separated
 
 ### Usage Improvements
 - ✅ **Faster navigation**: Know exactly where to find the right script

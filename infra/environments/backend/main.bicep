@@ -122,7 +122,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.7.1' = {
 // =========== FUNCTION APP STORAGE ACCOUNT (AVM) ===========
 
 // Storage account for Function App runtime requirements
-module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.31.0' = {
+module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.32.0' = {
   name: 'backend-functionStorageAccount-${regionReference[location]}'
   params: {
     name: resourceNames.functionStorageAccount
@@ -154,11 +154,9 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.31.0'
       containers: [
         {
           name: 'function-container'
-          properties: {
-            publicAccess: 'None'
-            metadata: {
-              createdBy: 'FunctionApp'
-            }
+          publicAccess: 'None'
+          metadata: {
+            createdBy: 'FunctionApp'
           }
         }
       ]
@@ -170,7 +168,7 @@ module functionStorageAccount 'br/public:avm/res/storage/storage-account:0.31.0'
   }
 }
 // =========== APP SERVICE PLAN FOR FUNCTIONS ===========
-module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.7.0' = {
   name: 'backend-appServicePlan'
   params: {
     name: resourceNames.appServicePlan
@@ -185,7 +183,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.5.0' = {
 // =========== AZURE FUNCTION APP (AVM) ===========
 
 // Function App for AI Foundry backend proxy using AVM
-module functionApp 'br/public:avm/res/web/site:0.19.4' = {
+module functionApp 'br/public:avm/res/web/site:0.22.0' = {
   name: 'backend-functionApp-${regionReference[location]}'
   params: {
     name: resourceNames.functionApp

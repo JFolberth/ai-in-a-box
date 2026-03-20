@@ -29,7 +29,7 @@ This is a JavaScript SPA project that integrates with a single AI Foundry endpoi
 
 ```powershell
 # ✅ CORRECT - In source control files:
-az deployment sub create --template-file "infra/main-orchestrator.bicep"
+az deployment sub create --template-file "infra/main-orchestrator.bicep" --parameters "infra/dev-orchestrator.parameters.bicepparam" --location "northcentralus"
 & "./deploy-scripts/deploy-backend-func-code.ps1"
 Set-Location "src/backend"
 dotnet build "src/backend/AIFoundryProxy.csproj"
@@ -122,7 +122,7 @@ function Test-Command {
 - **Security**: Public mode (no authentication) with backend proxy for AI Foundry integration
 - **Infrastructure**: Azure Bicep templates using Azure Verified Modules (AVM)
 - **Hosting**: Azure Storage Static Website
-- **Deployment**: Azure CLI with Bicep ONLY (no azd/Azure Developer CLI dependencies)
+- **Deployment**: Azure CLI with Bicep ONLY (no azd/Azure Developer CLI dependencies). Note: Azure Deployment Environments (ADE) is used for CI/CD validation but is separate from the azd CLI tool.
 - **Development**: DevContainer and DevBox ready with full Bicep support
 - **AI Integration**: Single AI in A Box agent endpoint (not user-switchable)
 - **Monitoring**: Application Insights with consolidated Log Analytics Workspace

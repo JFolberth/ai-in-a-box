@@ -525,10 +525,9 @@ ai-in-a-box/
 
 Once your local environment is working:
 
-1. **[Project Structure](project-structure.md)** - Understand the codebase
-2. **[Testing Guide](testing-guide.md)** - Run comprehensive tests
-3. **[Debugging Guide](debugging.md)** - Troubleshoot issues
-4. **[Customization](../configuration/customization.md)** - Make it your own
+1. **[Customization](../configuration/customization.md)** - Make it your own
+2. **[Configuration Reference](../configuration/configuration-reference.md)** - Detailed configuration options
+3. **[Troubleshooting](../operations/troubleshooting.md)** - Common issues and solutions
 
 ## 📖 Related Documentation
 

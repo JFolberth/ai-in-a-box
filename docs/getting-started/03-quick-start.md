@@ -305,7 +305,7 @@ $agentId = "asst_generated_agent_id_here"
 
 ```bash
 # Deploy frontend application
-& "C:\Users\BicepDeveloper\ai-in-a-box\deploy-scripts\deploy-frontend-spa-code.ps1" `
+./deploy-scripts/deploy-frontend-spa-code.ps1 `
   -StaticWebAppName "$staticWebAppName" `
   -ResourceGroupName "$staticWebAppResourceGroup" `
   -BackendApiUrl "https://$functionAppName.azurewebsites.net/api"
@@ -394,7 +394,7 @@ Based on your configuration choices, you now have:
 Want to make it your own? Here are some quick customizations:
 
 ### Change the Agent Prompt
-Edit the AI agent behavior in your AI Foundry resource (instructions in [Configuration Guide](../configuration/ai-foundry-setup.md))
+Edit the AI agent behavior in your AI Foundry resource (instructions in [Customization Guide](../configuration/customization.md))
 
 ### Update the UI
 Modify colors, layout, and branding in `src/frontend/` (see [Development Guide](../development/local-development.md))
@@ -432,7 +432,7 @@ az cognitiveservices account show --name "$aiFoundryResourceName" --resource-gro
 az functionapp show --name "$functionAppName" --resource-group "$functionAppResourceGroup" --query "state"
 
 # Check for build errors
-dotnet build "C:\Users\BicepDeveloper\ai-in-a-box\src\backend\AIFoundryProxy.csproj"
+dotnet build "src/backend/AIFoundryProxy.csproj"
 
 # Verify managed identity permissions
 az role assignment list --scope "/subscriptions/$(az account show --query id -o tsv)" --query "[?principalType=='ServicePrincipal' && contains(roleDefinitionName, 'AI')]"
