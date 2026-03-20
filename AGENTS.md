@@ -146,10 +146,10 @@ Before generating Azure or C# code, ALWAYS search Microsoft Learn first:
 ### Infrastructure as Code
 ```bash
 # Validate templates
-az deployment sub validate --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location eastus2
+az deployment sub validate --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location northcentralus
 
 # Deploy infrastructure
-az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location eastus2
+az deployment sub create --template-file infra/main-orchestrator.bicep --parameters infra/dev-orchestrator.parameters.bicepparam --location northcentralus
 
 # Deploy application code
 ./deploy-scripts/deploy-backend-func-code.ps1
