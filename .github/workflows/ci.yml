@@ -651,7 +651,7 @@ jobs:
           fi
       
       - name: Create GitHub Issue
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const title = `🚨 CI Workflow Failure - ${{ steps.failure-details.outputs.trigger_type }} Run`;
