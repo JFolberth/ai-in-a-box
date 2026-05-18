@@ -82,7 +82,7 @@ jobs:
         path: ./infra/
       
     - name: Azure CLI Login
-      uses: azure/login@v2
+      uses: azure/login@v3
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
