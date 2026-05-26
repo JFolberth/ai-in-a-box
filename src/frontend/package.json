@@ -20,8 +20,8 @@
     "@babel/preset-env": "^7.29.2",
     "@testing-library/jest-dom": "^6.9.1",
     "babel-jest": "^30.0.2",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "jsdom": "^29.0.0",
     "vite": "^8.0.14",
     "dompurify": "^3.4.5"
