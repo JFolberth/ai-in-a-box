@@ -9,12 +9,6 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        
-        // Add logging
-        services.AddLogging(builder =>
-        {
-            builder.AddApplicationInsights();
-        });
     })
     .Build();
 
