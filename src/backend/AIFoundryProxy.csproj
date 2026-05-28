@@ -16,7 +16,6 @@
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="3.1.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
